@@ -1,4 +1,4 @@
-Dear Supplier,
+Dear {{ $supplier_name ?? 'Supplier' }},
 <br><br>
 We hope this message finds you well.
 <br><br>

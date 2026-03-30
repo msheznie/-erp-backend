@@ -165,7 +165,9 @@ class SupplierRegistrationLink extends Model
             ->whereNotNull('supplier_master_id')
             ->where('supplierassigned.companySystemID', $companyId)
             ->where('supplierassigned.isActive', 1)
-            ->selectRaw('MAX(srm_supplier_registration_link.id) as registration_link_id, srm_supplier_registration_link.email as supplier_email')
+            ->selectRaw('MAX(srm_supplier_registration_link.id) as registration_link_id,
+                srm_supplier_registration_link.email as supplier_email, srm_supplier_registration_link.name'
+            )
             ->groupBy('srm_supplier_registration_link.email')
             ->get();
     }

@@ -181,7 +181,10 @@ class TenderSupplierAssignee extends Model
             ->where('srm_tender_supplier_assignee.tender_master_id', $tenderId)
             ->where('srm_tender_supplier_assignee.company_id', $companyId)
             ->where('srm_tender_supplier_assignee.mail_sent', 1)
-            ->selectRaw('COALESCE(srm_tender_supplier_assignee.supplier_email, srl.email) as supplier_email, srm_tender_supplier_assignee.registration_link_id')
+            ->selectRaw('COALESCE(srm_tender_supplier_assignee.supplier_email, srl.email) as supplier_email,
+              srm_tender_supplier_assignee.registration_link_id,
+              COALESCE(srm_tender_supplier_assignee.supplier_name, srl.name) as name'
+            )
             ->get()
             ->unique('registration_link_id')
             ->values();

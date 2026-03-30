@@ -77,9 +77,10 @@ class TenderCancellationService
         }
 
         $subject = $this->buildSubject($tender);
-        $body = $this->buildDefaultBody($tender, $externalComment);
 
         foreach ($suppliers as $supplier) {
+            $body = $this->buildDefaultBody($tender, $externalComment, $supplier->name);
+
             $email = Email::emailAddressFormat($supplier->supplier_email);
             if (empty($email)) {
                 continue;
@@ -103,16 +104,10 @@ class TenderCancellationService
         $companyName = $company->CompanyName;
 
         $subject = $this->buildSubject($tender);
-        $body = view('email.tender_cancellation_supplier_notice', [
-            'tenderCode' => $tender->tender_code,
-            'tenderTitle' => $tender->title,
-            'tenderDescription' => $tender->description,
-            'supplierComment' => $supplierComment,
-            'companyName' => $companyName,
-        ])->render();
 
         $suppliers = $this->resolveCancellationRecipients($tender);
         foreach ($suppliers as $supplier) {
+            $body = $this->buildDefaultBody($tender, $supplierComment, $supplier->name);
             $email = Email::emailAddressFormat($supplier->supplier_email);
             if (empty($email)) {
                 continue;
@@ -297,7 +292,7 @@ class TenderCancellationService
         return 'Cancellation of Tender - ' . $tender->tender_code;
     }
 
-    private function buildDefaultBody(TenderMaster $tender, string $externalComment): string
+    private function buildDefaultBody(TenderMaster $tender, string $externalComment, string $supplier_name): string
     {
         $company = Company::find($tender->company_id);
         $companyName = $company->CompanyName ?? '';
@@ -308,6 +303,7 @@ class TenderCancellationService
             'tenderDescription' => $tender->description,
             'supplierComment' => $externalComment,
             'companyName' => $companyName,
+            'supplier_name' => $supplier_name,
         ])->render();
     }
 
