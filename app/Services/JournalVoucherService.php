@@ -113,6 +113,14 @@ class JournalVoucherService
         if (isset($input['JVdate'])) {
             if ($input['JVdate']) {
                 $input['JVdate'] = new Carbon($input['JVdate']);
+                $documentDate = Carbon::parse($input['JVdate']);
+                if (!($documentDate->lessThanOrEqualTo(Carbon::today()))) {
+                    return [
+                        'status' => false,
+                        'message' => trans('custom.journal_voucher_date_must_be_today_or_before'),
+                        'httpCode' => 500,
+                    ];
+                }
             }
         }
 
@@ -238,7 +246,14 @@ class JournalVoucherService
         else{
             if (isset($input['JVdate'])) {
                 if ($input['JVdate']) {
-                    $input['JVdate'] = Carbon::parse($input['JVdate']);
+                    $input['JVdate'] = Carbon::parse($input['JVdate']);             
+                if (!($input['JVdate']->lessThanOrEqualTo(Carbon::today()))) {
+                    return [
+                        'status' => false,
+                        'message' => trans('custom.journal_voucher_date_must_be_today_or_before'),
+                        'httpCode' => 500,
+                    ];
+                }
                 }
             }
 
