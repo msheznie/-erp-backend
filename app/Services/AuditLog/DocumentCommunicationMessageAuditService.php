@@ -43,21 +43,21 @@ class DocumentCommunicationMessageAuditService
 
             if ($createdByName !== '') {
                 $modifiedData[] = [
-                    'amended_field' => 'Created By',
+                    'amended_field' => 'created_by',
                     'previous_value' => '',
                     'new_value' => $createdByName,
                 ];
             }
 
             $modifiedData[] = [
-                'amended_field' => 'Comment Body',
+                'amended_field' => 'comment_body',
                 'previous_value' => '',
                 'new_value' => (string) $newBody,
             ];
         } elseif ($crudType === 'U') {
             if ((string) $oldBody !== (string) $newBody) {
                 $modifiedData[] = [
-                    'amended_field' => 'Comment Body',
+                    'amended_field' => 'comment_body',
                     'previous_value' => (string) $oldBody,
                     'new_value' => (string) $newBody,
                 ];
@@ -66,14 +66,14 @@ class DocumentCommunicationMessageAuditService
             $editedByName = self::resolveEmployeeName($new['authorId'] ?? null);
             if ($editedByName !== '') {
                 $modifiedData[] = [
-                    'amended_field' => 'Edited By',
+                    'amended_field' => 'edited_by',
                     'previous_value' => '',
                     'new_value' => $editedByName,
                 ];
             }
         } elseif ($crudType === 'D') {
             $modifiedData[] = [
-                'amended_field' => 'Comment Body',
+                'amended_field' => 'comment_body',
                 'previous_value' => (string) $oldBody,
                 'new_value' => '',
             ];
@@ -82,7 +82,7 @@ class DocumentCommunicationMessageAuditService
             $deletedByNewId = $new['deleted_by'] ?? '';
             if ((string) $deletedByOldId !== (string) $deletedByNewId) {
                 $modifiedData[] = [
-                    'amended_field' => 'Deleted By',
+                    'amended_field' => 'deleted_by',
                     'previous_value' => self::resolveEmployeeName($deletedByOldId),
                     'new_value' => self::resolveEmployeeName($deletedByNewId),
                 ];

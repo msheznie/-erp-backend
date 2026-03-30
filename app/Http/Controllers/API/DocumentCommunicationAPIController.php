@@ -23,11 +23,11 @@ class DocumentCommunicationAPIController extends AppBaseController
             if (!$result['success']) {
                 return $this->sendError($result['message'], $result['code'] ?? 422);
             }
-            return $this->sendResponse($result['data'], 'Thread details retrieved successfully');
+            return $this->sendResponse($result['data'], trans('custom.thread_details_retrieved_successfully'));
         }
         catch(\Exception $e)
         {
-            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
         }
     }
 
@@ -39,11 +39,11 @@ class DocumentCommunicationAPIController extends AppBaseController
             if (!$result['success']) {
                 return $this->sendError($result['message'], $result['code'] ?? 422);
             }
-            return $this->sendResponse($result['data'], 'Messages retrieved successfully');
+            return $this->sendResponse($result['data'], trans('custom.messages_retrieved_successfully'));
         }
         catch(\Exception $e)
         {
-            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
         }
     }
 
@@ -55,11 +55,11 @@ class DocumentCommunicationAPIController extends AppBaseController
             if (!$result['success']) {
                 return $this->sendError($result['message'], $result['code'] ?? 422);
             }
-            return $this->sendResponse($result['data'], 'Comment added successfully');
+            return $this->sendResponse($result['data'], trans('custom.comment_added_successfully'));
         }
         catch(\Exception $e)
         {
-            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
         }
     }
 
@@ -71,11 +71,11 @@ class DocumentCommunicationAPIController extends AppBaseController
             if (!$result['success']) {
                 return $this->sendError($result['message'], $result['code'] ?? 422);
             }
-            return $this->sendResponse($result['data'], 'Reply added successfully');
+            return $this->sendResponse($result['data'], trans('custom.reply_added_successfully'));
         }
         catch(\Exception $e)
         {
-            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
         }
     }
 
@@ -87,11 +87,11 @@ class DocumentCommunicationAPIController extends AppBaseController
             if (!$result['success']) {
                 return $this->sendError($result['message'], $result['code'] ?? 422);
             }
-            return $this->sendResponse($result['data'], 'Comment updated successfully');
+            return $this->sendResponse($result['data'], trans('custom.comment_updated_successfully'));
         }
         catch(\Exception $e)
         {
-            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
         }
     }
 
@@ -103,11 +103,11 @@ class DocumentCommunicationAPIController extends AppBaseController
             if (!$result['success']) {
                 return $this->sendError($result['message'], $result['code'] ?? 422);
             }
-            return $this->sendResponse($result['data'], 'Comment deleted successfully');
+            return $this->sendResponse($result['data'], trans('custom.comment_deleted_successfully'));
         }
         catch(\Exception $e)
         {
-            return $this->sendError('Unexpected Error: ' . $e->getMessage());
+            return $this->sendError(trans('custom.unexpected_error') . $e->getMessage());
         }
     }
 }
