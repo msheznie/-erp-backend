@@ -346,7 +346,13 @@ class DebitNote extends Model
         'type',
         'empID',
         'empControlAccount',
-        'isDelegation'
+        'isDelegation',
+        'cancelYN',
+        'cancelComment',
+        'cancelDate',
+        'canceledByEmpSystemID',
+        'canceledByEmpID',
+        'canceledByEmpName',
     ];
 
     /**
@@ -417,7 +423,13 @@ class DebitNote extends Model
         'VATAmountRpt' => 'float',
         'netAmount' => 'float',
         'netAmountLocal' => 'float',
-        'netAmountRpt' => 'float'
+        'netAmountRpt' => 'float',
+        'cancelYN' => 'integer',
+        'cancelComment' => 'string',
+        'cancelDate' => 'datetime',
+        'canceledByEmpSystemID' => 'integer',
+        'canceledByEmpID' => 'string',
+        'canceledByEmpName' => 'string',
     ];
 
     /**
