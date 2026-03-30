@@ -40,7 +40,7 @@ class SMAttendanceCrossDayPullingService{
 
     function execute()
     {
-        $this->insertToLogTb('cross day execution started');
+        $this->insertToLogTb('cross day execution started at '. $this->dateTime);
         DB::beginTransaction();
         try {
             $this->isFeatureEnabled = FeatureFlagService::isFeatureEnabled('shift_work_hr_cal');
@@ -58,7 +58,7 @@ class SMAttendanceCrossDayPullingService{
             
 
             DB::commit();
-            Log::info('Cross day data pulled successfully'.$this->log_suffix(__LINE__));
+            $this->insertToLogTb('Cross day data pulled successfully at '. $this->dateTime);
             return true;
 
         } catch (Exception $ex) {
