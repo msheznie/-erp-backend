@@ -49,8 +49,6 @@ class AttendanceCrossDayPulling implements ShouldQueue{
 
         $msg = "Company id {$this->companyId} started to executed the cross day end pulling in at ";
         $msg .= "{$this->dispatchDb} DB ( {$this->attDate} )";
-        
-        Log::channel('attendance_cross_day_job_service')->info($msg);
 
         $isShiftModule = HrModuleAssignService::checkModuleAvailability($this->companyId, Modules::SHIFT);
 
