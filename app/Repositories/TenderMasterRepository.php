@@ -832,7 +832,7 @@ class TenderMasterRepository extends BaseRepository
             $commercialStartDate = $formatedDates['commercialStartDate'];
             $commercialEndDate = $formatedDates['commercialEndDate'];
 
-            $result1 = $currentDateFormatted->gt($commercialStartDate);
+            $result1 = $currentDateFormatted->gt(Carbon::parse($commercialStartDate));
             if ($commercialEndDate == null) {
                 $result2 = true;
             } else {
