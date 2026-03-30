@@ -1966,8 +1966,12 @@ class TenderMasterAPIController extends AppBaseController
 
             return $this->sendError($approve["message"]);
         } else {
-            if ((int) $request->input('documentSystemID') === 134) {
-                $finalize = $this->tenderMasterRepository->finalizeTenderCancellationIfApproved((int) $request->input('documentSystemCode'));
+            if ((int) $request->input('documentSystemID') === 134 && 
+                $approve['data'] &&
+                $approve['data']['numberOfLevels'] == $approve['data']['currentLevel'])
+            {
+                $cancellationId = (int) $request->input('documentSystemCode');
+                $finalize = $this->tenderMasterRepository->finalizeTenderCancellationIfApproved($cancellationId);
                 if (!$finalize['success']) {
                     return $this->sendError($finalize['message'], $finalize['code'] ?? 500);
                 }

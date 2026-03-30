@@ -6,6 +6,7 @@ use App\Constants\TenderConstants;
 use App\helper\email as Email;
 use App\Models\Company;
 use App\Models\SrmItemWiseTenderAwarding;
+use App\Models\SupplierRegistrationLink;
 use App\Models\TenderCancellation;
 use App\Models\TenderMaster;
 use App\Models\TenderSupplierAssignee;
@@ -47,6 +48,8 @@ class TenderCancellationService
             return ['success' => true, 'message' => trans('srm_tender_rfx.cancellation_no_finalization_required')];
         }
         if ((int) $cancellation->tender->cancelled_yn === 1) {
+            $externalComment = (string) $cancellation->external_comment;
+            $this->sendCancellationSupplierNotification($cancellation->tender, $externalComment);
             return ['success' => true, 'message' => trans('srm_tender_rfx.cancellation_already_finalized')];
         }
 
@@ -68,16 +71,21 @@ class TenderCancellationService
             return;
         }
 
-        $suppliers = TenderSupplierAssignee::getCancellationNotificationSuppliers(
-            (int) $tender->id,
-            (int) $tender->company_id
-        );
+        $suppliers = $this->resolveCancellationRecipients($tender);
+        if ($suppliers->isEmpty()) {
+            return;
+        }
+
         $subject = $this->buildSubject($tender);
         $body = $this->buildDefaultBody($tender, $externalComment);
 
         foreach ($suppliers as $supplier) {
+            $email = Email::emailAddressFormat($supplier->supplier_email);
+            if (empty($email)) {
+                continue;
+            }
             Email::sendEmailSRM([
-                'empEmail' => $supplier->supplier_email,
+                'empEmail' => $email,
                 'companySystemID' => $tender->company_id,
                 'alertMessage' => $subject,
                 'emailAlertMessage' => $body,
@@ -91,7 +99,7 @@ class TenderCancellationService
         if (!$this->isScheduleOrItemWise($tender)) {
             return;
         }
-        $company= Company::find($input['companySystemID']);
+        $company= Company::find($tender->company_id);
         $companyName = $company->CompanyName;
 
         $subject = $this->buildSubject($tender);
@@ -103,10 +111,14 @@ class TenderCancellationService
             'companyName' => $companyName,
         ])->render();
 
-        $suppliers = TenderSupplierAssignee::getCancellationNotificationSuppliers((int) $tender->id, (int) $tender->company_id);
+        $suppliers = $this->resolveCancellationRecipients($tender);
         foreach ($suppliers as $supplier) {
+            $email = Email::emailAddressFormat($supplier->supplier_email);
+            if (empty($email)) {
+                continue;
+            }
             Email::sendEmailSRM([
-                'empEmail' => $supplier->supplier_email,
+                'empEmail' => $email,
                 'companySystemID' => $tender->company_id,
                 'alertMessage' => $subject,
                 'emailAlertMessage' => $body,
@@ -244,8 +256,7 @@ class TenderCancellationService
             $employee = Helper::getEmployeeInfo();
             $cancellation->tender->markAsCancelled((int) $employee->employeeSystemID, (string) $employee->empName);
             $externalComment = (string) $cancellation->external_comment;
-            $this->sendScheduleAndItemwiseSupplierEmail($cancellation->tender, $externalComment);
-            $this->notifySuppliersAfterFinalApproval($cancellation->tender, $externalComment);
+            $this->sendCancellationSupplierNotification($cancellation->tender, $externalComment);
             DB::commit();
             return [
                 'success' => true,
@@ -288,8 +299,8 @@ class TenderCancellationService
 
     private function buildDefaultBody(TenderMaster $tender, string $externalComment): string
     {
-        $company= Company::find($input['companySystemID']);
-        $companyName = $company->CompanyName;
+        $company = Company::find($tender->company_id);
+        $companyName = $company->CompanyName ?? '';
 
         return view('email.tender_cancellation_supplier_notice', [
             'tenderCode' => $tender->tender_code,
@@ -317,6 +328,34 @@ class TenderCancellationService
             '',
             'supplier'
         );
+    }
+
+    private function resolveCancellationRecipients(TenderMaster $tender)
+    {
+        if ((int) $tender->published_yn !== 1) {
+            return collect();
+        }
+
+        if ($this->isOpenTenderType($tender)) {
+            return SupplierRegistrationLink::getOpenTenderCancellationRecipients((int) $tender->company_id);
+        }
+
+        return TenderSupplierAssignee::getInvitedCancellationNotificationSuppliers((int) $tender->id, (int) $tender->company_id);
+    }
+
+    private function isOpenTenderType(TenderMaster $tender): bool
+    {
+        return (int) $tender->tender_type_id === 1;
+    }
+
+    private function sendCancellationSupplierNotification(TenderMaster $tender, string $supplierComment): void
+    {
+        if ($this->isScheduleOrItemWise($tender)) {
+            $this->sendScheduleAndItemwiseSupplierEmail($tender, $supplierComment);
+            return;
+        }
+
+        $this->notifySuppliersAfterFinalApproval($tender, $supplierComment);
     }
 }
 
