@@ -1005,6 +1005,17 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             }
         }
 
+        $documentDate = $jvMasterData['JVdate'];
+        $monthBegin = $jvMasterData['FYBiggin'];
+        $monthEnd = $jvMasterData['FYEnd'];
+        if ($documentDate < $monthBegin || $documentDate > $monthEnd) {
+            return [
+                "status" => false,
+                "message" => trans('custom.jv_financial_period_validation'),
+                "httpCode" => 500
+            ];
+        }
+
         $approve = DocumentApprove::approveDocument($input);
 
         if (!$approve["success"]) {
