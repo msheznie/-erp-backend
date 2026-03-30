@@ -43,10 +43,9 @@ Route::post('asset-details', 'FixedAssetMasterAPIController@getAssetDetails');
 Route::post('warehouse/items', 'ItemMasterAPIController@getWarehouseItemQuantity');
 
 Route::prefix('integrations')->group(function () {
-    // external integrations
-    Route::post('customer-invoices', 'CustomerInvoiceAPIController@createCustomerInvoiceAPI');
-    Route::post('credit-notes', 'CreditNoteAPIController@createCreditNoteAPI');
-    Route::get('customer-invoices/balances','CustomerInvoiceAPIController@getApprovedCustomerInvoiceBalancesAPI');
+    //external integrations
+    Route::post('customer-invoices','CustomerInvoiceAPIController@createCustomerInvoiceAPI');
+    Route::post('credit-notes','CreditNoteAPIController@createCreditNoteAPI');
     Route::post('receipt-matchings', 'ReceiptMatchingAPIController@createReceiptMatchingAPI');
     Route::post('customer-invoices/cancel', 'CustomerInvoiceDirectAPIController@customerInvoiceCancelAPI');
     Route::post('supplier-invoices', 'BookInvSuppMasterAPIController@createSupplierInvoices');
@@ -62,4 +61,6 @@ Route::prefix('integrations')->group(function () {
     Route::post('banks/search', 'BankMasterAPIController@pullBankMaster');
     Route::post('chart-of-accounts/search', 'ChartOfAccountAPIController@pullChartOfAccounts');
     Route::post('pos/shifts', 'POS\PosSyncAPIController@syncShift');
+    Route::post('customer-invoices/balances','CustomerInvoiceAPIController@getApprovedCustomerInvoiceBalancesAPI');
+
 });
