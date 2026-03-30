@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\CompanyDepartment;
 use App\Repositories\BaseRepository;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Class CompanyDepartmentRepository
@@ -94,4 +95,50 @@ class CompanyDepartmentRepository extends BaseRepository
                               ->with('children')
                               ->get();
     }
-} 
+
+    /**
+     * Eloquent query for external integration department search 
+     *
+     * @param  array  $filters  Keys: code (optional exact), status (ACTIVE|INACTIVE), type (Parent|Final)
+     */
+    public function departmentsSearchQuery(int $companySystemID, array $filters): Builder
+    {
+        $query = $this->model()::query()
+            ->where('companySystemID', $companySystemID)
+            ->with([
+                'parent',
+                'company',
+                'employees.employee',
+                'companyDepartmentSegments.segment',
+            ])
+            ->withCount('children');
+
+        $codes = $filters['code'] ?? [];
+        if (is_array($codes)) {
+            $codes = collect($codes)
+                ->map(fn ($c) => trim((string) $c))
+                ->filter(fn ($c) => $c !== '')
+                ->unique()
+                ->values()
+                ->all();
+
+            if (!empty($codes)) {
+                $query->whereIn('departmentCode', $codes);
+            }
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('isActive', $filters['status'] === 'ACTIVE' ? 1 : 0);
+        }
+
+        if (!empty($filters['type'])) {
+            if ($filters['type'] === 'Parent') {
+                $query->whereHas('children');
+            } else {
+                $query->whereDoesntHave('children');
+            }
+        }
+
+        return $query->orderBy('departmentCode');
+    }
+}
