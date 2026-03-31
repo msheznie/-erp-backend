@@ -94,6 +94,7 @@ use App\Models\AppointmentDetails;
 use App\Models\SupplierBlock;
 use App\Services\DecimalPrecisionService;
 use App\Services\GeneralLedgerService;
+use App\Services\GrvRoleBasedAccessService;
 use App\Services\ValidateDocumentAmend;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
@@ -113,13 +114,21 @@ class GRVMasterAPIController extends AppBaseController
     /** @var GRVConfirmValidationService */
     private $grvConfirmValidationService;
     private $decimalPrecisionService;
+    /** @var GrvRoleBasedAccessService */
+    private $grvRoleBasedAccessService;
 
-    public function __construct(GRVMasterRepository $gRVMasterRepo, UserRepository $userRepo, GRVConfirmValidationService $grvConfirmValidationService, DecimalPrecisionService $decimalPrecisionService)
+    public function __construct(GRVMasterRepository $gRVMasterRepo, UserRepository $userRepo, GRVConfirmValidationService $grvConfirmValidationService, DecimalPrecisionService $decimalPrecisionService, GrvRoleBasedAccessService $grvRoleBasedAccessService)
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
         $this->userRepository = $userRepo;
         $this->grvConfirmValidationService = $grvConfirmValidationService;
         $this->decimalPrecisionService = $decimalPrecisionService;
+        $this->grvRoleBasedAccessService = $grvRoleBasedAccessService;
+    }
+
+    private function ensureGrvViewAccessOrFail(GRVMaster $grvMaster): void
+    {
+        $this->grvRoleBasedAccessService->requireCanViewOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
     }
 
     /**
@@ -355,8 +364,13 @@ class GRVMasterAPIController extends AppBaseController
         if (empty($gRVMaster)) {
             return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail(request(), (int)$gRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->ensureGrvViewAccessOrFail($gRVMaster);
 
-        return $this->sendResponse($gRVMaster->toArray(), trans('custom.good_receipt_voucher_retrieved_successfully'));
+        $employeeSystemID = (int)Helper::getEmployeeSystemID();
+        $data = $gRVMaster->toArray();
+        $data['uiMode'] = $this->grvRoleBasedAccessService->getUiModeForGrv(request(), $gRVMaster, $employeeSystemID);
+        return $this->sendResponse($data, trans('custom.good_receipt_voucher_retrieved_successfully'));
     }
 
     /**
@@ -385,6 +399,7 @@ class GRVMasterAPIController extends AppBaseController
         if (empty($gRVMaster)) {
             return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($gRVMaster, (int)Helper::getEmployeeSystemID());
 
         if ($gRVMaster->grvCancelledYN == -1) {
             return $this->sendError(trans('custom.good_receipt_voucher_closed_you_cannot_edit'), 500);
@@ -1219,6 +1234,7 @@ class GRVMasterAPIController extends AppBaseController
     public function getGoodReceiptVoucherMasterView(Request $request)
     {
         $input = $request->all();
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$input['companyId'], (int)Helper::getEmployeeSystemID());
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID', 'projectID'));
 
         $grvLocation = $request['grvLocation'];
@@ -1242,7 +1258,7 @@ class GRVMasterAPIController extends AppBaseController
         
         $search = $request->input('search.value');
 
-        $grvMaster = $this->gRVMasterRepository->grvListQuery($request,$input,$search,$grvLocation, $serviceLineSystemID, $projectID);
+        $grvMaster = $this->gRVMasterRepository->grvListQuery($request, $input, $this->grvRoleBasedAccessService, $search, $grvLocation, $serviceLineSystemID, $projectID);
 
         $policySuplierEvaluation = CompanyPolicyMaster::where('companyPolicyCategoryID', 92)
             ->where('companySystemID', $input['companyId'])->first();
@@ -1264,6 +1280,10 @@ class GRVMasterAPIController extends AppBaseController
         return \DataTables::eloquent($grvMaster)
             ->addColumn('Actions', $policy)
             ->addColumn('SupplierEvaluationPolicy', $supplierEvaluationEnabled)
+            ->addColumn('uiMode', function ($row) use ($request) {
+                $employeeSystemID = (int) Helper::getEmployeeSystemID();
+                return $this->grvRoleBasedAccessService->getUiModeForGrv($request, $row, $employeeSystemID);
+            })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -1495,8 +1515,13 @@ class GRVMasterAPIController extends AppBaseController
         if (empty($gRVMaster)) {
             return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$gRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->ensureGrvViewAccessOrFail($gRVMaster);
 
-        return $this->sendResponse($gRVMaster->toArray(), trans('custom.record_retrieve', ['attribute' => trans('custom.grv')]));
+        $employeeSystemID = (int)Helper::getEmployeeSystemID();
+        $data = $gRVMaster->toArray();
+        $data['uiMode'] = $this->grvRoleBasedAccessService->getUiModeForGrv($request, $gRVMaster, $employeeSystemID);
+        return $this->sendResponse($data, trans('custom.record_retrieve', ['attribute' => trans('custom.grv')]));
     }
 
     public function getGRVMasterApproval(Request $request)
@@ -1712,6 +1737,8 @@ class GRVMasterAPIController extends AppBaseController
         if (empty($grvMaster)) {
             return $this->sendError(trans('custom.grv_master_not_found'));
         }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->ensureGrvViewAccessOrFail($grvMaster);
 
         $outputRecord = $this->gRVMasterRepository->with(['created_by', 'confirmed_by',
             'cancelled_by', 'modified_by', 'approved_by' => function ($query) {
@@ -1967,6 +1994,12 @@ class GRVMasterAPIController extends AppBaseController
 
         $companySystemID = $input['companySystemID'];
         $grvAutoID = $input['grvAutoID'];
+        $grvMaster = GRVMaster::where('companySystemID', $companySystemID)->find($grvAutoID);
+        if (empty($grvMaster)) {
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
+        }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->ensureGrvViewAccessOrFail($grvMaster);
 
         $detail = DB::select('SELECT
 	erp_bookinvsuppmaster.bookingDate,

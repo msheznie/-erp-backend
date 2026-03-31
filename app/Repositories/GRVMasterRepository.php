@@ -16,6 +16,7 @@ use App\Models\FixedAssetMaster;
 use Carbon\Carbon;
 use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\Services\GrvRoleBasedAccessService;
 use Illuminate\Http\Request;
 
 /**
@@ -334,10 +335,16 @@ class GRVMasterRepository extends BaseRepository
         ];
     }
 
-    public function grvListQuery($request, $input, $search = '', $grvLocation = null, $serviceLineSystemID = null, $projectID = null) {
+    public function grvListQuery($request, $input, GrvRoleBasedAccessService $grvRoleBasedAccessService, $search = '', $grvLocation = null, $serviceLineSystemID = null, $projectID = null) {
 
         $grvMaster = GRVMaster::where('companySystemID', $input['companyId']);
         $grvMaster->where('documentSystemID', $input['documentId']);
+        $employeeSystemID = (int) Helper::getEmployeeSystemID();
+        $grvMaster = $grvRoleBasedAccessService->applyViewScope(
+            $grvMaster,
+            (int)$input['companyId'],
+            $employeeSystemID
+        );
         $grvMaster->with(['local_currency_by','reporting_currency_by','created_by' => function ($query) {
             }, 'segment_by' => function ($query) {
             }, 'location_by' => function ($query) {
