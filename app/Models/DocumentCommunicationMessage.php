@@ -25,6 +25,7 @@ class DocumentCommunicationMessage extends Model
         'authorId',
         'body',
         'version',
+        'companySystemID',
         'edited_at',
         'deleted_by',
     ];
@@ -39,6 +40,7 @@ class DocumentCommunicationMessage extends Model
         'authorId' => 'integer',
         'body' => 'string',
         'version' => 'integer',
+        'companySystemID' => 'integer',
         'edited_at' => 'datetime',
         'deleted_by' => 'integer',
     ];

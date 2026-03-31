@@ -141,6 +141,7 @@ class DocumentCommunicationService
             'authortype' => $authorType,
             'authorId' => $authorId,
             'body' => $input['body'],
+            'companySystemID' => (int)$input['companySystemID'],
         ]);
 
         if (!empty($input['attachments']) && is_array($input['attachments'])) {
