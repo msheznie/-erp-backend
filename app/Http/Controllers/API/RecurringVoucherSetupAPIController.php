@@ -39,7 +39,6 @@ use App\helper\email as Email;
 use App\helper\Workflow\DocumentApprove;
 use App\helper\Workflow\DocumentReject;
 use App\helper\Workflow\DocumentConfirm;
-
 /**
  * Class RecurringVoucherSetupController
  * @package App\Http\Controllers\API
@@ -148,7 +147,6 @@ class RecurringVoucherSetupAPIController extends AppBaseController
     public function store(CreateRecurringVoucherSetupAPIRequest $request)
     {
         $input = $request->all();
-
         $input = $this->convertArrayToValue($input);
 
         $validator = \Validator::make($input, [
@@ -186,12 +184,24 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         if(!$company)
             return $this->sendError(trans('custom.company_details_not_found'));
 
+        $startDate = Helper::parseRequestDate($input['startDate']);
+        $endDate = Helper::parseRequestDate($input['endDate']);
+        $processDate = Helper::parseRequestDate($input['processDate']);
 
-        if(!isset($input['companyFinanceYearID']))
+        $financeYearForStart = $this->recurringVoucherSetupRepository->getActiveFinanceYearByDate($input['companySystemID'], $startDate);
+        $financeYearForEnd = $this->recurringVoucherSetupRepository->getActiveFinanceYearByDate($input['companySystemID'], $endDate);
+
+        
+        if (!$financeYearForStart || !$financeYearForEnd) {
             return $this->sendError(trans('custom.company_finance_year_not_found'));
+        }
+        $input['companyFinanceYearID'] = $financeYearForStart->companyFinanceYearID;
+
+        // if(!isset($input['companyFinanceYearID']))
+        //     return $this->sendError(trans('custom.company_finance_year_not_found'));
 
 
-        $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $input['companyFinanceYearID'])->where('companySystemID', $input['companySystemID'])->first();
+        $companyfinanceyear = CompanyFinanceYear::where('companyFinanceYearID', $financeYearForStart->companyFinanceYearID)->where('companySystemID', $input['companySystemID'])->first();
 
         if ($companyfinanceyear) {
             $startYear = $companyfinanceyear['bigginingDate'];
@@ -363,6 +373,19 @@ class RecurringVoucherSetupAPIController extends AppBaseController
         $currencyDecimalPlace = Helper::getCurrencyDecimalPlace($rrvMaster->currencyID);
 
         if ($prevRrvConfirmedYN == 0 && $rrvConfirmedYN == 1) {
+
+
+            $startDate = Helper::parseRequestDate($input['startDate']);
+            $endDate = Helper::parseRequestDate($input['endDate']);
+            $processDate = Helper::parseRequestDate($input['processDate']);
+    
+            $financeYearForStart = $this->recurringVoucherSetupRepository->getActiveFinanceYearByDate($input['companySystemID'], $startDate);
+            $financeYearForEnd = $this->recurringVoucherSetupRepository->getActiveFinanceYearByDate($input['companySystemID'], $endDate);
+    
+            
+            if (!$financeYearForStart || !$financeYearForEnd) {
+                return $this->sendError(trans('custom.company_finance_year_not_found'));
+            }
 
             $validator = \Validator::make($input, [
                 'companyFinanceYearID' => 'required|numeric|min:1',
@@ -1120,4 +1143,5 @@ class RecurringVoucherSetupAPIController extends AppBaseController
 
         return $this->sendResponse($rrvMasterData->toArray(), trans('custom.rrv_reopened_successfully'));
     }
+
 }

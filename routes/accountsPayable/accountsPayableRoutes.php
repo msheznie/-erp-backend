@@ -135,9 +135,13 @@ Route::group([],function (){
     Route::get('getBankAccountDetails', 'DirectPaymentDetailsAPIController@getBankAccountDetails')->name('Get available cheque numbers');
     Route::get('getBankCharges', 'PaySupplierInvoiceDetailAPIController@getBankCharges')->name('Get bank charges details');
     Route::get('getCreditNotePaymentDetails', 'PayCreditNoteDetailAPIController@getCreditNotePaymentDetails')->name('Get payment voucher credit note details');
+    Route::get('getAdvanceReceiptPaymentDetails', 'PayAdvanceReceiptDetailAPIController@getAdvanceReceiptPaymentDetails')->name('Get payment voucher advance receipt details');
     Route::get('getCreditNoteForPV', 'PayCreditNoteDetailAPIController@getCreditNoteForPV')->name('Get credit note for pv');
+    Route::get('getAdvanceReceiptForPV', 'PayAdvanceReceiptDetailAPIController@getAdvanceReceiptForPV')->name('Get advance receipt for pv');
     Route::post('addCreditNotePaymentDetail', 'PayCreditNoteDetailAPIController@addCreditNotePaymentDetail')->name('Add credit note payment detail');
+    Route::post('addAdvanceReceiptPaymentDetail', 'PayAdvanceReceiptDetailAPIController@addAdvanceReceiptPaymentDetail')->name('Add advance receipt payment detail');
     Route::post('deleteAllCreditNotePaymentDetail', 'PayCreditNoteDetailAPIController@deleteAllCreditNotePaymentDetail')->name('Delete all credit note payment detail');
+    Route::post('deleteAllAdvanceReceiptPaymentDetail', 'PayAdvanceReceiptDetailAPIController@deleteAllAdvanceReceiptPaymentDetail')->name('Delete all advance receipt payment detail');
 
     Route::resource('bank_memo_payees', 'BankMemoPayeeAPIController');
     Route::resource('pdc_logs', 'PdcLogAPIController');
@@ -146,6 +150,7 @@ Route::group([],function (){
     Route::resource('pay_supplier_invoice_details', 'PaySupplierInvoiceDetailAPIController',['except' => ['index','store']]);
     Route::resource('pay_supplier_invoice_masters', 'PaySupplierInvoiceMasterAPIController', ['only' => ['store', 'show', 'update']]);
     Route::resource('pv_bank_charge_details', 'PaymentVoucherBankChargeDetailsAPIController');
+    Route::resource('pay_advance_receipt_details', 'PayAdvanceReceiptDetailAPIController');
 });
 
 //Payment Voucher Matching

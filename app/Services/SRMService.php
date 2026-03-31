@@ -2094,9 +2094,9 @@ class SRMService
             ->map(function ($row) {
                 $itemName = optional($row->boqItem)->item_name
                     ?: optional($row->boqItem)->description
-                    ?: optional($row->pricingScheduleDetail)->label
-                    ?: optional($row->pricingScheduleDetail)->description;
-    
+                        ?: optional($row->pricingScheduleDetail)->label
+                            ?: optional($row->pricingScheduleDetail)->description;
+
                 return [
                     'item' => $itemName,
                     'supplier_name' => $row->supplier->name ?? null,

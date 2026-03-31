@@ -56,7 +56,8 @@ class CustomerInvoiceItemDetailsRepository extends BaseRepository
         'sellingTotal',
         'sellingCostAfterMarginLocal',
         'sellingCostAfterMarginRpt',
-        'timestamp'
+        'timestamp',
+        'serviceLineSystemID'
     ];
 
     /**

@@ -322,6 +322,8 @@ class QuotationMasterAPIController extends AppBaseController
         $input['createdUserID'] = $employee->empID;
         $input['createdUserName'] = $employee->empName;
 
+        $input['isSegmentPolicyOn'] = Helper::checkPolicy($input['companySystemID'], 106) ? 1 : 0;
+
         if(isset($input['quoId'])) {
             $quoMaster = QuotationMaster::find($input['quoId']);
             $quoMaster->isInSO = 1;
@@ -378,15 +380,6 @@ class QuotationMasterAPIController extends AppBaseController
 
         if (empty($quotationMaster)) {
             return $this->sendError(trans('custom.quotation_master_not_found'));
-        }
-        $isSegmentPolicyOn = CompanyPolicyMaster::where('companySystemID', $quotationMaster->companySystemID)
-            ->where('companyPolicyCategoryID', 106)
-            ->where('isYesNO', 1)
-            ->exists();
-        if($isSegmentPolicyOn){
-            $quotationMaster->isSegmentPolicyOn = $isSegmentPolicyOn;
-        } else {
-            $quotationMaster->isSegmentPolicyOn = false;
         }
         return $this->sendResponse($quotationMaster->toArray(), trans('custom.quotation_master_retrieved_successfully'));
     }
@@ -640,12 +633,8 @@ class QuotationMasterAPIController extends AppBaseController
                 }
             }
 
-            $isSegmentPolicyOn = CompanyPolicyMaster::where('companyPolicyCategoryID', 106)
-                ->where('companySystemID', $input['companySystemID'])
-                ->where('isYesNO', 1)
-                ->exists();
 
-            if($quotationMaster->salesType == 2 && $isSegmentPolicyOn){
+            if($quotationMaster->salesType == 2 && $quotationMaster->isSegmentPolicyOn){
                 $checkQuantity = QuotationDetails::where('quotationMasterID', $id)
                     ->whereNull('serviceLineSystemID')
                     ->count();
@@ -1136,16 +1125,6 @@ class QuotationMasterAPIController extends AppBaseController
             $query->with(['term_description']);
         }])->first();
 
-        $isSegmentPolicyOn = CompanyPolicyMaster::where('companySystemID', $output->companySystemID)
-            ->where('companyPolicyCategoryID', 106)
-            ->where('isYesNO', 1)
-            ->exists();
-        if($isSegmentPolicyOn){
-            $output->isSegmentPolicyOn = $isSegmentPolicyOn;
-        } else {
-            $output->isSegmentPolicyOn = false;
-        }
-
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
@@ -1180,16 +1159,6 @@ class QuotationMasterAPIController extends AppBaseController
             foreach ($soPaymentTerms as $val) {
                 $paymentTermsView .= $val['term_description']['categoryDescription'] .' '.$val['comAmount'].' '.$output['transactionCurrency'].' '.$val->paymentTemDes.' '.$val['inDays'] . trans('custom.in_days') . ', ';
             }
-        }
-
-        $isSegmentPolicyOn = CompanyPolicyMaster::where('companySystemID', $output->companySystemID)
-            ->where('companyPolicyCategoryID', 106)
-            ->where('isYesNO', 1)
-            ->exists();
-        if($isSegmentPolicyOn){
-            $output->isSegmentPolicyOn = $isSegmentPolicyOn;
-        } else {
-            $output->isSegmentPolicyOn = false;
         }
 
         $order = array(
@@ -1592,11 +1561,14 @@ class QuotationMasterAPIController extends AppBaseController
         $invoice = CustomerInvoiceDirect::find($input['custInvoiceDirectAutoID']);
 
         $documentSystemID = 0;
-        if($invoice->isPerforma == 4){ //Sales Order
+        if($invoice->isPerforma == 4){ // From Sales Order
             $documentSystemID = 68;
-        } elseif ($invoice->isPerforma==5){ ////Quotation
+        } elseif ($invoice->isPerforma==5){ // From Quotation
             $documentSystemID = 67;
         }
+
+        $invSalesType = $invoice->salesType;
+        $invSegmentPolicyOn = $invoice->isSegmentPolicyOn ?? 0;
 
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
@@ -1611,11 +1583,22 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $invoice->serviceLineSystemID)
             ->where('customerSystemCode', $invoice->customerID)
             ->where('transactionCurrencyID', $invoice->custTransactionCurrencyID)
-            ->when($invoice->salesType == 4, function($query) {
-                $query->where('salesType', 1);
-            })
-            ->when($invoice->salesType == 3, function($query) {
-                $query->where('salesType', 2);
+            ->where(function ($query) use ($invSalesType, $invSegmentPolicyOn) {
+                if ($invSalesType == 3 && $invSegmentPolicyOn == 1) {
+                    // Subscription invoice + policy ON
+                    $query->where('salesType', 2)
+                          ->where('isSegmentPolicyOn', 1);
+                } elseif ($invSalesType == 3 && $invSegmentPolicyOn == 0) {
+                    // Subscription invoice + policy OFF
+                    $query->where('salesType', 2)
+                          ->where(function ($q) {
+                              $q->whereNull('isSegmentPolicyOn')
+                                ->orWhere('isSegmentPolicyOn', 0);
+                          });
+                } else {
+                    // Goods / mixed invoices
+                    $query->where('salesType', 1);
+                }
             })
             ->whereDate('documentDate', '<=',$invoice->bookingDate)
             ->orderBy('quotationMasterID','DESC')
@@ -1667,15 +1650,35 @@ class QuotationMasterAPIController extends AppBaseController
 
         $quotaionDetails = QuotationDetails::where('quotationMasterID',$input['salesOrderID'])->pluck('soQuotationMasterID')->values()->toArray();
        
+        $soSalesType = $salesOrderData->salesType;
+        $soSegmentPolicyOn = $salesOrderData->isSegmentPolicyOn ?? 0;
+
         $existsSo = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
             ->whereIn('quotationMasterID',$quotaionDetails)
             ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
             ->where('customerSystemCode', $salesOrderData->customerSystemCode)
             ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
-            ->where('salesType', $salesOrderData->salesType)
+            ->where(function ($query) use ($soSalesType, $soSegmentPolicyOn) {
+                if ($soSalesType == 2 && $soSegmentPolicyOn == 1) {
+                    // S1: subscription + policy ON
+                    $query->where('salesType', 2)
+                          ->where('isSegmentPolicyOn', 1);
+                } elseif ($soSalesType == 2 && $soSegmentPolicyOn == 0) {
+                    // S3: subscription + policy OFF 
+                    $query->where('salesType', 2)
+                          ->where(function ($q) {
+                              $q->whereNull('isSegmentPolicyOn')
+                                ->orWhere('isSegmentPolicyOn', 0);
+                          });
+                } else {
+                    // S2, S4: goods any policy
+                    $query->where('salesType', 1);
+                }
+            })
             ->orderBy('quotationMasterID','DESC')
             ->get();
+
         $master = QuotationMaster::where('documentSystemID',$documentSystemID)
             ->where('companySystemID',$input['companySystemID'])
             ->where('approvedYN', -1)
@@ -1689,7 +1692,23 @@ class QuotationMasterAPIController extends AppBaseController
             ->where('serviceLineSystemID', $salesOrderData->serviceLineSystemID)
             ->where('customerSystemCode', $salesOrderData->customerSystemCode)
             ->where('transactionCurrencyID', $salesOrderData->transactionCurrencyID)
-            ->where('salesType', $salesOrderData->salesType)
+            ->where(function ($query) use ($soSalesType, $soSegmentPolicyOn) {
+                if ($soSalesType == 2 && $soSegmentPolicyOn == 1) {
+                    // S1: subscription + policy ON
+                    $query->where('salesType', 2)
+                          ->where('isSegmentPolicyOn', 1);
+                } elseif ($soSalesType == 2 && $soSegmentPolicyOn == 0) {
+                    // S3: subscription + policy OFF
+                    $query->where('salesType', 2)
+                          ->where(function ($q) {
+                              $q->whereNull('isSegmentPolicyOn')
+                                ->orWhere('isSegmentPolicyOn', 0);
+                          });
+                } else {
+                    // S2, S4: goods any policy
+                    $query->where('salesType', 1);
+                }
+            })
             ->orderBy('quotationMasterID','DESC')
             ->get();
 
@@ -1703,13 +1722,14 @@ class QuotationMasterAPIController extends AppBaseController
 
         $detail = DB::select('SELECT
                                 quotationdetails.*,
-                                erp_quotationmaster.serviceLineSystemID,
                                 "" AS isChecked,
                                 "" AS noQty,
-                                IFNULL(sodetails.soTakenQty,0) as soTakenQty 
+                                IFNULL(sodetails.soTakenQty,0) as soTakenQty,
+                                sl.ServiceLineDes as segmentDescription
                             FROM
                                 erp_quotationdetails quotationdetails
                                 INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
+                                LEFT JOIN serviceline sl ON quotationdetails.serviceLineSystemID = sl.serviceLineSystemID
                                 LEFT JOIN ( SELECT erp_quotationdetails.quotationDetailsID,soQuotationDetailID, SUM( requestedQty * userQty ) AS soTakenQty FROM erp_quotationdetails GROUP BY soQuotationDetailID, itemAutoID ) AS sodetails ON quotationdetails.quotationDetailsID = sodetails.soQuotationDetailID 
                             WHERE
                                 quotationdetails.quotationMasterID = ' . $id . ' 
@@ -2147,7 +2167,7 @@ class QuotationMasterAPIController extends AppBaseController
                      return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
                 }
 
-                if($companyPolicy && $masterData->salesType == 2){
+                if($masterData->isSegmentPolicyOn && $masterData->salesType == 2){
                     if(isset($value['segment']) && $value['segment'] != null){
                         $validateHeaderSegment = true;
                     }
@@ -2219,7 +2239,7 @@ class QuotationMasterAPIController extends AppBaseController
                                 if($itemMasterData->financeCategoryMaster != 2){
                                     return $this->sendError(trans('custom.only_service_items_can_add_to_quotations_for_sales_type_subscription'), 500);
                                 }
-                                if($companyPolicy){
+                                if($masterData->isSegmentPolicyOn){
                                     if(isset($finalRecords['segment']) && $finalRecords['segment'] != null){
                                         $segment = SegmentMaster::where('ServiceLineCode', $finalRecords['segment'])
                                             ->where('isActive', 1)

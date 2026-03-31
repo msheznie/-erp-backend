@@ -391,6 +391,13 @@
             </tr>
         </table>
 
+            @php
+                $showSegmentColumn = isset($request->isPerforma)
+                    && in_array($request->isPerforma, [4, 5])
+                    && isset($request->isSegmentPolicyOn)
+                    && (int) $request->isSegmentPolicyOn === 1;
+            @endphp
+
             <table class="table">
                 <thead>
                 <tr style="background-color: #6798da;">
@@ -402,6 +409,9 @@
                     <th style="width:10%;">Account Code</th>
                     <th style="width:25%;">Description</th>
                 @endif
+                    @if($showSegmentColumn)
+                        <th style="width:10%;text-align: center">Segment</th>
+                    @endif
                     <th style="width:10%;text-align: center">Delivery Note No</th>
                     <th style="width:10%;text-align: center">UOM</th>
                     <th style="width:10%;text-align: center">Quantity</th>
@@ -426,6 +436,15 @@
                             <tr style="border: 1px solid !important;">
                                 <td style="text-align: center;">{{$item->itemPrimaryCode}}</td>
                                 <td style="word-wrap:break-word;">{{$item->itemDescription}}</td>
+                                @if($showSegmentColumn)
+                                    <td style="text-align: center;">
+                                        @if(isset($item->segment) && $item->segment)
+                                            {{$item->segment->ServiceLineDes ?? ''}}
+                                        @else
+                                            {{$item->serviceLineCode ?? ''}}
+                                        @endif
+                                    </td>
+                                @endif
                                 <td style="word-wrap:break-word;">{{$item->comments}}</td>
                                 <td style="text-align: center;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                 <td style="text-align: center;">{{$item->qtyIssued}}</td>
@@ -446,6 +465,15 @@
                             <tr style="border: 1px solid !important;">
                                 <td style="text-align: center;">{{$item->glCode}}</td>
                                 <td style="word-wrap:break-word;">{{$item->glCodeDes}}</td>
+                                @if($showSegmentColumn)
+                                    <td style="text-align: center;">
+                                        @if(isset($item->department) && isset($item->department->ServiceLineDes))
+                                            {{$item->department->ServiceLineDes}}
+                                        @else
+                                            {{$item->serviceLineCode ?? ''}}
+                                        @endif
+                                    </td>
+                                @endif
                                 <td style="word-wrap:break-word;">{{$item->comments}}</td>
                                 <td style="text-align: center;">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
                                 <td style="text-align: center;">{{$item->invoiceQty}}</td>

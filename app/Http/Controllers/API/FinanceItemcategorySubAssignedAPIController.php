@@ -18,6 +18,7 @@ use App\Models\FinanceItemCategorySub;
 use App\Models\Company;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Repositories\FinanceItemcategorySubAssignedRepository;
+use App\Services\ApprovalLevelService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
@@ -35,11 +36,14 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
 {
     /** @var  FinanceItemcategorySubAssignedRepository */
     private $financeItemcategorySubAssignedRepository;
+    /** @var ApprovalLevelService */
+    private $approvalLevelService;
     use AuditLogsTrait;
 
-    public function __construct(FinanceItemcategorySubAssignedRepository $financeItemcategorySubAssignedRepo)
+    public function __construct(FinanceItemcategorySubAssignedRepository $financeItemcategorySubAssignedRepo, ApprovalLevelService $approvalLevelService)
     {
         $this->financeItemcategorySubAssignedRepository = $financeItemcategorySubAssignedRepo;
+        $this->approvalLevelService = $approvalLevelService;
     }
 
     /**
@@ -167,6 +171,20 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
             if (empty($financeItemCategorySubAssigned)) {
                 return $this->sendError(trans('custom.company_assigned_not_found'));
             }
+
+            $newAssigned = array_key_exists('isAssigned', $input) ? $input['isAssigned'] : null;
+            $newActive = array_key_exists('isActive', $input) ? $input['isActive'] : null;
+            $willUnassignOrInactivate = ($newAssigned !== null && $newAssigned != -1 && $newAssigned != 1) || ($newActive !== null && !$newActive);
+            if ($willUnassignOrInactivate) {
+                $companyName = $financeItemCategorySubAssigned->company ? $financeItemCategorySubAssigned->company->CompanyName : null;
+                if (empty($companyName)) {
+                    $companyName = $financeItemCategorySubAssigned->companyID;
+                }
+                if (!empty($financeItemCategorySubAssigned->itemCategorySubID) && $this->approvalLevelService->isSubcategoryUsedInActiveApprovalLevelForCompany((int) $financeItemCategorySubAssigned->itemCategorySubID, (int) $financeItemCategorySubAssigned->companySystemID)) {
+                    return $this->sendError(trans('custom.item_finance_category_used_in_active_approval_setup_for_company', ['company' => $companyName]), 422);
+                }
+            }
+
             $previousValue = $financeItemCategorySubAssigned->toArray();
 
             foreach ($input as $key => $value) {
@@ -310,13 +328,23 @@ class FinanceItemcategorySubAssignedAPIController extends AppBaseController
      *
      * @return Response
      */
-    public function destroy($id)
+    public function destroy($id, Request $request)
     {
+        $input = $request->all();
         /** @var FinanceItemcategorySubAssigned $financeItemcategorySubAssigned */
         $financeItemcategorySubAssigned = $this->financeItemcategorySubAssignedRepository->findWithoutFail($id);
         if (empty($financeItemcategorySubAssigned)) {
             return $this->sendError(trans('custom.finance_itemcategory_sub_assigned_not_found'));
         }
+
+        $companyName = $financeItemcategorySubAssigned->company ? $financeItemcategorySubAssigned->company->CompanyName : null;
+        if (empty($companyName)) {
+            $companyName = $financeItemcategorySubAssigned->companyID;
+        }
+        if (!empty($financeItemcategorySubAssigned->itemCategorySubID) && $this->approvalLevelService->isSubcategoryUsedInActiveApprovalLevelForCompany((int) $financeItemcategorySubAssigned->itemCategorySubID, (int) $financeItemcategorySubAssigned->companySystemID)) {
+            return $this->sendError(trans('custom.item_finance_category_used_in_active_approval_setup_for_company', ['company' => $companyName]), 422);
+        }
+
         $masterData = $financeItemcategorySubAssigned->toArray();
 
         $financeItemcategorySubAssigned->delete();

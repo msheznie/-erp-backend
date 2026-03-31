@@ -369,7 +369,6 @@ class BudgetNotificationService
             }
         }
 
-
         if (!empty($emails)) {
             Email::sendEmail($emails);
         }
@@ -420,8 +419,8 @@ class BudgetNotificationService
             'docSystemCode' => $departmentBudgetPlanningID,
         );
 
-
         Email::sendEmail($emails);
+        
    }
 
    private function sendEmailToDelegatee($budgetNotifications,$departmentBudgetPlanning,$departmentBudgetPlanningID)
@@ -467,6 +466,7 @@ class BudgetNotificationService
 
                         $subjectTemplate = $budgetNotifications->subject;
                         $bodyTemplate = $budgetNotifications->body;
+                        $subjectTemplate = str_replace('48 Hours', $reminderTimeHours . ' Hours', $subjectTemplate);
                         $bodyTemplate = str_replace('48 hours', $reminderTimeHours . ' hours', $bodyTemplate);
 
                         $emails[] = array(
@@ -723,5 +723,4 @@ class BudgetNotificationService
         Email::sendEmail($emails);
         
    }
-
 }

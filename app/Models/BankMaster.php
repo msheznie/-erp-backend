@@ -73,4 +73,9 @@ class BankMaster extends Model
     {
         return $this->belongsTo('App\Models\BankConfig','bankmasterAutoID','bank_master_id');
     }
+
+    public function bankAccounts()
+    {
+        return $this->hasMany(\App\Models\BankAccount::class, 'bankmasterAutoID', 'bankmasterAutoID');
+    }
 }

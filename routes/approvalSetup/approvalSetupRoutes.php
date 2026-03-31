@@ -23,6 +23,7 @@ Route::group([], function(){
     Route::post('assignEmployeeToApprovalGroup', 'EmployeesDepartmentAPIController@assignEmployeeToApprovalGroup')->name("Assign employee to approval group");
 
     Route::get('getGroupFilterData', 'ApprovalLevelAPIController@getGroupFilterData')->name("Get approval group filer data");
+    Route::get('getSubcategoriesByCategory', 'ApprovalLevelAPIController@getSubcategoriesByCategory')->name("Get subcategories by category");
     Route::get('getApprovalRollByLevel', 'ApprovalRoleAPIController@getApprovalRollByLevel')->name("Get approval roll by level");
 
     Route::resource('approval_levels', 'ApprovalLevelAPIController');

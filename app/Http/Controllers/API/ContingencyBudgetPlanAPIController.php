@@ -616,8 +616,9 @@ class ContingencyBudgetPlanAPIController extends AppBaseController
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
             $contingency = $contingency->where(function ($query) use ($search) {
-                $query->where('ServiceLineDes', 'like', "%{$search}%")
-                    ->orWhere('templateDescription', 'like', "%{$search}%");
+                $query->where('serviceline.ServiceLineDes', 'like', "%{$search}%")
+                    ->orWhere('erp_companyreporttemplate.description', 'like', "%{$search}%")
+                    ->orWhere('erp_budget_contingency.contingencyBudgetNo', 'like', "%{$search}%");
             });
         }
 

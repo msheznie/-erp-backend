@@ -1409,7 +1409,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                 }]);
             },
             'issue_item_details' => function ($query) {
-                $query->with(['uom_default', 'uom_issuing', 'project']);
+                $query->with(['uom_default', 'uom_issuing', 'project', 'segment']);
             }
 
         ])->findWithoutFail($id);
@@ -2543,9 +2543,9 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
             ->exists();
 
         if ($master->isPerforma == 2 || $master->isPerforma == 3 || $master->isPerforma == 4 || $master->isPerforma == 5) {
-            $detail = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $id)->first();
+            $detail = CustomerInvoiceItemDetails::with('segment')->where('custInvoiceDirectAutoID', $id)->first();
         } else {
-            $detail = CustomerInvoiceDirectDetail::where('custInvoiceDirectID', $id)->first();
+            $detail = CustomerInvoiceDirectDetail::with('department')->where('custInvoiceDirectID', $id)->first();
         }
 
         $customerInvoice = (object)[];
@@ -2891,17 +2891,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         $customerInvoice->accountIBAN = $accountIBAN;
         $customerInvoice->accountIBANSecondary = $accountIBANSecondary;
 
-        $awsPolicy = Helper::checkPolicy($companySystemID, 50);
-
         $customerInvoice->logoExists = false;
-        if ($awsPolicy) {
-            if (Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($company->logoPath)) {
-                $customerInvoice->logoExists = true;
-            }            
-        } else {
-            if (Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($company->logoPath)) {
-                $customerInvoice->logoExists = true;
-            }      
+        $logoPath = $company->logoPath ?? null;
+        if (is_string($logoPath) && trim($logoPath) !== '') {
+            $customerInvoice->logoExists = Storage::disk(Helper::policyWiseDisk($companySystemID, 'local_public'))->exists($logoPath);
         }
 
         $directTraSubTotal = 0;
@@ -2987,10 +2980,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
         }
 
         $printTemplate = $printTemplate->first();
-
-        if (!is_null($printTemplate)) {
-            $printTemplate = $printTemplate->toArray();
-        }
+        $printTemplate = !is_null($printTemplate) ? $printTemplate->toArray() : ['printTemplateID' => null];
 
 
         if ($printTemplate['printTemplateID'] == 15) {

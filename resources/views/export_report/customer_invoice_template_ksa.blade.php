@@ -405,12 +405,21 @@
             @endif
 
             @if ($request->template == 2 && isset($request->item_invoice) && $request->item_invoice)
+                @php
+                    $showSegmentColumn = isset($request->isPerforma)
+                        && in_array($request->isPerforma, [4, 5])
+                        && isset($request->isSegmentPolicyOn)
+                        && (int) $request->isSegmentPolicyOn === 1;
+                @endphp
 
                     <table class="table">
                         <thead>
                         <tr style="background-color: #6798da;">
                             <th colspan="1" style="width:5%;"></th>
                             <th colspan="4" style="width:40%;">Item<br>رقم المنتج</th>
+                            @if($showSegmentColumn)
+                                <th colspan="3" style="width:15%;text-align: center">Segment<br>القطاع</th>
+                            @endif
                             <th colspan="2" style="width:10%;text-align: center">UOM<br>وحدة القياس</th>
                             <th colspan="2" style="width:15%;text-align: center">QTY<br>الكمية</th>
                             <th colspan="2" style="width:15%;text-align: center">unit Cost<br>تكلفة الوحدة</th>
@@ -433,6 +442,15 @@
                                     <tr style="border: 1px solid !important;">
                                         <td colspan="1">{{$x}}</td>
                                         <td colspan="4" style="word-wrap:break-word;">{{$item->itemPrimaryCode.' - '.$item->itemDescription}}</td>
+                                        @if($showSegmentColumn)
+                                            <td colspan="3">
+                                                @if(isset($item->segment) && $item->segment)
+                                                    {{$item->segment->ServiceLineDes ?? ''}}
+                                                @else
+                                                    {{$item->serviceLineCode ?? ''}}
+                                                @endif
+                                            </td>
+                                        @endif
                                         <td colspan="2" style="text-align: right;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                                         <td colspan="2" style="text-align: right;">{{$item->qtyIssued}}</td>
                                         <td colspan="2" style="text-align: right;">{{number_format($item->sellingCostAfterMargin,$numberFormatting)}}</td>

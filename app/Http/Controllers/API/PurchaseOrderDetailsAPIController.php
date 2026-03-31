@@ -28,6 +28,7 @@ use App\Models\DeliveryOrder;
 use App\Models\DeliveryOrderDetail;
 use App\Models\ItemMaster;
 use App\Services\ProcurementOrder\ProcurementOrderService;
+use App\Services\Procurement\CategoryValidationService;
 use App\Http\Requests\API\CreatePurchaseOrderDetailsAPIRequest;
 use App\Http\Requests\API\UpdatePurchaseOrderDetailsAPIRequest;
 use App\Models\ProcumentOrderDetail;
@@ -57,6 +58,7 @@ use Illuminate\Support\Facades\DB;
 use App\Repositories\SegmentAllocatedItemRepository;
 use App\Models\GRVMaster;
 use App\Models\AppointmentDetails;
+use App\Services\DecimalPrecisionService;
 use Illuminate\Support\Arr;
 
 /**
@@ -69,12 +71,15 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
     private $purchaseOrderDetailsRepository;
     private $userRepository;
     private $segmentAllocatedItemRepository;
+    /** @var DecimalPrecisionService */
+    private $decimalPrecisionService;
 
-    public function __construct(PurchaseOrderDetailsRepository $purchaseOrderDetailsRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo)
+    public function __construct(PurchaseOrderDetailsRepository $purchaseOrderDetailsRepo, UserRepository $userRepo, SegmentAllocatedItemRepository $segmentAllocatedItemRepo, DecimalPrecisionService $decimalPrecisionService)
     {
         $this->purchaseOrderDetailsRepository = $purchaseOrderDetailsRepo;
         $this->userRepository = $userRepo;
         $this->segmentAllocatedItemRepository = $segmentAllocatedItemRepo;
+        $this->decimalPrecisionService = $decimalPrecisionService;
     }
 
     /**
@@ -371,26 +376,13 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             }
         }
 
-        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-            ->where('companySystemID', $purchaseOrder->companySystemID)
-            ->first();
-        if ($allowFinanceCategory) {
-            $policy = $allowFinanceCategory->isYesNO;
-            if ($policy == 0) {
-                if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
-                    return $this->sendError(trans('custom.category_is_not_found'), 500);
-                }
+        if (CategoryValidationService::shouldEnforceSingleCategory($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID)) {
+            $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                ->first();
 
-                //checking if item category is same or not
-                $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                    ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-                    ->first();
-
-                if ($pRDetailExistSameItem) {
-                    if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                        return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 500);
-                    }
-                }
+            if ($pRDetailExistSameItem && $item->financeCategoryMaster != $pRDetailExistSameItem['itemFinanceCategoryID']) {
+                return $this->sendError(CategoryValidationService::getCategoryRestrictionMessage($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID), 422);
             }
         }
 
@@ -595,21 +587,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.request_department_is_different_from_order'));
         }
 
-        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-            ->where('companySystemID', $purchaseOrder->companySystemID)
-            ->first();
-
-        if ($allowFinanceCategory) {
-            $policy = $allowFinanceCategory->isYesNO;
-
-
-            if ($policy == 0) {
-                if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
-                    return $this->sendError(trans('custom.category_is_not_found'), 500);
-                }
-            }
-        }
-
         //check PO segment is correct with PR pull segment
 
         foreach ($input['detailTable'] as $itemExist) {
@@ -633,6 +610,16 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             }
         }
 
+        $enforceSingleCategory = CategoryValidationService::shouldEnforceSingleCategory($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID);
+        $existingPOCategory = null;
+        $allowedCategoryInRequest = null;
+        if ($enforceSingleCategory) {
+            $existingRow = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                ->where('purchaseOrderMasterID', $purchaseOrderID)
+                ->first();
+            $existingPOCategory = $existingRow ? $existingRow->itemFinanceCategoryID : null;
+        }
+
         DB::beginTransaction();
         try {
             foreach ($input['detailTable'] as $new) {
@@ -648,14 +635,32 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
 
                     if ($new['isChecked'] && $new['poQty'] > 0) {
 
-                        //checking the fullyOrdered or partial in po
-                        $totalAddedQty = PurchaseOrderDetails::RequestDetailSum($new['purchaseRequestDetailsID']);
-                        $totalAddedQty = $new['poQty'] + $totalAddedQty;
-                        if ($totalAddedQty > $new['quantityRequested']) {
+                        if ($enforceSingleCategory) {
+                            if ($existingPOCategory !== null) {
+                                if ($new['itemFinanceCategoryID'] != $existingPOCategory) {
+                                    DB::rollBack();
+                                    return $this->sendError(CategoryValidationService::getCategoryRestrictionMessage($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID), 500);
+                                }
+                            } else {
+                                if ($allowedCategoryInRequest === null) {
+                                    $allowedCategoryInRequest = $new['itemFinanceCategoryID'];
+                                } elseif ($new['itemFinanceCategoryID'] != $allowedCategoryInRequest) {
+                                    DB::rollBack();
+                                    return $this->sendError(CategoryValidationService::getCategoryRestrictionMessage($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID), 500);
+                                }
+                            }
+                        }
+
+                        //checking the fullyOrdered or partial in po (tolerance-based comparison)
+                        $requestDetailSum = PurchaseOrderDetails::RequestDetailSum($new['purchaseRequestDetailsID']);
+                        $totalAddedQtyRaw = $new['poQty'] + $requestDetailSum;
+                        $unitID = $new['unitOfMeasure'] ?? null;
+                        $totalAddedQty = $this->decimalPrecisionService->roundQuantityToUnitPrecision($totalAddedQtyRaw, $unitID);
+                        if ($totalAddedQty > $this->decimalPrecisionService->roundQuantityToUnitPrecision((float) $new['quantityRequested'], $unitID) + 1e-6) {
                             return $this->sendError($new['itemPrimaryCode']." " . trans('custom.item_po_qty_cannot_be_greater_than_balance_qty'), 500);
                         }
 
-                        if ($new['quantityRequested'] == $totalAddedQty) {
+                        if ($this->decimalPrecisionService->quantitiesEqualWithinUnitPrecision((float) $new['quantityRequested'], $totalAddedQty, $unitID)) {
                             $fullyOrdered = 2;
                             $prClosedYN = -1;
                             $selectedForPO = -1;
@@ -684,7 +689,8 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             $prDetail_arr['altUnit'] = $new['altUnit'];
                             $prDetail_arr['altUnitValue'] = $new['altUnitValue'];
                             $prDetail_arr['purchaseOrderMasterID'] = $purchaseOrderID;
-                            $prDetail_arr['noQty'] = $new['poQty'];
+                            $poQtyRounded = $this->decimalPrecisionService->roundQuantityToUnitPrecision((float) $new['poQty'], $new['unitOfMeasure'] ?? null);
+                            $prDetail_arr['noQty'] = $poQtyRounded;
 
                             $pobalanceQty = ($new['quantityRequested'] - $new['poTakenQty']);
                             $prDetail_arr['balanceQty'] = $pobalanceQty;
@@ -714,9 +720,10 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                             $prDetail_arr['createdUserID'] = $user->employee['empID'];
                             $prDetail_arr['createdUserSystemID'] = $user->employee['employeeSystemID'];
 
-                            $prDetail_arr['unitCost'] = $new['poUnitAmount'];
+                            $currencyID = $purchaseOrder->supplierTransactionCurrencyID ?? null;
+                            $prDetail_arr['unitCost'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $new['poUnitAmount'], $currencyID);
 
-                            $prDetail_arr['netAmount'] = ($new['poUnitAmount'] * $new['poQty']);
+                            $prDetail_arr['netAmount'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision($prDetail_arr['unitCost'] * $poQtyRounded, $currencyID);
                             // Get VAT percentage for item
 
                             if ($purchaseOrder->isVatEligible) {
@@ -828,7 +835,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                                         'docAutoID' => $purchaseOrder->purchaseOrderID,
                                         'pulledDocumentDetailID' => $new['purchaseRequestDetailsID'],
                                     ];
-                                    if ($new['quantityRequested'] == $new['poQty']) {
+                                    if ($this->decimalPrecisionService->quantitiesEqualWithinUnitPrecision((float) $new['quantityRequested'], (float) $new['poQty'], $new['unitOfMeasure'] ?? null)) {
                                         $segmentAllocatedItem = $this->segmentAllocatedItemRepository->allocateWholeItemsInPRToPO($allocatedData);
                                         if (!$segmentAllocatedItem['status']) {
                                             return $this->sendError($segmentAllocatedItem['message']);
@@ -847,7 +854,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                                     'docAutoID' => $purchaseOrder->purchaseOrderID,
                                     'pulledDocumentDetailID' => $new['purchaseRequestDetailsID'],
                                 ];
-                                if ($new['quantityRequested'] == $new['poQty']) {
+                                if ($this->decimalPrecisionService->quantitiesEqualWithinUnitPrecision((float) $new['quantityRequested'], (float) $new['poQty'], $new['unitOfMeasure'] ?? null)) {
                                     $segmentAllocatedItem = $this->segmentAllocatedItemRepository->allocateWholeItemsInPRToPO($allocatedData);
                                     if (!$segmentAllocatedItem['status']) {
                                         return $this->sendError($segmentAllocatedItem['message']);
@@ -1085,12 +1092,13 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 $detailExistPRDetail = PurchaseRequestDetails::find($purchaseOrderDetails->purchaseRequestDetailsID);
 
                 $checkQuentity = ($detailExistPRDetail->quantityRequested - $updatedPRQty);
+                $prDetailUnitID = $detailExistPRDetail->unitOfMeasure ?? null;
 
-                if ($checkQuentity < 0) {
+                if ($checkQuentity < -1e-6) {
                     return $this->sendError(trans('custom.po_qty_cannot_be_greater_than_requested'), 500,array('type' => 'no_qty_issues'));
                 }
 
-                if ($checkQuentity == 0) {
+                if ($this->decimalPrecisionService->quantitiesEqualWithinUnitPrecision((float) $detailExistPRDetail->quantityRequested, (float) $updatedPRQty, $prDetailUnitID)) {
                     $fullyOrdered = 2;
                     $prClosedYN = -1;
                     $selectedForPO = -1;
@@ -1561,6 +1569,9 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
         $input = $request->all();
         $poID = $input['purchaseOrderID'];
 
+        $poMaster = ProcumentOrder::find($poID);
+        $currencyID = $poMaster ? $poMaster->supplierTransactionCurrencyID : null;
+
         $details = PurchaseOrderDetails::select(DB::raw('itemPrimaryCode,itemDescription,supplierPartNumber,"" as isChecked, "" as noQty,noQty as poQty,unitOfMeasure,purchaseOrderMasterID,purchaseOrderDetailsID,serviceLineCode,itemCode,companySystemID,companyID,serviceLineCode,itemPrimaryCode,itemDescription,itemFinanceCategoryID,itemFinanceCategorySubID,financeGLcodebBSSystemID,financeGLcodebBS,financeGLcodePLSystemID,financeGLcodePL,includePLForGRVYN,supplierPartNumber,unitOfMeasure,unitCost,discountPercentage,discountAmount,netAmount,comment,supplierDefaultCurrencyID,supplierDefaultER,supplierItemCurrencyID,foreignToLocalER,companyReportingCurrencyID,companyReportingER,localCurrencyID,localCurrencyER,addonDistCost,GRVcostPerUnitLocalCur,GRVcostPerUnitSupDefaultCur,GRVcostPerUnitSupTransCur,GRVcostPerUnitComRptCur,VATPercentage,VATAmount,VATAmountLocal,VATAmountRpt,receivedQty,markupPercentage,markupTransactionAmount,markupLocalAmount,markupReportingAmount, vatMasterCategoryID,vatSubCategoryID, exempt_vat_portion'))
             ->with(['unit' => function ($query) {
             }])
@@ -1571,28 +1582,32 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->get();
 
         foreach ($details as $detail) {
-            if($detail['receivedQty'] > 0){
-                $currentGrvAmount = sprintf('%.6f', ($detail['netAmount'] / $detail['poQty']) * $detail['receivedQty']);
-                $balanceGrvAmount = sprintf('%.6f', ($detail['netAmount'] - $currentGrvAmount));
+            $unit = $detail->unit;
+            $unitID = $unit ? $unit->UnitID : $detail->unitOfMeasure;
 
-                $balanceQty = sprintf('%.6f', ($detail['poQty'] - $detail['receivedQty']));
+            if ($detail['receivedQty'] > 0) {
+                $currentGrvAmountRaw = ($detail['netAmount'] / $detail['poQty']) * $detail['receivedQty'];
+                $balanceGrvAmountRaw = $detail['netAmount'] - $currentGrvAmountRaw;
+                $currentGrvAmount = (string) $this->decimalPrecisionService->roundAmountToCurrencyPrecision($currentGrvAmountRaw, $currencyID);
+                $balanceGrvAmount = (string) $this->decimalPrecisionService->roundAmountToCurrencyPrecision($balanceGrvAmountRaw, $currencyID);
+
+                $balanceQtyRaw = $detail['poQty'] - $detail['receivedQty'];
+                $balanceQty = (string) $this->decimalPrecisionService->roundQuantityToUnitPrecision($balanceQtyRaw, $unitID);
                 $detail['grvAmount'] = $balanceGrvAmount;
                 $detail['balanceGrvAmount'] = $balanceGrvAmount;
                 $detail['noQty'] = $balanceQty;
                 $detail['balanceQty'] = $balanceQty;
-
             } else {
-
-                $detail['grvAmount'] = $detail['netAmount'];
-                $detail['balanceGrvAmount'] = $detail['netAmount'];
-                $detail['noQty'] = $detail['poQty'];
-                $detail['balanceQty'] = $detail['poQty'];
+                $roundedNetAmount = (string) $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $detail['netAmount'], $currencyID);
+                $roundedPoQty = (string) $this->decimalPrecisionService->roundQuantityToUnitPrecision((float) $detail['poQty'], $unitID);
+                $detail['grvAmount'] = $roundedNetAmount;
+                $detail['balanceGrvAmount'] = $roundedNetAmount;
+                $detail['noQty'] = $roundedPoQty;
+                $detail['balanceQty'] = $roundedPoQty;
             }
         }
 
-
         return $this->sendResponse($details, trans('custom.purchase_order_details_retrieved_successfully'));
-
     }
 
     public function setMarkupPercentage($unitCost, $poData, $markupPercentage = 0, $markupTransAmount = 0, $by = '')
@@ -1743,29 +1758,7 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 if (empty($purchaseOrder)) {
                     return $this->sendError(trans('custom.purchase_order_not_found'), 500);
                 }
-                $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                    ->where('companySystemID', $purchaseOrder->companySystemID)
-                    ->first();
-                if ($allowFinanceCategory) {
-                    $policy = $allowFinanceCategory->isYesNO;
-                    if ($policy == 0) {
-                        if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
-                            return $this->sendError(trans('custom.category_is_not_found_1'), 500);
-                        }
-
-                        //checking if item category is same or not
-                        $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
-                            ->first();
-
-                        if ($pRDetailExistSameItem) {
-                            if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                                return $this->sendError(trans('custom.you_cannot_add_different_category_item'), 500);
-                            }
-                        }
-                    }
-                }
-
+                // Category validation for bulk add is done inside PoAddBulkItemJob (filter by single category when enforcement is on)
 
                 $data['isBulkItemJobRun'] = 1;
 
@@ -1777,6 +1770,32 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
                 DB::beginTransaction();
                 try {
                     $invalidItems = [];
+                    $purchaseOrder = ProcumentOrder::where('purchaseOrderID', $input['purchaseOrderID'])->first();
+                    // When category enforcement is on: ensure all selected items are same category (or match existing PO)
+                    if (!empty($input['itemArray']) && $purchaseOrder && CategoryValidationService::shouldEnforceSingleCategory($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID)) {
+                        $existingPOCategory = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                            ->where('purchaseOrderMasterID', $input['purchaseOrderID'])
+                            ->first();
+                        $allowedCategory = $existingPOCategory ? $existingPOCategory->itemFinanceCategoryID : null;
+                        foreach ($input['itemArray'] as $value) {
+                            $item = ItemAssigned::where('itemCodeSystem', $value['itemCodeSystem'])
+                                ->where('companySystemID', $input['companySystemID'])
+                                ->first();
+                            if (!$item) {
+                                continue;
+                            }
+                            if ($allowedCategory === null) {
+                                $allowedCategory = $item->financeCategoryMaster;
+                            }
+                            if ($item->financeCategoryMaster != $allowedCategory) {
+                                $invalidItems[] = ['itemCodeSystem' => $value['itemCodeSystem'], 'message' => CategoryValidationService::getCategoryRestrictionMessage($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID)];
+                            }
+                        }
+                        if (!empty($invalidItems)) {
+                            $message = CategoryValidationService::getCategoryRestrictionMessage($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID);
+                            return $this->sendError($message, 500);
+                        }
+                    }
                     foreach ($input['itemArray'] as $key => $value) {
                         $res = ProcurementOrderService::validatePoItem($value['itemCodeSystem'], $input['companySystemID'], $input['purchaseOrderID']);
 

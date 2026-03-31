@@ -78,6 +78,8 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\GRVMasterRepository;
 use App\Repositories\UserRepository;
 use App\Services\ChartOfAccountValidationService;
+use App\Services\GRVConfirmValidationService;
+use App\Services\CompanyDocumentAttachmentService;
 use App\Traits\AuditTrial;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -90,6 +92,7 @@ use Response;
 use App\Models\Appointment;
 use App\Models\AppointmentDetails;
 use App\Models\SupplierBlock;
+use App\Services\DecimalPrecisionService;
 use App\Services\GeneralLedgerService;
 use App\Services\ValidateDocumentAmend;
 use Illuminate\Support\Arr;
@@ -107,11 +110,16 @@ class GRVMasterAPIController extends AppBaseController
     /** @var  GRVMasterRepository */
     private $gRVMasterRepository;
     private $userRepository;
+    /** @var GRVConfirmValidationService */
+    private $grvConfirmValidationService;
+    private $decimalPrecisionService;
 
-    public function __construct(GRVMasterRepository $gRVMasterRepo, UserRepository $userRepo)
+    public function __construct(GRVMasterRepository $gRVMasterRepo, UserRepository $userRepo, GRVConfirmValidationService $grvConfirmValidationService, DecimalPrecisionService $decimalPrecisionService)
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
         $this->userRepository = $userRepo;
+        $this->grvConfirmValidationService = $grvConfirmValidationService;
+        $this->decimalPrecisionService = $decimalPrecisionService;
     }
 
     /**
@@ -519,11 +527,10 @@ class GRVMasterAPIController extends AppBaseController
             ->where('grvAutoID', $input['grvAutoID'])
             ->first();
 
-        $input['grvTotalSupplierTransactionCurrency'] = $grvTotalSupplierTransactionCurrency['transactionTotalSum'];
-        $input['grvTotalComRptCurrency'] = $grvTotalSupplierTransactionCurrency['reportingTotalSum'];
-        $input['grvTotalLocalCurrency'] = $grvTotalSupplierTransactionCurrency['localTotalSum'];
-        $input['grvTotalSupplierDefaultCurrency'] = $grvTotalSupplierTransactionCurrency['defaultTotalSum'];
-
+        $input['grvTotalSupplierTransactionCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['transactionTotalSum'], $gRVMaster->supplierTransactionCurrencyID ?? null);
+        $input['grvTotalComRptCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['reportingTotalSum'], $gRVMaster->companyReportingCurrencyID ?? null);
+        $input['grvTotalLocalCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['localTotalSum'], $gRVMaster->localCurrencyID ?? null);
+        $input['grvTotalSupplierDefaultCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['defaultTotalSum'], $gRVMaster->supplierDefaultCurrencyID ?? null);
 
         if ($gRVMaster->grvConfirmedYN == 0 && $input['grvConfirmedYN'] == 1) {
             if ($gRVMaster->grvTypeID == 1) {
@@ -768,10 +775,10 @@ class GRVMasterAPIController extends AppBaseController
                 ->first();
 
 
-            $input['grvTotalSupplierTransactionCurrency'] = $grvTotalSupplierTransactionCurrency['transactionTotalSum'];
-            $input['grvTotalComRptCurrency'] = $grvTotalSupplierTransactionCurrency['reportingTotalSum'];
-            $input['grvTotalLocalCurrency'] = $grvTotalSupplierTransactionCurrency['localTotalSum'];
-            $input['grvTotalSupplierDefaultCurrency'] = $grvTotalSupplierTransactionCurrency['defaultTotalSum'];
+            $input['grvTotalSupplierTransactionCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['transactionTotalSum'], $gRVMaster->supplierTransactionCurrencyID ?? null);
+            $input['grvTotalComRptCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['reportingTotalSum'], $gRVMaster->companyReportingCurrencyID ?? null);
+            $input['grvTotalLocalCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['localTotalSum'], $gRVMaster->localCurrencyID ?? null);
+            $input['grvTotalSupplierDefaultCurrency'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $grvTotalSupplierTransactionCurrency['defaultTotalSum'], $gRVMaster->supplierDefaultCurrencyID ?? null);
 
             //updating logistic details in grv details table
             $fetchAllGrvDetails = GRVDetails::where('grvAutoID', $input['grvAutoID'])
@@ -956,9 +963,27 @@ class GRVMasterAPIController extends AppBaseController
                 return $this->sendError($result["errorMsg"]);
             }
 
+            // Part 3: GRV subcategory approval validations (only when subcategory approval is enabled)
+            $grvValidation = $this->grvConfirmValidationService->validateForConfirmation((int) $input["companySystemID"], (int) $id);
+            if (!$grvValidation['valid']) {
+                return $this->sendError($grvValidation['message'], 422);
+            }
 
+            $docConfig = CompanyDocumentAttachment::where('companySystemID', $input["companySystemID"])
+                ->where('documentSystemID', (int) $input["documentSystemID"])
+                ->first();
+            $isSubcategoryApproval = $docConfig && CompanyDocumentAttachmentService::isApprovalEnabled($docConfig->isSubcategoryApproval ?? 0);
+            $resolved = $this->grvConfirmValidationService->resolveCategoryAndSubcategoryForParams((int) $id, $isSubcategoryApproval);
 
-            $params = array('autoID' => $id, 'company' => $input["companySystemID"], 'document' => $input["documentSystemID"], 'segment' => $input["serviceLineSystemID"], 'category' => '', 'amount' => $grvMasterSum['masterTotalSum']);
+            $params = array(
+                'autoID' => $id,
+                'company' => $input["companySystemID"],
+                'document' => $input["documentSystemID"],
+                'segment' => $input["serviceLineSystemID"],
+                'category' => $resolved['category'] ?? '',
+                'subCategory' => $resolved['subCategory'] ?? '',
+                'amount' => $grvMasterSum['masterTotalSum']
+            );
             $confirm = DocumentConfirm::confirmDocument($params);
 
             if (!$confirm["success"]) {

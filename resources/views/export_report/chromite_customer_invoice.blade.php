@@ -192,6 +192,13 @@
         </tr>
     </table>
 
+    @php
+        $showSegmentColumn = isset($request->isPerforma)
+            && in_array($request->isPerforma, [4, 5])
+            && isset($request->isSegmentPolicyOn)
+            && (int) $request->isSegmentPolicyOn === 1;
+    @endphp
+
     <table >
         <thead>
             <tr style="background-color: #6798da; border: 1px solid !important;">
@@ -203,6 +210,9 @@
             @if(count($request->invoicedetails) > 0 )
                 <th colspan="3" style="text-align: center">Account Code</th>
                 <th colspan="4" style="text-align: center">Description</th>
+            @endif
+            @if($showSegmentColumn)
+                <th colspan="3" style="text-align: center">Segment</th>
             @endif
                 <th colspan="3" style="text-align: center">Delivery Note No</th>
                 <th colspan="2" style="text-align: center">UOM</th>
@@ -229,6 +239,15 @@
                         <td colspan="1"></td>
                         <td colspan="3" style="text-align: center;">{{$item->itemPrimaryCode}}</td>
                         <td colspan="4" style="text-align: left;">{{$item->itemDescription}}</td>
+                        @if($showSegmentColumn)
+                            <td colspan="3" style="text-align: left;">
+                                @if(isset($item->segment) && $item->segment)
+                                    {{$item->segment->ServiceLineDes ?? ''}}
+                                @else
+                                    {{$item->serviceLineCode ?? ''}}
+                                @endif
+                            </td>
+                        @endif
                         <td colspan="3" style="text-align: left;">{{$item->comments}}</td>
                         <td colspan="2" style="text-align: center;">{{isset($item->uom_issuing->UnitShortCode)?$item->uom_issuing->UnitShortCode:''}}</td>
                         <td colspan="2" style="text-align: center;">{{$item->qtyIssued}}</td>
@@ -250,6 +269,15 @@
                         <td colspan="1"></td>
                         <td colspan="3" style="text-align: center;">{{$item->glCode}}</td>
                         <td colspan="4" style="text-align: left;">{{$item->glCodeDes}}</td>
+                        @if($showSegmentColumn)
+                            <td colspan="3" style="text-align: left;">
+                                @if(isset($item->department) && isset($item->department->ServiceLineDes))
+                                    {{$item->department->ServiceLineDes}}
+                                @else
+                                    {{$item->serviceLineCode ?? ''}}
+                                @endif
+                            </td>
+                        @endif
                         <td colspan="3" style="text-align: left;">{{$item->comments}}</td>
                         <td colspan="2" style="text-align: center;">{{isset($item->unit->UnitShortCode)?$item->unit->UnitShortCode:''}}</td>
                         <td colspan="2" style="text-align: center;">{{$item->invoiceQty}}</td>

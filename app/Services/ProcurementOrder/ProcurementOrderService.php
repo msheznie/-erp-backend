@@ -11,6 +11,7 @@ use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\SupplierAssigned;
 use App\Models\User;
 use App\Models\AssetFinanceCategory;
+use App\Services\Procurement\CategoryValidationService;
 use Illuminate\Support\Facades\DB;
 use App\helper\Helper;
 use Response;
@@ -77,26 +78,13 @@ class ProcurementOrderService
             }
         }
 
-        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
-                ->where('companySystemID', $purchaseOrder->companySystemID)
+        if (CategoryValidationService::shouldEnforceSingleCategory($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID)) {
+            $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                ->where('purchaseOrderMasterID', $purchaseOrderID)
                 ->first();
-        if ($allowFinanceCategory) {
-            $policy = $allowFinanceCategory->isYesNO;
-            if ($policy == 0) {
-                if ($purchaseOrder->financeCategory == null || $purchaseOrder->financeCategory == 0) {
-                    return ['status' => false, 'message' => 'Category is not found'];
-                }
 
-                //checking if item category is same or not
-                $pRDetailExistSameItem = ProcumentOrderDetail::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
-                    ->where('purchaseOrderMasterID', $purchaseOrderID)
-                    ->first();
-
-                if ($pRDetailExistSameItem) {
-                    if ($item->financeCategoryMaster != $pRDetailExistSameItem["itemFinanceCategoryID"]) {
-                        return ['status' => false, 'message' => 'You cannot add different category item'];
-                    }
-                }
+            if ($pRDetailExistSameItem && $item->financeCategoryMaster != $pRDetailExistSameItem['itemFinanceCategoryID']) {
+                return ['status' => false, 'message' => CategoryValidationService::getCategoryRestrictionMessage($purchaseOrder->companySystemID, (int) $purchaseOrder->documentSystemID)];
             }
         }
 

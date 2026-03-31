@@ -241,6 +241,16 @@
             {
                 max-height: 60px !important;
             }
+
+        .bank-details-outer-border {
+            border: 1px solid #dee2e6;
+            border-collapse: collapse;
+        }
+        .bank-details-outer-border th,
+        .bank-details-outer-border td,
+        .bank-details-outer-border tr {
+            border: none !important;
+        }
     </style>
 </head>
 <body>
@@ -297,6 +307,21 @@
                             @endif
                         </td>
                     </tr>
+                    @if($masterdata->expenseClaimOrPettyCash == 15)
+                    <tr>
+                        <td width="100px">
+                            <span style="font-weight: bold">{{ __('custom.currency') }}</span>
+                        </td>
+                        <td width="10px">
+                            <span style="font-weight: bold">:</span>
+                        </td>
+                        <td>
+                            @if($masterdata->transactioncurrency)
+                                <span>{{ $masterdata->transactioncurrency->CurrencyCode }}</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endif
                 </table>
             </td>
         </tr>
@@ -307,8 +332,11 @@
             @if($masterdata->invoiceType == 2)
                  {{ __('custom.supplier_payment') }}
             @endif
-            @if($masterdata->invoiceType == 3)
+            @if($masterdata->invoiceType == 3 && $masterdata->expenseClaimOrPettyCash != 15)
                     {{ __('custom.direct_payment') }}
+            @endif
+            @if($masterdata->invoiceType == 3 && $masterdata->expenseClaimOrPettyCash == 15)
+                    {{ __('custom.payment_voucher_interbank_transfer') }}
             @endif
             @if($masterdata->invoiceType == 5)
                     {{ __('custom.supplier_advance_payment') }}
@@ -326,6 +354,7 @@
     </div>
     <br>
     <br>
+    @if($masterdata->expenseClaimOrPettyCash != 15)
     <table style="width: 100%">
         <tr style="width:100%">
             <td style="width: 60%">
@@ -476,6 +505,7 @@
                     <tr>
                         <td>&nbsp;</td>
                     </tr>
+                    @if($masterdata->expenseClaimOrPettyCash != 15)
                     <tr>
                         <td valign="bottom" style="text-align: right">
                             <span style="font-weight: bold"> {{ __('custom.currency') }}:</span>
@@ -484,10 +514,131 @@
                             @endif
                         </td>
                     </tr>
+                    @endif
                 </table>
             </td>
         </tr>
     </table>
+    @endif
+    @if($masterdata->invoiceType == 3 && $masterdata->expenseClaimOrPettyCash == 15)
+    <table style="width: 100%; margin-top: 20px;">
+        <tr>
+            <td style="width: 50%; vertical-align: top; padding-right: 10px;">
+                <table class="table table-sm bank-details-outer-border" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th colspan="3" style="text-align: center; font-weight: bold; background-color: #EBEBEB;">
+                                {{ __('custom.paying_bank_details') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="font-weight: bold" width="180px">{{ __('custom.paying_bank_name') }}</td>
+                            <td width="40px">:</td>
+                            <td>
+                                @if($masterdata->bankaccount)
+                                    {{ $masterdata->bankaccount->bankName }}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold">{{ __('custom.company_account_number') }}</td>
+                            <td>:</td>
+                            <td>
+                                @if($masterdata->bankaccount)
+                                    {{ $masterdata->bankaccount->AccountNo }}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold">{{ __('custom.iban') }}</td>
+                            <td>:</td>
+                            <td>
+                                @if($masterdata->bankaccount)
+                                    {{ $masterdata->bankaccount->{'accountIBAN#'} ?? '' }}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold">{{ __('custom.bank_branch') }}</td>
+                            <td>:</td>
+                            <td>
+                                @if($masterdata->bankaccount)
+                                    {{ $masterdata->bankaccount->bankBranch ?? '' }}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold">&nbsp;</td>
+                            <td>&nbsp;</td>
+                            <td>        
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+            <td style="width: 50%; vertical-align: top;">
+                <table class="table table-sm bank-details-outer-border" style="width: 100%;">
+                    <thead>
+                        <tr>
+                            <th colspan="3" style="text-align: center; font-weight: bold; background-color: #EBEBEB;">
+                                {{ __('custom.beneficiary_bank_details') }}
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php $firstDetail = $masterdata->directdetail->first(); @endphp
+                        <tr>
+                            <td style="font-weight: bold" width="170px">{{ __('custom.beneficiary_name') }}</td>
+                            <td width="40px">:</td>
+                            @if($masterdata->company)
+                            <td>{{ $masterdata->company->CompanyName }}</td>
+                            @endif
+
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold">{{ __('custom.beneficiary_bank_name') }}</td>
+                            <td>:</td>
+                            <td>
+                                @if($firstDetail && $firstDetail->to_bank)
+                                    {{ $firstDetail->to_bank->bankName }}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold">{{ __('custom.beneficiary_account_no') }}</td>
+                            <td>:</td>
+                            <td>
+                                @if($firstDetail && $firstDetail->to_bank)
+                                    {{ $firstDetail->to_bank->AccountNo }}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold">{{ __('custom.iban') }}</td>
+                            <td>:</td>
+                            <td>
+                                @if($firstDetail && $firstDetail->to_bank)
+                                    {{ $firstDetail->to_bank->{'accountIBAN#'} ?? '' }}
+                                @endif
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold">{{ __('custom.bank_branch') }}</td>
+                            <td>:</td>
+                            <td>
+                                @if($firstDetail && $firstDetail->to_bank)
+                                    {{ $firstDetail->to_bank->bankBranch ?? '' }}
+                                @endif
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+    @endif
     @if($masterdata->invoiceType == 2 || $masterdata->invoiceType == 6)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">
@@ -537,7 +688,7 @@
 
         @if ($masterdata->invoiceType == 2 && $bankChargeCount > 0)
         <div style="margin-top: 30px">
-            <h4>{{ __('custom.bank_charges_others') }}</h4>
+            <h4>{{ __('custom.bank_charges_and_others') }}</h4>
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
@@ -580,10 +731,14 @@
     @endif
     @if($masterdata->invoiceType == 3)
         <div style="margin-top: 30px">
+            @if($masterdata->expenseClaimOrPettyCash == 15)
+                <h4>{{ __('custom.transaction_details') }}</h4>
+            @endif
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
                 <tr class="theme-tr-head">
                     <th>#</th>
+                    @if($masterdata->expenseClaimOrPettyCash != 15)
                     <th style="text-align: center">{{ __('custom.gl_code') }}</th>
                     <th style="text-align: center">{{ __('custom.gl_code_description') }}</th>
                     @if($masterdata->invoiceType == 3 && $isProjectBase)
@@ -591,9 +746,7 @@
                     @endif
                     <th style="text-align: center">{{ __('custom.segment') }}</th>
                     <th style="text-align: center">{{ __('custom.amount') }}</th>
-                    @if($masterdata->invoiceType == 3 && $masterdata->expenseClaimOrPettyCash != 15)
                     <th style="text-align: center">{{ __('custom.vat') }}</th>
-                    @endif
                     <th style="text-align: center">{{ __('custom.payment_amount') }}</th>
                     <th style="text-align: center">{{ __('custom.local_amt') }} (
                         @if($masterdata->localCurrency)
@@ -607,6 +760,28 @@
                         @endif
                         )
                     </th>
+                    @else
+                    <th style="text-align: center">{{ __('custom.segments') }}</th>
+                    <th style="text-align: center; width: 20%;">{{ __('custom.comment') }}</th>
+                    <th style="text-align: center">{{ __('custom.transfer_amount') }} (
+                        @if($masterdata->bankaccount && $masterdata->bankaccount->currency)
+                            {{ $masterdata->bankaccount->currency->CurrencyCode }}
+                        @endif
+                        )</th>
+                    <th style="text-align: center">{{ __('custom.bank_er') }} (
+                        @if($masterdata->bankaccount && $masterdata->bankaccount->currency)
+                            {{ $masterdata->bankaccount->currency->CurrencyCode }}
+                        @endif
+                        @if($masterdata->directdetail->isNotEmpty() && $masterdata->directdetail->first()->to_bank && $masterdata->directdetail->first()->to_bank->currency)
+                            - {{ $masterdata->directdetail->first()->to_bank->currency->CurrencyCode }}
+                        @endif
+                        )</th>
+                    <th style="text-align: center">{{ __('custom.bank_amount') }}
+                        @if($masterdata->directdetail->isNotEmpty() && $masterdata->directdetail->first()->to_bank && $masterdata->directdetail->first()->to_bank->currency)
+                            ({{ $masterdata->directdetail->first()->to_bank->currency->CurrencyCode }})
+                        @endif
+                    </th>
+                    @endif
                 </tr>
                 </thead>
                 <tbody>
@@ -614,10 +789,12 @@
                     $tot= 0;
                     $totLocal= 0;
                     $totRpt = 0;
+                    $interBankAmountSubTotal = 0;
                 @endphp
                 @foreach ($masterdata->directdetail as $item)
                     <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
                         <td>{{$loop->iteration}}</td>
+                        @if($masterdata->expenseClaimOrPettyCash != 15)
                         <td>{{$item->glCode}}</td>
                         <td>{{$item->glCodeDes}}</td>
 
@@ -634,9 +811,7 @@
                             @endif
                         </td>
                         <td style="text-align: right">{{number_format($item->DPAmount, $transDecimal)}}</td>
-                        @if($masterdata->invoiceType == 3 && $masterdata->expenseClaimOrPettyCash != 15)
                         <td style="text-align: right">{{number_format($item->vatAmount, $transDecimal)}}</td>
-                        @endif
                         <td style="text-align: right">{{number_format($item->DPAmount + $item->vatAmount, $transDecimal)}}</td>
                         <td style="text-align: right">{{number_format($item->localAmount + $item->VATAmountLocal, $localDecimal)}}</td>
                         <td style="text-align: right">{{number_format($item->comRptAmount + $item->VATAmountRpt, $rptDecimal)}}</td>
@@ -645,25 +820,74 @@
                             $totLocal += $item->localAmount + $item->VATAmountLocal;
                             $totRpt += $item->comRptAmount + $item->VATAmountRpt;
                         @endphp
+                        @else
+                        <td>@if($item->segment)
+                                {{$item->segment->ServiceLineDes}}
+                            @endif
+                        </td>
+                        <td style="width: 20%;">{{ $item->comments ?? '' }}</td>
+                        <td style="text-align: right">{{ number_format($item->DPAmount, $transDecimal) }}</td>
+                        <td style="text-align: right">{{ number_format($item->bankCurrencyER ?? 0, $transDecimal) }}</td>
+                        <td style="text-align: right">{{ number_format($item->interBankAmount ?? 0, $transDecimal) }}</td>
+                        @php 
+                        $interBankAmountSubTotal += $item->interBankAmount ?? 0; 
+                        $tot += $item->DPAmount + $item->vatAmount;
+                        @endphp
+                        @endif
                     </tr>
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                    @if($masterdata->expenseClaimOrPettyCash != 15)
                     @if($masterdata->invoiceType == 3 && $isProjectBase)
                         <td colspan="4" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff">&nbsp;</td>
                     @endif
                     <td colspan="{{ ($masterdata->invoiceType == 3 && $masterdata->expenseClaimOrPettyCash != 15) ? 5 : 4 }}" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff">&nbsp;</td>
-                    <td style="text-align: right" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
-                    <td style="text-align: right"
-                        style="background-color: rgb(215,215,215)">{{number_format($tot, $transDecimal)}}</td>
-                    <td style="text-align: right"
-                        style="background-color: rgb(215,215,215)">{{number_format($totLocal, $localDecimal)}}</td>
-                    <td style="text-align: right"
-                        style="background-color: rgb(215,215,215)">{{number_format($totRpt, $rptDecimal)}}</td>
-                   
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{number_format($tot, $transDecimal)}}</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{number_format($totLocal, $localDecimal)}}</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{number_format($totRpt, $rptDecimal)}}</td>
+                    @else
+                    /* <td colspan="2" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff">&nbsp;</td> */
+                    <td colspan="1" style="text-align: right; background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{ number_format($tot, $transDecimal) }}</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">&nbsp;</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{ number_format($interBankAmountSubTotal, $transDecimal) }}</td>
+                    @endif
                 </tr>
                 </tbody>
             </table>
         </div>
+        @if($masterdata->expenseClaimOrPettyCash == 15 && $masterdata->bank_charge && $masterdata->bank_charge->isNotEmpty())
+        <div style="margin-top: 30px">
+            <h4>{{ __('custom.bank_charges_others') }}</h4>
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+                <tr class="theme-tr-head">
+                    <th style="text-align: center">{{ __('custom.glaccount') }}</th>
+                    <th style="text-align: center">{{ __('custom.segments') }}</th>
+                    <th style="text-align: center; width: 20%;">{{ __('custom.comment') }}</th>
+                    <th style="text-align: center">{{ __('custom.amount') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach($masterdata->bank_charge as $bankCharge)
+                    <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
+                        <td>{{ $bankCharge->glCode }} | {{ $bankCharge->glCodeDescription ?? '' }}</td>
+                        <td>@if($bankCharge->segment){{ $bankCharge->segment->ServiceLineDes }}@endif</td>
+                        <td style="width: 20%;">{{ $bankCharge->comment ?? '' }}</td>
+                        <td style="text-align: right">{{ number_format($bankCharge->dpAmount, $transDecimal) }}</td>
+                    </tr>
+                @endforeach
+                </tbody>
+                <tfoot>
+                <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                    <td colspan="3" style="text-align: right; background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{ number_format($masterdata->bank_charge->sum('dpAmount'), $transDecimal) }}</td>
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+        @endif
     @endif
     @if($masterdata->invoiceType == 5 || $masterdata->invoiceType == 7)
         <div style="margin-top: 30px">
@@ -719,7 +943,47 @@
             </table>
         </div>
     @endif
-    @if($masterdata->invoiceType == 8)
+    @if($masterdata->invoiceType == 8 && (int) $masterdata->refundType === 1)
+        <div style="margin-top: 30px">
+            <table class="table table-bordered" style="width: 100%;">
+                <thead>
+                <tr class="theme-tr-head">
+                    <th>#</th>
+                    <th style="text-align: center">{{ __('custom.advance_voucher_code') }}</th>
+                    <th style="text-align: center">{{ __('custom.advance_voucher_date') }}</th>
+                    <th style="text-align: center">{{ __('custom.advance_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.balance_amount') }}</th>
+                    <th style="text-align: center">{{ __('custom.payment_amount') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach ($masterdata->advanceReceiptDetail ?? [] as $ddet)
+                    <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
+                        <td>{{$loop->iteration}}</td>
+                        <td>
+                            @if($ddet->advanceReceipt)
+                                {{ $ddet->advanceReceipt->custPaymentReceiveCode }}
+                            @endif
+                        </td>
+                        <td>
+                            @if($ddet->advanceReceipt && $ddet->advanceReceipt->custPaymentReceiveDate)
+                                {{ \App\helper\Helper::dateFormat($ddet->advanceReceipt->custPaymentReceiveDate)}}
+                            @endif
+                        </td>
+                        <td style="text-align: right">{{ number_format((float) ($ddet->advanceAmount ?? 0), $transDecimal) }}</td>
+                        <td style="text-align: right">{{ number_format((float) ($ddet->paymentBalancedAmount ?? 0), $transDecimal) }}</td>
+                        <td style="text-align: right">{{ number_format((float) ($ddet->advanceReceiptAmount ?? 0), $transDecimal) }}</td>
+                    </tr>
+                @endforeach
+                <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
+                    <td colspan="4" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff; text-align: right">&nbsp;</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{ number_format($advanceReceiptDetailSubTotal, $transDecimal) }}</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    @elseif($masterdata->invoiceType == 8 && (int) $masterdata->refundType !== 1)
         <div style="margin-top: 30px">
             <table class="table table-bordered" style="width: 100%;">
                 <thead>
@@ -733,7 +997,7 @@
                 </tr>
                 </thead>
                 <tbody>
-                @foreach ($masterdata->creditnotedetail as $ddet)
+                @foreach ($masterdata->creditnotedetail ?? [] as $ddet)
                     <tr style="border-top: 1px solid #ffffff !important;border-bottom: 1px solid #ffffff !important;">
                         <td>{{$loop->iteration}}</td>
                         <td>
@@ -748,12 +1012,12 @@
                         </td>
                         <td style="text-align: right">
                             @if($ddet->creditnote)
-                                {{number_format($ddet->creditnote->netAmount, $transDecimal)}}
+                                {{number_format($ddet->creditNoteAmount, $transDecimal)}}
                             @endif
                         </td>
                         <td style="text-align: right">
                             @if($ddet->creditnote)
-                                {{number_format($ddet->creditnote->netAmount - $ddet->creditNotePaymentAmount, $transDecimal)}}
+                                {{number_format($ddet->paymentBalancedAmount, $transDecimal)}}
                             @endif
                         </td>
                         <td style="text-align: right">{{number_format($ddet->creditNotePaymentAmount, $transDecimal)}}</td>
@@ -761,9 +1025,8 @@
                 @endforeach
                 <tr style="border-top: 1px solid #333 !important;border-bottom: 1px solid #333 !important;">
                     <td colspan="4" style="border-bottom: 1px solid #ffffffff; background-color:#ffffff; border-right: 1px solid #ffffffff; text-align: right">&nbsp;</td>
-                    <td style="text-align: right" style="background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
-                    <td style="text-align: right"
-                        style="background-color: rgb(215,215,215)">{{number_format($creditNoteDetailSubTotal, $transDecimal)}}</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{ __('custom.total_payment') }}</td>
+                    <td style="text-align: right; background-color: rgb(215,215,215)">{{number_format($creditNoteDetailSubTotal, $transDecimal)}}</td>
                 </tr>
                 </tbody>
             </table>
@@ -794,7 +1057,9 @@
             </table>
         </div>
     @endif
-
+    @if($masterdata->invoiceType == 3 && $masterdata->expenseClaimOrPettyCash == 15)
+    <br>
+    @endif
     <div style="padding-bottom: 20px!important; padding-top: 35px!important; page-break-inside: avoid; !important;">
     <table style="width:100%;">
         <tr>

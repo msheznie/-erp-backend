@@ -456,6 +456,13 @@
         @endif
     @endif
 
+    @php
+        $showSegmentColumn = isset($request->isPerforma)
+            && in_array($request->isPerforma, [4, 5])
+            && isset($request->isSegmentPolicyOn)
+            && (int) $request->isSegmentPolicyOn === 1;
+    @endphp
+
     @if (!$request->linePdoinvoiceDetails && $request->invoicedetails && $request->isPerforma == 1)
         <table class="table table-bordered" style="width: 100%;">
             <thead>
@@ -463,6 +470,9 @@
                 <th colspan="1" style="width:3%"></th>
                 <th colspan="2" style="width:10%;text-align: center">GL Code</th>
                 <th colspan="4" style="width:60%;text-align: center">GL Description</th>
+                @if($showSegmentColumn)
+                    <th colspan="2" style="width:15%;text-align: center">Segment</th>
+                @endif
                 <th colspan="2" style="width:10%;text-align: center">QTY</th>
                 <th colspan="2" style="width:10%;text-align: center">Unit Price</th>
                 <th colspan="2" style="width:10%;text-align: center">Total Taxable Amount</th>
@@ -484,6 +494,15 @@
                     <td colspan="1">{{$x}}</td>
                     <td colspan="2">{{$item->glCode}}</td>
                     <td colspan="4">{{$item->glCodeDes}}</td>
+                    @if($showSegmentColumn)
+                        <td colspan="2">
+                            @if(isset($item->department) && isset($item->department->ServiceLineDes))
+                                {{$item->department->ServiceLineDes}}
+                            @else
+                                {{$item->serviceLineCode ?? ''}}
+                            @endif
+                        </td>
+                    @endif
                     <td colspan="2" class="text-center" style="text-align: center">{{number_format($item->invoiceQty,2)}}</td>
                     <td colspan="2" class="text-right">{{number_format(($item->invoiceAmount -$item->VATAmount),$numberFormatting)}}</td>
                     <td colspan="2" class="text-right">{{number_format(($item->invoiceAmount -$item->VATAmount),$numberFormatting)}}</td>
@@ -620,6 +639,9 @@
                 <th colspan="1" style="width:3%"></th>
                 <th colspan="2" style="width:10%;text-align: center">GL Code</th>
                 <th colspan="4" style="width:60%;text-align: center">GL Description</th>
+                @if($showSegmentColumn)
+                    <th colspan="2" style="width:15%;text-align: center">Segment</th>
+                @endif
                 <th colspan="2" style="width:10%;text-align: center">QTY</th>
                 <th colspan="2" style="width:10%;text-align: center">Unit Price</th>
                 <th colspan="2" style="width:10%;text-align: center">Total Taxable Amount</th>
@@ -641,6 +663,15 @@
                     <td colspan="1">{{$x}}</td>
                     <td colspan="2">{{$item->glCode}}</td>
                     <td colspan="4">{{$item->glCodeDes}}</td>
+                    @if($showSegmentColumn)
+                        <td colspan="2">
+                            @if(isset($item->department) && isset($item->department->ServiceLineDes))
+                                {{$item->department->ServiceLineDes}}
+                            @else
+                                {{$item->serviceLineCode ?? ''}}
+                            @endif
+                        </td>
+                    @endif
                     <td colspan="2" class="text-center" style="text-align: center">{{number_format($item->invoiceQty,2)}}</td>
                     <td colspan="2" class="text-right">{{number_format(($item->unitCost),$numberFormatting)}}</td>
                     <td colspan="2" class="text-right">{{number_format(($item->unitCost * $item->invoiceQty),$numberFormatting)}}</td>

@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Models\CustomerReceivePayment;
 use App\Criteria\LimitOffsetCriteria;
+use App\Services\API\CreditNoteAPIService;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
@@ -130,13 +131,7 @@ class CreditNoteReceiptAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $createdReceipts = [];
-        foreach ($input['selectedVouchers'] as $receiptData) {
-            $receiptData['companySystemID'] = $input['companySystemID'];
-            
-            $creditNoteReceipt = $this->creditNoteReceiptRepository->create($receiptData);
-            $createdReceipts[] = $creditNoteReceipt->toArray();
-        }
+        $createdReceipts = CreditNoteAPIService::storeCreditNoteReceiptVouchers($input);
 
         return $this->sendResponse($createdReceipts, 'Credit Note Receipts saved successfully');
 

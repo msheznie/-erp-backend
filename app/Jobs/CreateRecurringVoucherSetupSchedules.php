@@ -10,6 +10,7 @@ use App\Models\RecurringVoucherSetupDetail;
 use App\Models\RecurringVoucherSetupSchedule;
 use App\Repositories\RecurringVoucherSetupDetailRepository;
 use App\Repositories\RecurringVoucherSetupScheduleRepository;
+use App\Repositories\RecurringVoucherSetupRepository;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Queue\SerializesModels;
@@ -57,7 +58,7 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
      *
      * @return void
      */
-    public function handle()
+    public function handle(RecurringVoucherSetupRepository $recurringVoucherSetupRepository)
     {
 
 
@@ -75,7 +76,8 @@ class CreateRecurringVoucherSetupSchedules implements ShouldQueue
 
                 for($i = 0; $i < $noOfDayMonthYear; $i++){
                     $processDate = $i == 0 ? $processDate : $processDate->addMonth();
-                    $financeYear = CompanyFinanceYear::where('companyFinanceYearID',$recurringVoucher->companyFinanceYearID)->first();
+                    //$financeYear = CompanyFinanceYear::where('companyFinanceYearID',$recurringVoucher->companyFinanceYearID)->first();
+                    $financeYear = $recurringVoucherSetupRepository->getActiveFinanceYearByDate($recurringVoucher->companySystemID, $processDate);
 
                     $financePeriod = CompanyFinancePeriod::where('companySystemID',$recurringVoucher->companySystemID)
                         ->where('companyFinanceYearID',$financeYear->companyFinanceYearID)
