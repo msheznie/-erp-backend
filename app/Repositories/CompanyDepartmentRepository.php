@@ -104,27 +104,29 @@ class CompanyDepartmentRepository extends BaseRepository
     public function departmentsSearchQuery(int $companySystemID, array $filters): Builder
     {
         $query = $this->model()::query()
+            ->select([
+                'departmentSystemID',
+                'companySystemID',
+                'parentDepartmentID',
+                'departmentCode',
+                'departmentDescription',
+                'isFinance',
+                'isActive',
+            ])
             ->where('companySystemID', $companySystemID)
             ->with([
-                'parent',
-                'company',
-                'employees.employee',
-                'companyDepartmentSegments.segment',
-            ])
+                'parent:departmentSystemID,departmentDescription',
+                'company:companySystemID,CompanyName',
+                'employees:departmentEmployeeSystemID,departmentSystemID,employeeSystemID,isHOD',
+                'employees.employee:employeeSystemID,empID,empFullName,empName',
+                'companyDepartmentSegments:departmentSegmentSystemID,departmentSystemID,serviceLineSystemID',
+                'companyDepartmentSegments.segment:serviceLineSystemID,ServiceLineCode,ServiceLineDes',
+                    ])
             ->withCount('children');
 
         $codes = $filters['code'] ?? [];
-        if (is_array($codes)) {
-            $codes = collect($codes)
-                ->map(fn ($c) => trim((string) $c))
-                ->filter(fn ($c) => $c !== '')
-                ->unique()
-                ->values()
-                ->all();
-
-            if (!empty($codes)) {
-                $query->whereIn('departmentCode', $codes);
-            }
+        if (!empty($codes)) {
+            $query->whereIn('departmentCode', $codes);
         }
 
         if (!empty($filters['status'])) {
