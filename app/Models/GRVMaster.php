@@ -193,7 +193,8 @@ class GRVMaster extends Model
         'approvedByUserSystemID',
         'postedDate',
         'deliveryAppoinmentID',
-        'isDelegation'
+        'isDelegation',
+        'isBulkItemJobRun'
     ];
 
     /**
@@ -280,6 +281,7 @@ class GRVMaster extends Model
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
         'deleted_at' => 'datetime',
+        'isBulkItemJobRun' => 'boolean',
     ];
 
     /**

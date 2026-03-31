@@ -20,6 +20,7 @@ use App\helper\Helper;
 use App\helper\ItemTracking;
 use App\Http\Requests\API\CreateGRVDetailsAPIRequest;
 use App\Http\Requests\API\UpdateGRVDetailsAPIRequest;
+use App\Jobs\AddMultipleItemsToGRV;
 use App\Models\FinanceItemCategorySub;
 use App\Models\GRVDetails;
 use App\Models\TaxVatCategories;
@@ -36,6 +37,7 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\CompanyPolicyMaster;
 use App\Models\ProcumentOrderDetail;
 use App\Services\CompanyDocumentAttachmentService;
+use App\Services\Inventory\GRVService;
 use App\Services\Procurement\CategoryValidationService;
 use App\Models\PurchaseReturnDetails;
 use App\Models\PurchaseOrderDetails;
@@ -65,6 +67,7 @@ use App\Services\POReceivedQtyUpdateService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Response;
 use Illuminate\Support\Arr;
 
@@ -83,6 +86,8 @@ class GRVDetailsAPIController extends AppBaseController
     private $decimalPrecisionService;
     /** @var POReceivedQtyUpdateService */
     private $poReceivedQtyUpdateService;
+    /** @var GRVService */
+    private $gRVService;
 
     public function __construct(
         GRVDetailsRepository $gRVDetailsRepo,
@@ -90,7 +95,8 @@ class GRVDetailsAPIController extends AppBaseController
         GRVMasterRepository $gRVMasterRepository,
         ExpenseAssetAllocationRepository $expenseAssetAllocationRepo,
         DecimalPrecisionService $decimalPrecisionService,
-        POReceivedQtyUpdateService $poReceivedQtyUpdateService
+        POReceivedQtyUpdateService $poReceivedQtyUpdateService,
+        GRVService $gRVService
     )
     {
         $this->gRVDetailsRepository = $gRVDetailsRepo;
@@ -99,6 +105,7 @@ class GRVDetailsAPIController extends AppBaseController
         $this->expenseAssetAllocationRepo = $expenseAssetAllocationRepo;
         $this->decimalPrecisionService = $decimalPrecisionService;
         $this->poReceivedQtyUpdateService = $poReceivedQtyUpdateService;
+        $this->gRVService = $gRVService;
     }
 
     /**
@@ -1239,43 +1246,42 @@ class GRVDetailsAPIController extends AppBaseController
         $input = $this->convertArrayToValue($input);
 
         $grvAutoID = $input['grvAutoID'];
-
         $grvTypeID = $input['grvTypeID'];
-
         $companySystemID = $input['companySystemID'];
 
         $grvMaster = $this->gRVMasterRepository->findWithoutFail($grvAutoID);
         if (empty($grvMaster)) {
-            return $this->sendError(trans('custom.grv_master_not_found'));
+            return ['response' => $this->sendError(trans('custom.grv_master_not_found')), 'grvMaster' => null];
         }
 
         if ($grvMaster->serviceLineSystemID) {
             $checkDepartmentActive = SegmentMaster::find($grvMaster->serviceLineSystemID);
             if (empty($checkDepartmentActive)) {
-                return $this->sendError(trans('custom.department_not_found'));
+                return ['response' => $this->sendError(trans('custom.department_not_found')), 'grvMaster' => null];
             }
             if ($checkDepartmentActive->isActive == 0) {
-                return $this->sendError(trans('custom.please_select_active_department'), 500);
+                return ['response' => $this->sendError(trans('custom.please_select_active_department'), 500), 'grvMaster' => null];
             }
         } else {
-            return $this->sendError(trans('custom.please_select_department'), 500);
+            return ['response' => $this->sendError(trans('custom.please_select_department'), 500), 'grvMaster' => null];
         }
 
         if ($grvMaster->grvLocation) {
             $checkWarehouseActive = WarehouseMaster::find($grvMaster->grvLocation);
             if (empty($checkWarehouseActive)) {
-                return $this->sendError(trans('custom.warehouse_not_found'));
+                return ['response' => $this->sendError(trans('custom.warehouse_not_found')), 'grvMaster' => null];
             }
             if ($checkWarehouseActive->isActive == 0) {
-                return $this->sendError(trans('custom.please_select_active_warehouse'), 500);
+                return ['response' => $this->sendError(trans('custom.please_select_active_warehouse'), 500), 'grvMaster' => null];
             }
-        }
-        else {
-            return $this->sendError(trans('custom.please_select_warehouse'), 500);
+        } else {
+            return ['response' => $this->sendError(trans('custom.please_select_warehouse'), 500), 'grvMaster' => null];
         }
         
         DB::beginTransaction();
         try {
+            $user = Helper::getEmployeeInfo();
+            
             $itemAssign = ItemAssigned::with(['item_master'])->find($input['itemCode']);
 
             if (empty($itemAssign)) {
@@ -1303,7 +1309,7 @@ class GRVDetailsAPIController extends AppBaseController
                 }
             }
 
-            $user = Helper::getEmployeeInfo();
+            
             
             $item = ItemAssigned::where('itemCodeSystem', $itemAssign->itemCodeSystem)
                 ->where('companySystemID', $companySystemID)
@@ -1328,7 +1334,7 @@ class GRVDetailsAPIController extends AppBaseController
                 }
             }
 
-                $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
+            $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
 
             $currency = Helper::convertAmountToLocalRpt($grvMaster->documentSystemID,$grvAutoID,$input['unitCost']);
             
@@ -1449,9 +1455,94 @@ class GRVDetailsAPIController extends AppBaseController
             DB::rollBack();
             return $this->sendError(trans('custom.error_occurred'));
         }
-
     }
 
+    public function GRVDetailsValidateItem(Request $request)
+    {
+        $input = $request->all();
+        return $this->gRVService->validateGRVItem($input['itemCodeSystem'], $input['companySystemID'], $input['grvAutoID']);
+    }
+
+    public function GRVDetailsAddAllItems(Request $request)
+    {
+        
+        $input = $request->all();
+
+        if (isset($input['addAllItems']) && $input['addAllItems']) {
+            $db = isset($input['db']) ? $input['db'] : "";
+
+            $grvMaster = $this->gRVMasterRepository->findWithoutFail($input['grvAutoID']);
+            
+            if (empty($grvMaster)) {
+                return $this->sendError(trans('custom.grv_master_not_found'), 500);
+            }
+            
+            try {
+                $user = Helper::getEmployeeInfo();
+                $input['empID'] = $user->empID;
+                $input['employeeSystemID'] = $user->employeeSystemID;
+                $this->gRVMasterRepository->where('grvAutoID', $grvMaster->grvAutoID)->update(['isBulkItemJobRun' => 1]);
+                AddMultipleItemsToGRV::dispatch($db, $input);
+
+                return $this->sendResponse('', trans('custom.items_added_to_queue'));
+            } catch (\Throwable $exception) {
+                GRVMaster::where('grvAutoID', $grvMaster->grvAutoID)->update(['isBulkItemJobRun' => 0]);
+                Log::error('Failed to dispatch AddMultipleItemsToGRV', [
+                    'grvAutoID' => $grvMaster->grvAutoID,
+                    'companySystemID' => $grvMaster->companySystemID,
+                    'db' => $db,
+                    'message' => $exception->getMessage(),
+                    'file' => $exception->getFile(),
+                    'line' => $exception->getLine(),
+                ]);
+
+                return $this->sendError(trans('custom.error_occurred'), 500);
+            }
+
+        } else {
+            DB::beginTransaction();
+            try {
+                $invalidItems = [];
+                $grvMaster = GRVMaster::where('grvAutoID', $input['grvAutoID'])->first();
+                
+                if (!empty($input['itemArray']) && $grvMaster && CategoryValidationService::shouldEnforceSingleCategory($grvMaster->companySystemID, (int) $grvMaster->documentSystemID)) {
+                    $existingPOCategory = GRVDetails::select(DB::raw('DISTINCT(itemFinanceCategoryID) as itemFinanceCategoryID'))
+                        ->where('grvAutoID', $input['grvAutoID'])
+                        ->first();
+                    $allowedCategory = $existingPOCategory ? $existingPOCategory->itemFinanceCategoryID : null;
+
+                    foreach ($input['itemArray'] as $value) {
+                        $item = ItemAssigned::where('itemCodeSystem', $value['itemCodeSystem'])
+                            ->where('companySystemID', $input['companySystemID'])
+                            ->first();
+                        if (!$item) {
+                            continue;
+                        }
+                        if ($allowedCategory === null) {
+                            $allowedCategory = $item->financeCategoryMaster;
+                        }
+                        if ($item->financeCategoryMaster != $allowedCategory) {
+                            $invalidItems[] = ['itemCodeSystem' => $value['itemCodeSystem'], 'message' => CategoryValidationService::getCategoryRestrictionMessage($grvMaster->companySystemID, (int) $grvMaster->documentSystemID)];
+                        }
+                    }
+
+                    if (!empty($invalidItems)) {
+                        $message = CategoryValidationService::getCategoryRestrictionMessage($grvMaster->companySystemID, (int) $grvMaster->documentSystemID);
+                        return $this->sendError($message, 500);
+                    }
+                }
+                foreach ($input['itemArray'] as $key => $value) {
+                    $this->gRVService->storeGRVItem($value['itemCodeSystem'], $input['companySystemID'], $input['grvAutoID'], $value);
+                }
+                DB::commit();
+                return $this->sendResponse('', trans('custom.grv_details_saved_successfully'));
+            } catch (\Exception $exception) {
+                DB::rollBack();
+                return $this->sendError($exception->getMessage(), 500);
+            }
+        }
+    }
+    
     public function updateGRVDetailsDirect(Request $request)
     {
         $input = $request->all();
@@ -1585,8 +1676,6 @@ class GRVDetailsAPIController extends AppBaseController
         }
 
     }
-
-
 
     public function grvDeleteAllDetails(Request $request)
     {
