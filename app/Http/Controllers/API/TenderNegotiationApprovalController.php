@@ -14,6 +14,7 @@ use App\Models\TenderNegotiation;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\TenderMaster;
 use App\Models\SupplierRegistrationLink;
+use App\Services\SrmNotificationService;
 use Illuminate\Http\Request;
 use Flash;
 use Illuminate\Support\Facades\Log;
@@ -25,10 +26,15 @@ class TenderNegotiationApprovalController extends AppBaseController
 {
     /** @var  TenderNegotiationApprovalRepository */
     private $tenderNegotiationApprovalRepository;
+    private $srmNotificationService;
 
-    public function __construct(TenderNegotiationApprovalRepository $tenderNegotiationApprovalRepo)
+    public function __construct(
+        TenderNegotiationApprovalRepository $tenderNegotiationApprovalRepo,
+        SrmNotificationService $srmNotificationService
+    )
     {
         $this->tenderNegotiationApprovalRepository = $tenderNegotiationApprovalRepo;
+        $this->srmNotificationService = $srmNotificationService;
     }
 
     /**
@@ -188,11 +194,16 @@ class TenderNegotiationApprovalController extends AppBaseController
         $tenderNegotiation = TenderNegotiation::select('status','id')->find($input['id']);
         $tenderNegotiation->status = 2;
         $tenderNegotiation->save();
-        $tenderMaster = TenderMaster::select('negotiation_published','id', 'tender_code', 'title')->find($input['srm_tender_master_id']);
+        $tenderMaster = TenderMaster::select('negotiation_published','id', 'tender_code', 'title', 'document_system_id')->find($input['srm_tender_master_id']);
         $tenderMaster->negotiation_published = 1;
         $tenderMaster->save();
 
         $this->sendEmailToSuppliers($input, $tenderMaster->tender_code, $tenderMaster->title);
+        $this->srmNotificationService->sendNegotiationStartedNotificationByNegotiation(
+            $input['id'],
+            $tenderMaster->title,
+            $tenderMaster->document_system_id
+        );
         return $this->sendResponse($tenderNegotiation->toArray(), trans('srm_ranking.tender_negotiation_published'));
     }
 
@@ -242,4 +253,5 @@ class TenderNegotiationApprovalController extends AppBaseController
             }
         }
     }
+
 }

@@ -9,6 +9,7 @@ use App\Models\BidMainWork;
 use App\Models\BidSubmissionDetail;
 use App\Models\BidSubmissionMaster;
 use App\Models\DocumentAttachments;
+use App\Models\Employee;
 use App\Models\PricingScheduleDetail;
 use App\Models\PricingScheduleMaster;
 use App\Models\ScheduleBidFormatDetails;
@@ -16,7 +17,9 @@ use App\Models\SRMTenderTechnicalEvaluationAttachment;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderConfirmationDetail;
 use App\Models\TenderMaster;
+use App\Models\TenderNegotiation;
 use App\Models\TenderNegotiationArea;
+use App\Models\SrmTenderTechnicalEvaluationHistory;
 use App\Repositories\BidSubmissionMasterRepository;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -551,12 +554,73 @@ class BidSubmissionMasterAPIController extends AppBaseController
             ->with('orderCondition', $sort)
             ->make(true);
 
-        $hasEvaluationAttachment = DocumentAttachments::evaluationAttachment($companyId, $tenderId);
-        $hasEvaluationComment = SRMTenderTechnicalEvaluationAttachment::hasEvaluationComment($companyId, $tenderId);
-        if($hasEvaluationAttachment) {
-            $getFileDetails = DocumentAttachments::getOriginalFileName($companyId, $tenderId);
+        $evaluationHistory = [];
+        $getFileDetails = null;
+
+        if ((int)$isNegotiation === 1) {
+            $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($tenderId);
+
+            $currentRoundRow = null;
+            if ($latestNegotiation) {
+                $currentRoundRow = SrmTenderTechnicalEvaluationHistory::getCurrentNegotiaitionData($tenderId, $companyId, $latestNegotiation);
+            }
+
+            // Form fields must be negotiation-round specific only (empty if none saved for current round).
+            $hasEvaluationAttachment = (bool)($currentRoundRow && $currentRoundRow->attachment_id);
+            $hasEvaluationComment = (bool)($currentRoundRow && ($currentRoundRow->comment !== null && $currentRoundRow->comment !== ''));
+            $getEvaluationData = $currentRoundRow ? ['comment' => $currentRoundRow->comment ?? ''] : null;
+
+            if ($currentRoundRow) {
+                $getFileDetails = [
+                    'originalFileName' => $currentRoundRow->attachment->originalFileName ?? '-',
+                    'attachmentID' => $currentRoundRow->attachment->attachmentID ?? null,
+                    'attachmentDescription' => $currentRoundRow->attachment->attachmentDescription ?? '-',
+                ];
+            }
+
+            $negRows = SrmTenderTechnicalEvaluationHistory::tenderNegotiaitonTechEvaluationHistory($tenderId, $companyId);
+            $negotiationAttachmentIds = $negRows->pluck('attachment_id')->filter()->unique()->values()->toArray();
+
+            $original = SRMTenderTechnicalEvaluationAttachment::getOriginalTenderData($tenderId, $companyId);
+            $originalAttachment = DocumentAttachments::getOriginalFileName($companyId, $tenderId, $negotiationAttachmentIds);
+
+            if ($original || $originalAttachment) {
+                $evaluationHistory[] = [
+                    'scope' => 'original',
+                    'round_no' => 0,
+                    'comment' => $original->comment ?? '',
+                    'user_name' => $original->created_user->empName ?? '-',
+                    'commented_at' => optional($original)->updated_at 
+                        ?? optional($original)->created_at 
+                        ?? '-',
+                    'attachment_description' => $originalAttachment->attachmentDescription ?? '-',
+                    'attachment_id' => $originalAttachment->attachmentID ?? null,
+                    'original_file_name' => $originalAttachment->originalFileName ?? null,
+                ];
+            }
+
+            foreach ($negRows as $row) {
+                $evaluationHistory[] = [
+                    'scope' => 'negotiation',
+                    'negotiation_id' => $row->negotiation_id,
+                    'negotiation_code' => $row->negotiation_code,
+                    'round_no' => $row->round_no,
+                    'comment' => $row->comment ?? '',
+                    'user_name' => $row->createdByEmployee->empFullName ?? '-',
+                    'commented_at' => $row->updated_at ?? $row->created_at,
+                    'attachment_description' => $row->attachment->attachmentDescription ?? '-',
+                    'attachment_id' => $row->attachment->attachmentID ?? null,
+                    'original_file_name' => $row->attachment->originalFileName ?? null,
+                ];
+            }
+        } else {
+            $hasEvaluationAttachment = DocumentAttachments::evaluationAttachment($companyId, $tenderId);
+            $hasEvaluationComment = SRMTenderTechnicalEvaluationAttachment::hasEvaluationComment($companyId, $tenderId);
+            if($hasEvaluationAttachment) {
+                $getFileDetails = DocumentAttachments::getOriginalFileName($companyId, $tenderId);
+            }
+            $getEvaluationData = SRMTenderTechnicalEvaluationAttachment::getEvaluationComment($companyId, $tenderId);
         }
-        $getEvaluationData = SRMTenderTechnicalEvaluationAttachment::getEvaluationComment($companyId, $tenderId);
 
         if ($tender->document_system_id == 113) {
             if (empty($tender->bid_opening_end_date) && empty($tender->technical_bid_closing_date)) {
@@ -580,6 +644,8 @@ class BidSubmissionMasterAPIController extends AppBaseController
             'hasBidOpen' => $hasBidOpen,
             'OriginalFileName' => $getFileDetails['originalFileName'] ?? '-',
             'OriginalFileId' => $getFileDetails['attachmentID'] ?? '-',
+            'OriginalFileDescription' => $getFileDetails['attachmentDescription'] ?? '-',
+            'evaluationHistory' => $evaluationHistory,
             'tenderUuid' => $tender['uuid']
         ];
     }

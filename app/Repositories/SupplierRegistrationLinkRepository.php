@@ -73,24 +73,24 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         DB::beginTransaction();
         try
         {
-                $inputData = $input['extra'];
-                $supplierLink = $this->model->newInstance();
-                $supplierLink->name = $inputData['name'];
-                $supplierLink->email = $inputData['email'];
-                $supplierLink->registration_number =  $inputData['registration_number'];
-                $supplierLink->company_id = $inputData['company_id'];
-                $supplierLink->token = $inputData['token'];
-                $supplierLink->created_by = -1;
-                $supplierLink->updated_by = '';
-                $supplierLink->STATUS = ($inputData['status']) ?? 0;
-                $supplierLink->uuid = ($inputData['tenantUuid']) ?? null;
-                $supplierLink->is_bid_tender =  $inputData['is_bid_tender'];
-                $supplierLink->created_via =  3;
-                $supplierLink->is_existing_erp_supplier = 0;
-                $supplierLink->sub_domain = ' ';
-                $supplierLink->save();
-                DB::commit();
-                return ['success' => true, 'message' => 'Successfully Saved', 'data' => true];
+            $inputData = $input['extra'];
+            $supplierLink = $this->model->newInstance();
+            $supplierLink->name = $inputData['name'];
+            $supplierLink->email = $inputData['email'];
+            $supplierLink->registration_number =  $inputData['registration_number'];
+            $supplierLink->company_id = $inputData['company_id'];
+            $supplierLink->token = $inputData['token'];
+            $supplierLink->created_by = -1;
+            $supplierLink->updated_by = '';
+            $supplierLink->STATUS = ($inputData['status']) ?? 0;
+            $supplierLink->uuid = ($inputData['tenantUuid']) ?? null;
+            $supplierLink->is_bid_tender =  $inputData['is_bid_tender'];
+            $supplierLink->created_via =  3;
+            $supplierLink->is_existing_erp_supplier = 0;
+            $supplierLink->sub_domain = ' ';
+            $supplierLink->save();
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully Saved', 'data' => true];
 
         }
         catch (\Exception $exception)
@@ -190,5 +190,37 @@ class SupplierRegistrationLinkRepository extends BaseRepository
             $type = 'Fully Approved';
         }
         return $type;
+    }
+
+    public function getNonRegisteredSupplierList($request)
+    {
+        $search = $request->input('search.value');
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $linkData = SupplierRegistrationLink::getUnapprovedSuppliers($input['tenderMasterId'],
+            $input['companyId'],true);
+
+
+        if($search){
+            $search = str_replace("\\", "\\\\", $search);
+            $linkData =   $linkData->where(function ($query) use($search) {
+                $query->where('name','LIKE',"%{$search}%")
+                    ->orWhere('registration_number', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+
+        return \DataTables::of($linkData)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
     }
 }

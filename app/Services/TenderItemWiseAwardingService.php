@@ -757,67 +757,67 @@ class TenderItemWiseAwardingService
         // Schedule-wise only: award or LOI/LOA email data
         if (($emailType === 'award' || $emailType === 'loi_loa') && $supplierId === null) {
             $tender->load(['ranking_supplier' => function ($q) {
-                    $q->where('award', 1)->with(['supplier', 'bid_submission_master']);
-                }]);
-                $rankSup = $tender->ranking_supplier;
-                if (!$rankSup || !$rankSup->supplier) {
-                    return [
-                        'success' => false,
-                        'message' => trans('srm_tender_rfx.item_wise_tender_award_first_or_provide_selections'),
-                        'data' => null,
-                    ];
-                }
-                $supplier = $rankSup->supplier;
-                $bidMaster = $rankSup->bid_submission_master ?? null;
-                $bidSubmittedRaw = $bidMaster && isset($bidMaster->bidSubmittedDatetime)
-                    ? $bidMaster->bidSubmittedDatetime
-                    : ($bidMaster && $bidMaster->created_at ? $bidMaster->created_at->format('Y-m-d H:i:s') : '');
-                $bidSubmisionDate = $bidSubmittedRaw ? (function () use ($bidSubmittedRaw) {
-                    $parts = explode(' ', $bidSubmittedRaw)[0] ?? '';
-                    $p = explode('-', $parts);
-                    return count($p) === 3 ? $p[2] . '/' . $p[1] . '/' . $p[0] : $bidSubmittedRaw;
-                })() : '';
-                $finalCommercialPrice = $bidMaster && isset($bidMaster->line_item_total) ? number_format((float) $bidMaster->line_item_total, 2) : '';
-                $currency = $tender->currency ? $tender->currency->CurrencyName : '';
-                $context = [
-                    'supplierName' => $supplier->name ?? '',
-                    'tenderCode' => $tender->tender_code ?? '',
-                    'tenderTitle' => $tender->title ?? '',
-                    'bidSubmisionDate' => $bidSubmisionDate,
-                    'documentType' => $documentTypeLabel,
-                    'finalCommercialPrice' => $finalCommercialPrice,
-                    'currency' => $currency,
+                $q->where('award', 1)->with(['supplier', 'bid_submission_master']);
+            }]);
+            $rankSup = $tender->ranking_supplier;
+            if (!$rankSup || !$rankSup->supplier) {
+                return [
+                    'success' => false,
+                    'message' => trans('srm_tender_rfx.item_wise_tender_award_first_or_provide_selections'),
+                    'data' => null,
                 ];
-                $recipientDisplay = ($supplier->name ?? '') . ($supplier->email ? ' <' . $supplier->email . '>' : '');
-                $supplierEmail = $supplier->email ?? null;
-                if ($emailBody !== '') {
-                    $emailBody = self::replaceLoiLoaPlaceholders($emailBody, $context);
-                } else {
-                    $emailBody = "Hi " . ($supplier->name ?? '') . ", <br><br> Based on your final revised proposal submitted on " . $bidSubmisionDate . ", we would like to inform you that we intend to award your company the " . $tender->tender_code . " | " . $tender->title . " " . $documentTypeLabel . " for <b>" . $finalCommercialPrice . "</b> " . $currency . " with all agreed conditions. <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. <br>";
+            }
+            $supplier = $rankSup->supplier;
+            $bidMaster = $rankSup->bid_submission_master ?? null;
+            $bidSubmittedRaw = $bidMaster && isset($bidMaster->bidSubmittedDatetime)
+                ? $bidMaster->bidSubmittedDatetime
+                : ($bidMaster && $bidMaster->created_at ? $bidMaster->created_at->format('Y-m-d H:i:s') : '');
+            $bidSubmisionDate = $bidSubmittedRaw ? (function () use ($bidSubmittedRaw) {
+                $parts = explode(' ', $bidSubmittedRaw)[0] ?? '';
+                $p = explode('-', $parts);
+                return count($p) === 3 ? $p[2] . '/' . $p[1] . '/' . $p[0] : $bidSubmittedRaw;
+            })() : '';
+            $finalCommercialPrice = $bidMaster && isset($bidMaster->line_item_total) ? number_format((float) $bidMaster->line_item_total, 2) : '';
+            $currency = $tender->currency ? $tender->currency->CurrencyName : '';
+            $context = [
+                'supplierName' => $supplier->name ?? '',
+                'tenderCode' => $tender->tender_code ?? '',
+                'tenderTitle' => $tender->title ?? '',
+                'bidSubmisionDate' => $bidSubmisionDate,
+                'documentType' => $documentTypeLabel,
+                'finalCommercialPrice' => $finalCommercialPrice,
+                'currency' => $currency,
+            ];
+            $recipientDisplay = ($supplier->name ?? '') . ($supplier->email ? ' <' . $supplier->email . '>' : '');
+            $supplierEmail = $supplier->email ?? null;
+            if ($emailBody !== '') {
+                $emailBody = self::replaceLoiLoaPlaceholders($emailBody, $context);
+            } else {
+                $emailBody = "Hi " . ($supplier->name ?? '') . ", <br><br> Based on your final revised proposal submitted on " . $bidSubmisionDate . ", we would like to inform you that we intend to award your company the " . $tender->tender_code . " | " . $tender->title . " " . $documentTypeLabel . " for <b>" . $finalCommercialPrice . "</b> " . $currency . " with all agreed conditions. <br>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal. <br>";
+            }
+            // Override with saved schedule-wise draft: TAE for award, TLL for LOI/LOA
+            $draftDocCode = $emailType === 'loi_loa' ? self::DOCUMENT_CODE_LOI_LOA : 'TAE';
+            $scheduleAwardDraft = TenderCustomEmail::getSupplierCustomEmailBody($tenderId, $rankSup->supplier->id, $draftDocCode);
+            if ($scheduleAwardDraft && $scheduleAwardDraft->email_body !== null && $scheduleAwardDraft->email_body !== '') {
+                $emailBody = self::replaceLoiLoaPlaceholders($scheduleAwardDraft->email_body, $context);
+                if (!empty($scheduleAwardDraft->email_subject)) {
+                    $emailSubject = $scheduleAwardDraft->email_subject;
                 }
-                // Override with saved schedule-wise draft: TAE for award, TLL for LOI/LOA
-                $draftDocCode = $emailType === 'loi_loa' ? self::DOCUMENT_CODE_LOI_LOA : 'TAE';
-                $scheduleAwardDraft = TenderCustomEmail::getSupplierCustomEmailBody($tenderId, $rankSup->supplier->id, $draftDocCode);
-                if ($scheduleAwardDraft && $scheduleAwardDraft->email_body !== null && $scheduleAwardDraft->email_body !== '') {
-                    $emailBody = self::replaceLoiLoaPlaceholders($scheduleAwardDraft->email_body, $context);
-                    if (!empty($scheduleAwardDraft->email_subject)) {
-                        $emailSubject = $scheduleAwardDraft->email_subject;
-                    }
-                    if (!empty($scheduleAwardDraft->cc_email)) {
-                        $decoded = json_decode($scheduleAwardDraft->cc_email, true);
-                        if (is_array($decoded)) {
-                            $ccEmails = $decoded;
-                        }
-                    }
-                    if ($scheduleAwardDraft->document_id && $scheduleAwardDraft->attachment) {
-                        $attachments = [['attachmentID' => $scheduleAwardDraft->document_id, 'originalFileName' => $scheduleAwardDraft->attachment->originalFileName ?? '', 'path' => $scheduleAwardDraft->attachment->path ?? '']];
-                    } elseif (!$scheduleAwardDraft->document_id) {
-                        $attachments = [];
+                if (!empty($scheduleAwardDraft->cc_email)) {
+                    $decoded = json_decode($scheduleAwardDraft->cc_email, true);
+                    if (is_array($decoded)) {
+                        $ccEmails = $decoded;
                     }
                 }
-                if (!empty($emailSubject)) {
-                    $emailSubject = self::replaceLoiLoaPlaceholders($emailSubject, $context);
+                if ($scheduleAwardDraft->document_id && $scheduleAwardDraft->attachment) {
+                    $attachments = [['attachmentID' => $scheduleAwardDraft->document_id, 'originalFileName' => $scheduleAwardDraft->attachment->originalFileName ?? '', 'path' => $scheduleAwardDraft->attachment->path ?? '']];
+                } elseif (!$scheduleAwardDraft->document_id) {
+                    $attachments = [];
                 }
+            }
+            if (!empty($emailSubject)) {
+                $emailSubject = self::replaceLoiLoaPlaceholders($emailSubject, $context);
+            }
         }
 
         return [
@@ -833,6 +833,8 @@ class TenderItemWiseAwardingService
                 'document_type_label' => $documentTypeLabel,
                 'tender_code' => $tender->tender_code ?? '',
                 'tender_title' => $tender->title ?? '',
+                'final_tender_awarded' => (int) ($tender->final_tender_awarded ?? 0),
+                'final_tender_award_email' => (int) ($tender->final_tender_award_email ?? 0),
             ],
         ];
     }
@@ -1217,7 +1219,7 @@ class TenderItemWiseAwardingService
                 'attachmentList' => $attachmentList,
                 'ccEmail' => $ccEmails,
             ];
-            Email::sendEmailErp($dataEmail);
+            Email::sendEmailSRM($dataEmail);
         }
     }
 

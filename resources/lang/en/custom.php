@@ -10021,6 +10021,10 @@ return
     'product_access_value_not_matching' => 'The Product access value not matching with system',
     'user_type_not_found' => 'The User Type not Found',
     'input_value_not_matching' => 'The input value not matching',
+    'tender_awarded_date' => 'Tender/RFX Awarded Date',
+    'is_linked' => 'Is Linked',
+    'linked_supplier_code' => 'Linked Supplier Code',
+    'linked_supplier_name' => 'Linked Supplier Name',
     'wareHouse_code_must_be_array' => 'Warehouse code must be an array',
     'item_code_must_be_a_array' => 'Item code must be an array',
     'wareHouse_code_must_be_a_string' => 'Warehouse code must be a string',
@@ -10047,5 +10051,5 @@ return
     'grv_mixed_category_types' => 'GRV cannot contain items from multiple Item Finance Category Types. Please ensure all items belong to the same category.',
     'grv_multiple_subcategories' => 'GRV cannot contain items from multiple subcategories under the same main category. Please select items from a single subcategory.',
     'subcategory_approval_disabled_enable_before_activate' => 'Subcategory Approval is currently disabled in Document Configuration. Please enable Subcategory Approval before activating a Subcategory-level approval setup.',
-    'payment_voucher_interbank_transfer' => 'Payment Voucher - Interbank Transfer',
+    'payment_voucher_interbank_transfer' => 'Payment Voucher - Interbank Transfer'
 ];

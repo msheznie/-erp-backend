@@ -170,5 +170,25 @@ class SrmItemWiseTenderAwarding extends Model
         return self::getAwardedRowsForTender($tenderId, $isNegotiation, $supplierId)
             ->with(['supplier', 'bid_submission_master'])->get();
     }
-    
+
+    public static function getAwardedItems($tenderId)
+    {
+        return self::query()
+            ->select('boq_item_id', 'bid_format_detail_id', 'supplier_id')
+            ->with([
+                'supplier:id,name',
+                'boqItem:id,item_name,description',
+                'pricingScheduleDetail:id,label,description'
+            ])
+            ->where('tender_id', $tenderId)
+            ->where('award', 1)
+            ->get();
+    }
+
+    public static function hasAwardedItemsForTender(int $tenderId): bool
+    {
+        return self::where('tender_id', $tenderId)
+            ->where('is_awarded', 1)
+            ->exists();
+    }
 }

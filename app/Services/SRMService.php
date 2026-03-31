@@ -73,6 +73,7 @@ use App\Models\SupplierInvoiceDirectItem;
 use App\Models\SupplierMaster;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierTenderNegotiation;
+use App\Models\TenderFinalBids;
 use App\Models\TenderBidClarifications;
 use App\Models\TenderBidNegotiation;
 use App\Models\TenderBoqItems;
@@ -89,6 +90,7 @@ use App\Models\TenderSupplierAssignee;
 use App\Models\WarehouseMaster;
 use App\Models\BookInvSuppMaster;
 use App\Models\SrmPOAcknowledgement;
+use App\Models\SrmItemWiseTenderAwarding;
 use App\Repositories\DocumentAttachmentsRepository;
 use App\Repositories\SRMPublicLinkRepository;
 use App\Repositories\SupplierInvoiceItemDetailRepository;
@@ -125,6 +127,7 @@ use App\Models\SupplierInvoiceItemDetail;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Config;
 use App\Services\WebPushNotificationService;
+use App\Constants\TenderConstants;
 
 use App\helper\email as Email;
 use App\helper\Workflow\DocumentConfirm;
@@ -1388,6 +1391,13 @@ class SRMService
                 },
                 'slot_detail' => function ($query) {
                     $query->select('id','slot_master_id', 'company_id');
+                },
+                'detail' => function ($query) {
+                    $query->select('appointment_id', 'po_master_id')
+                        ->distinct()
+                        ->with(['po_master' => function ($query) {
+                            $query->select('purchaseOrderID', 'purchaseOrderCode');
+                        }]);
                 }
             ]);
 
@@ -1422,6 +1432,12 @@ class SRMService
         $data = DataTables::of($query)
             ->addColumn('attachmentPolicyEnabled', function ($row) {
                 return Helper::checkPolicy($row->company_id, 104);
+            })
+            ->addColumn('purchase_orders', function ($row) {
+                return $row->detail
+                    ->pluck('po_master.purchaseOrderCode')
+                    ->filter()
+                    ->implode(', ');
             })
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
@@ -1671,7 +1687,7 @@ class SRMService
                 'final_tender_awarded', 'tender_type_id', 'currency_id', 'document_sales_end_date',
                 'pre_bid_clarification_end_date', 'bid_submission_closing_date', 'pre_bid_clarification_method',
                 'site_visit_date', 'description_sec_lang', 'title_sec_lang', 'document_type', 'tender_document_fee',
-                'negotiation_code','site_visit_date', 'description_sec_lang', 'title_sec_lang', 'company_id')
+                'negotiation_code','site_visit_date', 'description_sec_lang', 'title_sec_lang', 'company_id', 'cancelled_yn')
                 ->with([
                     'currency:currencyID,CurrencyName',
                     'srmTenderMasterSupplier' => function ($q) use ($supplierRegId) {
@@ -1695,7 +1711,8 @@ class SRMService
                     }
                 ])->whereDoesntHave('srmTenderMasterSupplier', function ($q) use ($supplierRegId) {
                     $q->where('purchased_by', '=', $supplierRegId);
-                })->whereIn('id', $tenderMasterId)->where('published_yn', 1)->where('final_tender_awarded', 0);
+                })->whereIn('id', $tenderMasterId)->where('published_yn', 1)->where('final_tender_awarded', 0)
+                ->where('cancelled_yn', 0);
         } else if ($request->input('extra.tender_status') == 2) {
 
             $negotiatedTenders = TenderNegotiation::select('srm_tender_master_id')
@@ -1708,10 +1725,10 @@ class SRMService
                 'pre_bid_clarification_method', 'no_of_alternative_solutions', 'site_visit_date',
                 'description_sec_lang', 'title_sec_lang', 'is_active_go_no_go', 'bid_submission_closing_date',
                 'is_negotiation_closed', 'pre_bid_clarification_end_date', 'document_sales_end_date', 'document_type',
-                'tender_document_fee', 'negotiation_code', 'company_id')
+                'tender_document_fee', 'negotiation_code', 'company_id', 'cancelled_yn')
                 ->with([
                     'currency' => function ($q){
-                        $q->select('currencyID', 'CurrencyName');
+                        $q->select('currencyID', 'CurrencyName', 'DecimalPlaces');
                     },
                     'tender_negotiation' => function ($q){
                         $q->select('id', 'srm_tender_master_id', 'status')
@@ -1748,7 +1765,8 @@ class SRMService
                 })
                 ->whereNotIn('id', $negotiatedTenders)
                 ->where('published_yn', 1)
-                ->where('final_tender_awarded', 0);
+                ->where('final_tender_awarded', 0)
+                ->where('cancelled_yn', 0);
 
         } else if ($request->input('extra.tender_status') == 3) {
 
@@ -1757,10 +1775,11 @@ class SRMService
                 'pre_bid_clarification_method', 'no_of_alternative_solutions', 'site_visit_date',
                 'description_sec_lang', 'title_sec_lang', 'is_active_go_no_go', 'bid_submission_closing_date',
                 'is_negotiation_closed', 'pre_bid_clarification_end_date', 'document_sales_end_date',
-                'negotiation_code', 'document_type', 'tender_document_fee', 'company_id', 'evaluation_type_id')
+                'negotiation_code', 'document_type', 'tender_document_fee', 'company_id', 'evaluation_type_id',
+                'show_award_detail', 'award_visibility_type', 'cancelled_yn', 'negotiation_is_awarded')
                 ->with([
                     'currency' => function ($q){
-                        $q->select('currencyID', 'CurrencyName');
+                        $q->select('currencyID', 'CurrencyName', 'DecimalPlaces');
                     },
                     'tender_negotiation' => function ($q) use ($supplierRegId){
                         $q->select('id', 'srm_tender_master_id', 'status')
@@ -1818,7 +1837,8 @@ class SRMService
                         ->orWhere(function ($query) {
                             $query->where('negotiation_is_awarded', 1)
                                 ->where('final_tender_awarded', 1);
-                        });
+                        })
+                        ->orWhere('cancelled_yn', 1);
                 })->where('published_yn', 1)
                 ->whereHas('srmTenderMasterSuppliers', function ($q) use ($supplierRegId) {
                     $q->where('purchased_by', '=', $supplierRegId);
@@ -1868,6 +1888,9 @@ class SRMService
             ->addColumn('tenderPurchasePolicy', function ($tender) {
                 return Helper::checkPolicy($tender->company_id, 98);
             })
+            ->addColumn('award_details', function ($tender) {
+                return $this->buildSupplierPortalAwardDetails($tender);
+            })
             ->with('orderCondition', $sort)
             ->addColumn('Actions', 'Actions', "Actions")
             ->make(true);
@@ -1899,7 +1922,7 @@ class SRMService
             )
                 ->with([
                     'currency' => function ($q) {
-                        $q->select('currencyID', 'CurrencyName');
+                        $q->select('currencyID', 'CurrencyName', 'DecimalPlaces');
                     },
                     'tender_negotiation' => function ($q) use ($supplierRegId) {
                         $q->select('id', 'srm_tender_master_id', 'status', 'version')
@@ -1986,6 +2009,100 @@ class SRMService
         ];
     }
 
+    private function buildSupplierPortalAwardDetails($tender): array
+    {
+        if (
+            empty($tender->show_award_detail) ||
+            empty($tender->evaluation_type_id) ||
+            empty($tender->award_visibility_type)
+        ) {
+            return [];
+        }
+
+        $tenderId = $tender->id;
+
+        if ($tender->evaluation_type_id == TenderConstants::EVALUATION_SCHEDULE_WISE) {
+            return $this->buildScheduleWiseAwardDetails($tender, $tenderId);
+        }
+
+        if (
+            $tender->evaluation_type_id == TenderConstants::EVALUATION_ITEM_WISE &&
+            $tender->award_visibility_type == TenderConstants::VISIBILITY_ITEM_SUPPLIER
+        ) {
+            return $this->buildItemWiseAwardDetails($tenderId);
+        }
+
+        return [];
+    }
+    private function buildScheduleWiseAwardDetails($tender, int $tenderId): array
+    {
+        $isNegotiation = $this->resolveScheduleAwardIsNegotiationFlag($tender);
+
+        if ($tender->award_visibility_type == TenderConstants::VISIBILITY_RANKING) {
+            return $this->buildScheduleRanking($tenderId, $isNegotiation);
+        }
+
+        if ($tender->award_visibility_type == TenderConstants::VISIBILITY_RANKING_WITH_COMMERCIAL) {
+            return $this->buildScheduleCommercial($tender, $tenderId, $isNegotiation);
+        }
+
+        return [];
+    }
+    private function resolveScheduleAwardIsNegotiationFlag($tender): int
+    {
+        return (int) ($tender->negotiation_is_awarded ?? 0) === 1 ? 1 : 0;
+    }
+
+    private function buildScheduleRanking(int $tenderId, int $isNegotiation): array
+    {
+        $bidSubmissionMasterIds = TenderNegotiation::bidSubmissionMasterIdsForScheduleAward($tenderId, $isNegotiation);
+
+        $rows = TenderFinalBids::getScheduleAwardRankingRows($tenderId, $isNegotiation, $bidSubmissionMasterIds);
+
+        return $rows->values()->map(function ($row) {
+            return [
+                'supplier_name' => $row->supplier->name ?? null,
+                'ranking' => $row->combined_ranking ?? null,
+            ];
+        })->toArray();
+    }
+    private function buildScheduleCommercial($tender, int $tenderId, int $isNegotiation): array
+    {
+        $decimalPlaces = isset($tender->currency->DecimalPlaces)
+            ? (int) $tender->currency->DecimalPlaces
+            : 3;
+
+        $bidSubmissionMasterIds = TenderNegotiation::bidSubmissionMasterIdsForScheduleAward($tenderId, $isNegotiation);
+
+        $rows = TenderFinalBids::getScheduleAwardCommercialRows($tenderId, $isNegotiation, $bidSubmissionMasterIds);
+
+        return $rows->values()->map(function ($row) use ($decimalPlaces) {
+            $commercial = $row->bid_submission_master->line_item_total ?? null;
+
+            return [
+                'supplier_name' => $row->supplier->name ?? null,
+                'ranking' => $row->commercial_ranking ?? null,
+                'commercial' => $commercial !== null
+                    ? number_format((float) $commercial, $decimalPlaces, '.', '')
+                    : null,
+            ];
+        })->toArray();
+    }
+    private function buildItemWiseAwardDetails(int $tenderId): array
+    {
+        return SrmItemWiseTenderAwarding::getAwardedItems($tenderId)
+            ->map(function ($row) {
+                $itemName = optional($row->boqItem)->item_name
+                    ?: optional($row->boqItem)->description
+                        ?: optional($row->pricingScheduleDetail)->label
+                            ?: optional($row->pricingScheduleDetail)->description;
+
+                return [
+                    'item' => $itemName,
+                    'supplier_name' => $row->supplier->name ?? null,
+                ];
+            })->toArray();
+    }
     public function saveTenderPurchase(Request $request)
     {
         $supplierUuid = $request->input('extra.supplierUuid') ?? $request->input('supplier_uuid');

@@ -62,6 +62,7 @@ use App\Models\SrmTenderMasterEditLog;
 use App\Models\SrmTenderPo;
 use App\Models\SRMTenderPaymentProof;
 use App\Models\SRMTenderTechnicalEvaluationAttachment;
+use App\Models\SrmTenderTechnicalEvaluationHistory;
 use App\Models\SRMTenderUserAccess;
 use App\Models\SupplierRegistrationLink;
 use App\Models\SupplierAssigned;
@@ -75,7 +76,9 @@ use App\Models\TenderDocumentTypeAssign;
 use App\Models\TenderDocumentTypeAssignLog;
 use App\Models\TenderDocumentTypes;
 use App\Models\TenderMaster;
+use App\Models\TenderCancellation;
 use App\Models\TenderMasterSupplier;
+use App\Models\TenderNegotiation;
 use App\Models\TenderProcurementCategory;
 use App\Models\TenderPurchaseRequest;
 use App\Models\TenderPurchaseRequestEditLog;
@@ -89,6 +92,7 @@ use App\Services\GeneralService;
 use App\Services\SRMService;
 use App\Services\TenderItemWiseAwardingService;
 use App\Services\TenderConfirmationService;
+use App\Services\TenderCancellationService;
 use App\Utilities\ContractManagementUtils;
 use Carbon\Carbon;
 use Illuminate\Container\Container as Application;
@@ -158,12 +162,15 @@ class TenderMasterRepository extends BaseRepository
     ];
 
     protected $srmDocumentModifyService;
+    protected $tenderCancellationService;
     public function __construct(
         Application $app,
-        SrmDocumentModifyService $srmDocumentModifyService
+        SrmDocumentModifyService $srmDocumentModifyService,
+        TenderCancellationService $tenderCancellationService
     ){
         parent::__construct($app);
         $this->srmDocumentModifyService = $srmDocumentModifyService;
+        $this->tenderCancellationService = $tenderCancellationService;
     }
 
     /**
@@ -825,7 +832,7 @@ class TenderMasterRepository extends BaseRepository
             $commercialStartDate = $formatedDates['commercialStartDate'];
             $commercialEndDate = $formatedDates['commercialEndDate'];
 
-            $result1 = $currentDateFormatted->gt($commercialStartDate);
+            $result1 = $currentDateFormatted->gt(Carbon::parse($commercialStartDate));
             if ($commercialEndDate == null) {
                 $result2 = true;
             } else {
@@ -1255,6 +1262,7 @@ class TenderMasterRepository extends BaseRepository
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
         $documentSystemID = $input['documentSystemID'];
+        $isNegotiation = isset($input['isNegotiation']) ? (int)$input['isNegotiation'] : 0;
 
         $tenderData = TenderMaster::getTenderByUuid($input['tenderId']);
         if (empty($tenderData)) {
@@ -1271,14 +1279,53 @@ class TenderMasterRepository extends BaseRepository
 
         try {
             DB::transaction(function () use ($input, $companySystemID, $documentSystemID, $documentSystemCode,
-                $documentID, $companyID) {
+                $documentID, $companyID, $isNegotiation, $tenderData) {
 
+                $createdAttachmentId = null;
                 if (isset($input['Attachment']) && !empty($input['Attachment'])) {
 
                     $getAttachmentData = self::getAttachmentData($input['Attachment'], $companySystemID,
                         $documentSystemID, $documentSystemCode, $documentID, $companyID);
 
-                    DocumentAttachments::create($getAttachmentData);
+                    $created = DocumentAttachments::create($getAttachmentData);
+                    $createdAttachmentId = $created ? ($created->attachmentID ?? null) : null;
+                }
+
+                if ((int)$isNegotiation === 1) {
+                    $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($documentSystemCode);
+                    $roundNo = $latestNegotiation ? (int)$latestNegotiation->version : null;
+                    $negotiationId = $latestNegotiation ? (int)$latestNegotiation->id : null;
+                    $negotiationCode = $tenderData['negotiation_code'] ?? null;
+
+                    $comment = $input['comment'] ?? '';
+                    $hasAnyData = (($comment !== null && $comment !== '') || ($createdAttachmentId !== null));
+
+                    if ($hasAnyData) {
+                        $existing = SrmTenderTechnicalEvaluationHistory::checkExistHistory($documentSystemCode, $companySystemID, $negotiationId, $roundNo);
+                        $payload = [
+                            'tender_id' => $documentSystemCode,
+                            'company_id' => $companySystemID,
+                            'negotiation_id' => $negotiationId,
+                            'negotiation_code' => $negotiationCode,
+                            'round_no' => $roundNo,
+                            'comment' => $comment,
+                            'attachment_id' => $createdAttachmentId,
+                        ];
+
+                        if ($existing) {
+                            $payload['updated_by'] = Helper::getEmployeeSystemID();
+                            // Only overwrite attachment if a new one was uploaded.
+                            if ($createdAttachmentId === null) {
+                                unset($payload['attachment_id']);
+                            }
+                            SrmTenderTechnicalEvaluationHistory::where('id', $existing->id)->update($payload);
+                        } else {
+                            $payload['created_by'] = Helper::getEmployeeSystemID();
+                            SrmTenderTechnicalEvaluationHistory::create($payload);
+                        }
+                    }
+
+                    return;
                 }
 
                 $evaluationData = SRMTenderTechnicalEvaluationAttachment::getEvaluationData(
@@ -1390,6 +1437,7 @@ class TenderMasterRepository extends BaseRepository
         $input = $request->all();
         $companySystemID = $input['companySystemID'];
         $attachmentId = $input['attachmentId'];
+        $isNegotiation = isset($input['isNegotiation']) ? (int)$input['isNegotiation'] : 0;
 
         $attachment = DocumentAttachments::documentAttachmentById($attachmentId);
         if (!$attachment) {
@@ -1404,6 +1452,21 @@ class TenderMasterRepository extends BaseRepository
         }
 
         $attachment->delete();
+
+        if ((int)$isNegotiation === 1) {
+            $tenderData = TenderMaster::getTenderByUuid($input['tenderId']);
+            if (!empty($tenderData)) {
+                $tenderId = $tenderData['id'];
+                SrmTenderTechnicalEvaluationHistory::where('tender_id', $tenderId)
+                    ->where('company_id', $companySystemID)
+                    ->where('attachment_id', $attachmentId)
+                    ->update([
+                        'attachment_id' => null,
+                        'updated_by' => Helper::getEmployeeSystemID(),
+                        'updated_at' => now(),
+                    ]);
+            }
+        }
 
         return [
             'success' => true,
@@ -2327,7 +2390,7 @@ class TenderMasterRepository extends BaseRepository
                 $employee = Helper::getEmployeeInfo();
                 $data = [];
                 $insertSupplierAssignee = false;
-
+                $isUnapproved = $input['unapprovedSup'] ?? false;
                 $validation = self::checkTenderSupplierAssigneeValid($input);
                 if(!$validation['success']){
                     return $validation;
@@ -2344,24 +2407,48 @@ class TenderMasterRepository extends BaseRepository
 
                 if (!empty($pullList)) {
                     if ($tenderMaster['tender_type_id'] != 3 && $selectAll == true) {
-                        $deleteData = self::deleteTenderSupplierAssignee($tenderId, $editOrAmend, $versionID);
+                        $deleteData = self::deleteTenderSupplierAssignee($tenderId, $editOrAmend, $versionID, $isUnapproved);
                         if(!$deleteData['success']){
                             return $deleteData;
                         }
 
-                        $pullList = SupplierAssigned::tenderAssignSuppliersForCreation(
-                            $tenderId, $removedSuppliersId, $companySystemId, $editOrAmend, $versionID
-                        );
+                        if($isUnapproved)
+                        {
+                            $pullList = SupplierRegistrationLink::getallUnApprovedSuppliers(
+                                $tenderId, $removedSuppliersId, $companySystemId, $editOrAmend, $versionID);
+                        }else {
+                            $pullList = SupplierAssigned::tenderAssignSuppliersForCreation(
+                                $tenderId, $removedSuppliersId, $companySystemId, $editOrAmend, $versionID
+                            );
+                        }
+
+                    }
+
+                    if ($isUnapproved) {
+                        $registrationLinks = SupplierRegistrationLink::whereIn('id', $pullList)
+                            ->get()
+                            ->keyBy('id');
                     }
 
                     foreach ($pullList as $key => $val) {
+                        $reg = $isUnapproved ? ($registrationLinks[$val] ?? null) : null;
+
                         $data[$key] = [
                             'tender_master_id' => $tenderId,
-                            'supplier_assigned_id' => $val,
+                            'supplier_assigned_id' => $isUnapproved ? null : $val,
+                            'supplier_name' => $isUnapproved && $reg ? $reg->name : null,
+                            'supplier_email' => $isUnapproved && $reg ? $reg->email : null,
+                            'unApprovedSupplier' => $isUnapproved ? 1 : null,
+                            'registration_number' => $isUnapproved && $reg ? $reg->registration_number : null,
                             'created_by' => $employee->employeeSystemID,
                             'company_id' => $companySystemId,
                             'created_at' => Helper::currentDateTime()
                         ];
+
+                        if ($isUnapproved) {
+                            $data[$key]['registration_link_id'] = $val;
+                        }
+
                         if($editOrAmend){
                             $data[$key]['id'] = null;
                             $data[$key]['version_id'] = $versionID;
@@ -2383,21 +2470,34 @@ class TenderMasterRepository extends BaseRepository
             return ['success' => false, 'message' => $ex->getMessage()];
         }
     }
-    private function deleteTenderSupplierAssignee($tenderID, $editOrAmend, $versionID){
+    private function deleteTenderSupplierAssignee($tenderID, $editOrAmend, $versionID, $isUnapproved){
         try {
-            return DB::transaction(function () use ($tenderID, $editOrAmend, $versionID) {
+            return DB::transaction(function () use ($tenderID, $editOrAmend, $versionID, $isUnapproved) {
                 if($editOrAmend){
-                    TenderSupplierAssigneeEditLog::where('version_id', $versionID)
+                    $query = TenderSupplierAssigneeEditLog::where('version_id', $versionID)
                         ->where('is_deleted', 0)
                         ->where('tender_master_id', $tenderID)
-                        ->whereNotNull('supplier_assigned_id')
-                        ->where('mail_sent', 0)
-                        ->update(['is_deleted' => 1]);
+                        ->where('mail_sent', 0);
+
+                    if ($isUnapproved) {
+                        $query->where('unApprovedSupplier', 1);
+                    } else {
+                        $query->whereNotNull('supplier_assigned_id');
+                    }
+
+                    $query->update(['is_deleted' => 1]);
 
                 } else {
-                    TenderSupplierAssignee::where('tender_master_id', $tenderID)
-                        ->whereNotNull('supplier_assigned_id')->where('mail_sent', 0)
-                        ->delete();
+                    $query = TenderSupplierAssignee::where('tender_master_id', $tenderID)
+                        ->where('mail_sent', 0);
+
+                    if ($isUnapproved) {
+                        $query->where('unApprovedSupplier', 1);
+                    } else {
+                        $query->whereNotNull('supplier_assigned_id');
+                    }
+
+                    $query->delete();
                 }
                 return ['success' => true, 'message' => 'Record(s) deleted successfully.'];
             });
@@ -2870,6 +2970,16 @@ class TenderMasterRepository extends BaseRepository
             'timesReferred' => 0,
             'RollLevForApp_curr' => 1,
             'approved_by_emp_name' => null,
+
+            'cancelled_yn' => 0,
+            'cancelled_by' => null,
+            'cancelled_by_emp_name' => null,
+            'cancelled_date' => null,
+
+            'doc_verifiy_by_emp' => null,
+            'doc_verifiy_date' => null,
+            'doc_verifiy_status' => 0,
+            'doc_verifiy_comment' => null,
 
             'published_yn' => 0,
             'published_at' => null,
@@ -3458,5 +3568,48 @@ class TenderMasterRepository extends BaseRepository
                 'items' => $items,
             ]
         ];
+    }
+
+    public function createTenderCancellationRequest(array $input): array
+    {
+        return $this->tenderCancellationService->createCancellationRequest($input);
+    }
+
+    public function finalizeTenderCancellationIfApproved(int $cancellationId): array
+    {
+        return $this->tenderCancellationService->finalizeIfApproved($cancellationId);
+    }
+
+    public function getCancellationStatus(int $tenderId, int $companyId): array
+    {
+        return $this->tenderCancellationService->getCancellationStatus($tenderId, $companyId);
+    }
+
+    public function ensureTenderNotCancelled(int $tenderId): array
+    {
+        if ($tenderId <= 0) {
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.cancellation_document_id_required'),
+                'code' => 422
+            ];
+        }
+
+        $tender = TenderMaster::select('id', 'cancelled_yn', 'document_system_id')
+            ->where('id', $tenderId)
+            ->first();
+
+        if ($tender && (int) $tender->cancelled_yn === 1) {
+            $documentType = (int) $tender->document_system_id === 113
+                ? trans('srm_tender_rfx.rfx')
+                : trans('srm_tender_rfx.tender');
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.cancellation_processing_not_allowed', ['document_type' => $documentType]),
+                'code' => 422
+            ];
+        }
+
+        return ['success' => true];
     }
 }

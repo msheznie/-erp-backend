@@ -72,6 +72,7 @@ use App\Models\CurrencyConversionMaster;
 use App\Models\ERPAssetTransfer;
 use App\Models\ContingencyBudgetPlan;
 use App\Models\Appointment;
+use App\Models\TenderCancellation;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -546,6 +547,13 @@ class email
                         if (!empty($companyDepartmentEmployee)) {
                             $data['docApprovedYN'] = true;
                             $data['docCode'] = $companyDepartmentEmployee->planningCode;
+                        }
+                        break; 
+                    case 134:
+                        $tenderCancellation = TenderCancellation::with(['tender'])->where('id', $data['docSystemCode'])->first();
+                        if (!empty($tenderCancellation)) {
+                            $data['docApprovedYN'] = true;
+                            $data['docCode'] = $tenderCancellation->tenderCode ?? null;
                         }
                         break;                        
                     default:
