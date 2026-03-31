@@ -2459,12 +2459,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
         ->exists();
 
         $poMasterRcmActive = false;
-        if ($output->documentType == 0 || $output->documentType == 2) {
+        if (in_array($output->documentType, [0, 2])) {
             foreach ($output->detail as $detail) {
                 $poMaster = $detail->pomaster;
-                $isPoRcmActive = $poMaster && (int) $poMaster->rcmActivated === 1;
-                $isPoRcmAvailable = $poMaster && ($poMaster->rcmAvailable === true || (int) $poMaster->rcmAvailable === 1);
-                if ($isPoRcmActive && $isPoRcmAvailable) {
+
+                if (
+                    $poMaster &&
+                    (int) $poMaster->rcmActivated === 1 &&
+                    (int) $poMaster->rcmAvailable === 1
+                ) {
                     $poMasterRcmActive = true;
                     break;
                 }
@@ -3231,12 +3234,15 @@ class BookInvSuppMasterAPIController extends AppBaseController
         }
 
         if ($bookInvSuppMasterRecord->documentType != 4) {
-            if ($bookInvSuppMasterRecord->documentType == 0 || $bookInvSuppMasterRecord->documentType == 2) {
+            if (in_array($bookInvSuppMasterRecord->documentType, [0, 2])) {
                 foreach ($bookInvSuppMasterRecord->detail as $detail) {
                     $poMaster = $detail->pomaster;
-                    $isPoRcmActive = $poMaster && (int) $poMaster->rcmActivated === 1;
-                    $isPoRcmAvailable = $poMaster && ($poMaster->rcmAvailable === true || (int) $poMaster->rcmAvailable === 1);
-                    if ($isPoRcmActive && $isPoRcmAvailable) {
+
+                    if (
+                        $poMaster &&
+                        (int) $poMaster->rcmActivated === 1 &&
+                        (int) $poMaster->rcmAvailable === 1
+                    ) {
                         $poMasterRcmActive = true;
                         break;
                     }
