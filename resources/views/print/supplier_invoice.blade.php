@@ -946,7 +946,6 @@
         @php
             $siOrderTotal = (float) ($grvTotTra + $directTotTra);
             $siPoVatAmount = (float) ($poVATamount ?? ($masterdata->poVATamount ?? 0));
-            $siPct = (float) ($masterdata->retentionPercentage ?? 0);
             $siRcm = (int) ($masterdata->rcmActivated ?? 0);
             $siPoMasterRcmActive = (bool) ($poMasterRcmActive ?? false);
             $siEffectiveRcm = (($masterdata->documentType == 0 || $masterdata->documentType == 2) ? ($siPoMasterRcmActive || $siRcm) : (bool) $siRcm);
@@ -956,15 +955,8 @@
             $siPoVatAdjustedTotal = $siEffectiveRcm ? $siOrderTotal : ($siOrderTotal - $siPoVatAmount);
             $siVatAmount = $siEffectiveRcm ? 0 : ($siPoVatAmount - $siRetentionVatPortion);
             $siNetTotal = $siEffectiveRcm ? $siPoVatAdjustedTotal : ($siPoVatAdjustedTotal + $siVatAmount);
-            if ($siEffectiveRcm) {
-                $siRetentionAmount = $siOrderTotal * ($siPct / 100);
-            } elseif ($masterdata->documentType == 2) {
-                // Direct GRV retention follows VAT-exclusive total base as shown in edit.
-                $siRetentionAmount = $siPoVatAdjustedTotal * ($siPct / 100);
-            } else {
-                $siRetentionAmount = ((($siOrderTotal + $siPoVatAmount) * ($siPct / 100)) - $siRetentionVatPortion);
-            }
-            $siNetAmount = $siNetTotal - $siRetentionAmount - $siWhtDeduct - $siMol;
+            $siRetentionAmountDisplay = (float) ($masterdata->retentionAmount ?? 0);
+            $siNetAmount = $siNetTotal - $siRetentionAmountDisplay - $siWhtDeduct - $siMol;
         @endphp
         <div class="row" style="margin-top: 30px">
             <table style="width:100%; border-collapse: collapse;">
@@ -1005,7 +997,7 @@
                                     <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.retention') }}</span>
                                 </td>
                                 <td class="text-right" style="padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
-                                    <span class="font-weight-bold">{{ number_format($siRetentionAmount, $transDecimal) }}</span>
+                                    <span class="font-weight-bold">{{ number_format((float) ($masterdata->retentionAmount ?? 0), $transDecimal) }}</span>
                                 </td>
                             </tr>
                             @if ($masterdata->whtApplicable)
