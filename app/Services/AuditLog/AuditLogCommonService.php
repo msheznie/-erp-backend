@@ -533,6 +533,14 @@ class AuditLogCommonService
                     'docCodeColumn' => null, // No document code available
                     'companySystemIdColumn' => 'companyID'
                 ];
+
+            case 'erp_document_communication_messages':
+                return [
+                    'tableName' => 'erp_document_communication_messages',
+                    'primaryKey' => 'documentSystemCode',
+                    'docCodeColumn' => 'documentSystemCode',
+                    'companySystemIdColumn' => 'companySystemID'
+                ];
                 
             default:
                 return [
