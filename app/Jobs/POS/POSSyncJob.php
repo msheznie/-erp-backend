@@ -28,7 +28,7 @@ class POSSyncJob implements ShouldQueue
         public readonly ?string $externalReference,
         public readonly ?string $tenantUuid,
         public readonly ?int    $companyId,
-        public readonly ?int    $logId,
+        public readonly int|string|null $logId,
         public readonly ?int    $thirdPartyIntegrationKeyId,
     ) {
         $connection = env('IS_MULTI_TENANCY', false) ? 'database_main' : 'database';
