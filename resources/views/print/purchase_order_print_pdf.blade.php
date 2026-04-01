@@ -829,11 +829,7 @@
                     </td>
                     <td class="text-right" style="width: 20%;border: 1px solid rgb(127, 127, 127)!important;">
                         <span  style="font-weight: bold; font-size: 11px">
-                            @if($podata->rcmActivated)
-                                {{number_format(0, $numberFormatting)}} 
-                            @else 
                                 {{number_format($podata->VATAmount, $numberFormatting)}}
-                            @endif
                         </span>
                     </td>
                 </tr>
