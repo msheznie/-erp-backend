@@ -309,8 +309,10 @@ class EmployeeMovementNotificationService
         $movementType = $this->masterDet['movementType'] ?? '';
         $classification = $this->masterDet['type'] ?? '';
         $empName = $this->masterDet['empName'] ?? '';
+        $isExtension = $this->masterDet['isExtension'] ?? false;
+        $extText = $isExtension ? 'Extension' : '';
 
-        return "Employee Movement Approved - {$movementType} ({$classification}) - {$empName}";
+        return "Employee Movement {$extText} Approved - {$movementType} ({$classification}) - {$empName}";
     }
 
     public function emailBody()
@@ -324,11 +326,13 @@ class EmployeeMovementNotificationService
         $currentDepartmentDes = $this->masterDet['currentDepartmentDes'] ?? '';
         $assignedDepartmentDes = $this->masterDet['assignedDepartmentDes'] ?? '';
         $entityName = $this->masterDet['entityName'] ?? '';
+        $isExtension = $this->masterDet['isExtension'] ?? false;
 
         $isTransfer = (stripos((string) $movementType, 'Transfer') !== false);
+        $extText = $isExtension ? 'Extension' : '';
 
-        $body = 'This is to inform you that the following Employee Movement Request has been successfully approved in the system.<br/><br/>';
-        $body .= '<b>Employee Movement Details:</b><br/>';
+        $body = 'This is to inform you that the following Employee Movement '.$extText.' Request has been successfully approved in the system.<br/><br/>';
+        $body .= '<b>Employee Movement '.$extText.' Details:</b><br/>';
         $body .= 'Employee Name: ' . $empName . '<br/>';
         $body .= 'Employee ID: ' . $empCode . '<br/>';
         $body .= 'Movement Type: ' . $movementType . '<br/>';
