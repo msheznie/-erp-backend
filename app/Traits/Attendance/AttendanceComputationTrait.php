@@ -75,6 +75,11 @@ trait AttendanceComputationTrait{
             return;
         }
 
+        if (empty($this->clockIn) !== empty($this->clockOut)) {
+            $this->presentAbsentType = AbsentType::MISSED_PUNCH;
+            return;
+        }
+
         $this->presentAbsentType = AbsentType::ABSENT;
 
         if ($this->data['leaveHalfDay'] == 1) {
@@ -302,11 +307,7 @@ trait AttendanceComputationTrait{
 
     function lateHoursComputation(){
 
-        if (!$this->isShiftHoursSet || !$this->clockIn) {
-            return false;
-        }
-
-        if ($this->dayType != AttDayType::NORMAL_DAY) {
+        if (!$this->clockIn || $this->presentAbsentType == AbsentType::MISSED_PUNCH) {
             return false;
         }
 
@@ -314,7 +315,9 @@ trait AttendanceComputationTrait{
         $clockInDtObj = new DateTime($this->clockIn);
 
         if ($clockInDtObj->format('H:i:s') > $tempOnDutyDtObj->format('H:i:s')) {
-            $this->presentAbsentType = AbsentType::LATE;
+            if ($this->presentAbsentType != AbsentType::EXCEPTION){
+                $this->presentAbsentType = AbsentType::LATE;
+            }
 
             $actualOnDutyTime = new DateTime($this->onDutyTime);
             $interval = $clockInDtObj->diff($actualOnDutyTime);
@@ -390,22 +393,10 @@ trait AttendanceComputationTrait{
         }
     }
 
-    function calculateEarlyHourBaseOnGracePeriod(){
-
-        $calcClockOutMinutes = $this->shiftHours - $this->actualWorkingHours;
-
-        $calcClockOutDtmObj = new DateTime('@0');
-        $calcClockOutDtmObj->modify('+' . $calcClockOutMinutes . ' minutes');
-
-        $gracePeriodDtmObj = new DateTime('@0');
-        $gracePeriodDtmObj->modify('+' . $this->gracePeriod . ' minutes');
-
-        if($calcClockOutDtmObj  > $gracePeriodDtmObj){
-            $interval = $calcClockOutDtmObj->diff($gracePeriodDtmObj);
-            $hours = ($interval->h != 0) ? $interval->h : 0;
-            $minutes = ($interval->i != 0) ? $interval->i : 0;
-            $this->earlyHours = $hours * 60 + $minutes;
-        }
+    function calculateEarlyHourBaseOnGracePeriod()
+    {
+        $earlyMinutes = $this->shiftHours - $this->actualWorkingHours;
+        $this->earlyHours = max(0, $earlyMinutes - $this->gracePeriod);
     }
 
     public function overTimeComputation($clockInDtOT, $clockOutDtOT)
@@ -454,8 +445,7 @@ trait AttendanceComputationTrait{
 
     public function flxLateHourComputation()
     {
-
-        if (!$this->clockIn) {
+        if (!$this->clockIn || $this->presentAbsentType == AbsentType::MISSED_PUNCH) {
             return false;
         }
 
@@ -464,7 +454,9 @@ trait AttendanceComputationTrait{
 
 
         if ($clockInDtObj->format('H:i:s') > $flxHrToDtObj->format('H:i:s')) {
-            $this->presentAbsentType = AbsentType::LATE;
+            if ($this->presentAbsentType != AbsentType::EXCEPTION){
+                $this->presentAbsentType = AbsentType::LATE;
+            }
 
             $interval = $clockInDtObj->diff($flxHrToDtObj);
             $hours = ($interval->format('%h') != 0) ? $interval->format('%h') : 0;
@@ -492,4 +484,43 @@ trait AttendanceComputationTrait{
             $this->nonSalCatId = $abDayDeductionCalc['nonPay']['salaryCategoryId'];
         }
     }
+
+    public function configMissedPunch($punchTime, $punchType) {
+        if (count($this->attTempRecords) == 1) {
+            $this->presentAbsentType = AbsentType::MISSED_PUNCH;
+            $this->clockIn  = null;
+            $this->clockOut = $punchTime->format('H:i:s');
+
+            if ($punchType == 1) {
+                $this->clockIn  = $punchTime->format('H:i:s');
+                $this->clockOut = null;
+            }
+        }
+    }
+
+    public function calculateRotaShiftHours(){
+        if (empty($this->onDutyTime) || empty($this->offDutyTime)) {
+            return false;
+        }
+
+        $this->isShiftHoursSet = true;
+        $onDutyDate = date('Y-m-d', strtotime($this->data['att_date']));
+        $OffDutyDate = date('Y-m-d', strtotime($this->data['att_date'] . ' +1 day'));
+
+        $this->onDutyDateTime = new DateTime($onDutyDate . ' ' . $this->onDutyTime);
+        $this->offDutyDateTime = new DateTime($OffDutyDate . ' ' . $this->offDutyTime);
+        $this->shiftHoursObj = $this->offDutyDateTime->diff($this->onDutyDateTime);
+
+        $hours = $this->shiftHoursObj->format('%h');
+        $minutes = $this->shiftHoursObj->format('%i');
+        $this->shiftHours = ($hours * 60) + $minutes;
+
+    }
+
+    public function configOnLeavePresentType() {
+        $this->presentAbsentType = AbsentType::ON_LEAVE;
+        $this->actualWorkingHours = 0;
+        $this->otherComputation();
+    }
+
 }
