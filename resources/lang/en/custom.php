@@ -9954,7 +9954,7 @@ return
     'category_must_be_an_array' => 'Category must be an array',
     'per_page_cannot_exceed_50' => 'Per page cannot exceed 50',
     'budget_planning_export_ready' => 'Budget Planning Export Ready',
-    
+
     // Employee Activity Audit Report Validation Messages
     'screens_accessed_required' => 'Screens accessed is required',
     'screens_accessed_must_be_array' => 'Screens accessed must be an array',
