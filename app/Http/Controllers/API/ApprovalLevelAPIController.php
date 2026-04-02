@@ -38,6 +38,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Log;
 use App\helper\Helper;
+use App\Models\PvApprovalTypeSetup;
 
 /**
  * Class ApprovalLevelController
@@ -99,7 +100,8 @@ class ApprovalLevelAPIController extends AppBaseController
             }
         }
 
-        if(isset($input['documentSystemID']) && ($input['documentSystemID'] != 1)){
+        $validationExcludedDocuments = [1, 4];
+        if(isset($input['documentSystemID']) && !in_array($input['documentSystemID'], $validationExcludedDocuments)){
             $approvalLevelValidation = $this->approvalLevelValidation($input);
 
             if (!$approvalLevelValidation['status']) {
@@ -133,6 +135,13 @@ class ApprovalLevelAPIController extends AppBaseController
             $input['subcategoryID'] = null;
         }
 
+        if (isset($input['documentSystemID']) && $input['documentSystemID'] == 4) {
+            $input['serviceLineWise'] = 0;
+            $input['isCategoryWiseApproval'] = 0;
+            $input['isDelegation'] = 0;
+            $input['prTypeWise'] = 0;
+        }
+
         if (isset($request->approvalLevelID)) {
             $id = $request->approvalLevelID;
             $approvalLevel = $this->approvalLevelRepository->findWithoutFail($id);
@@ -164,6 +173,12 @@ class ApprovalLevelAPIController extends AppBaseController
 
         if (empty($approvalLevel)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_levels')]));
+        }
+
+        if (!empty($approvalLevel) && ($approvalLevel->documentSystemID == 4) && ($approvalLevel->pvTypeWise == 1)) {
+            $pvApprovalTypes = PvApprovalTypeSetup::where('company_system_id', $approvalLevel->companySystemID)->get();
+
+            $approvalLevel->pvTypeBaseApprovals = $pvApprovalTypes;
         }
 
         return $this->sendResponse($approvalLevel->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.approval_levels')]));
@@ -386,16 +401,6 @@ class ApprovalLevelAPIController extends AppBaseController
             ->when(isset($input['approvalLevelID']), function($query) use ($input) {
                 $query->where('approvalLevelID', '!=', $input['approvalLevelID']);
             })
-            /* ->when(isset($input['documentSystemID']) && (int) $input['documentSystemID'] === 4, function ($query) use ($input) {
-                if (!empty($input['pvTypeSetupID'])) {
-                    $query->where('pvTypeSetupID', $input['pvTypeSetupID']);
-                } else {
-                    $query->where(function ($q) {
-                        $q->whereNull('pvApprovalTypeSetupID')
-                            ->orWhere('pvApprovalTypeSetupID', 0);
-                    });
-                }
-            }) */
             ->when(isset($input['workflow']), function ($query) use ($input) {
                 $query->where(function ($query) use ($input) {
                     $query->where('workflow', $input['workflow']);

@@ -86,41 +86,45 @@ class PvApprovalTypeSetupService
         }
 
         if (isset($validatedData['is_amount_approval'])) {
-            $validatedData['is_general_approval'] = (int) $validatedData['is_amount_approval'] === 1 ? 0 : 1;
+            $result = $this->checkApprovalLevelConflict($validatedData, $setup);
+            if (!$result['status']) {
+                return ServiceResponse::failure($result['message']);
+            }
+            else {
+                $validatedData['is_general_approval'] = (int) $validatedData['is_amount_approval'] === 1 ? 0 : 1;
+            }
         } 
         elseif (isset($validatedData['is_general_approval'])) {
             if ((int) $validatedData['is_general_approval'] === 1) {
-                $validatedData['is_amount_approval'] = 0;
+                $result = $this->checkApprovalLevelConflict($validatedData, $setup);
+                if (!$result['status']) {
+                    return ServiceResponse::failure($result['message']);
+                }
+                else {
+                    $validatedData['is_amount_approval'] = 0;
+                }
             } 
             elseif ((int) $setup->is_amount_approval === 0) {
-                $validatedData['is_general_approval'] = 1;
+                $result = $this->checkApprovalLevelConflict($validatedData, $setup);
+                if (!$result['status']) {
+                    return ServiceResponse::failure($result['message']);
+                }
+                else {
+                    $validatedData['is_general_approval'] = 1;
+                }
             }
+
         }
 
         if (isset($validatedData['is_active'])) {
-            $companySystemId = $validatedData['company_system_id'];
             if ((int) $validatedData['is_active'] === 1) {
-                $existingActiveSetupDescription = null;
-                $documentAttachmentId = $validatedData['document_attachment_id'];
-
-                $typeValues = $this->getPvTypeFlagValues($validatedData, $setup);
-                $query = PvApprovalTypeSetup::where('company_system_id', $companySystemId)
-                    ->where('document_attachment_id', $documentAttachmentId)
-                    ->where('is_active', 1)
-                    ->where('id', '!=', (int) $setup->id);
-
-                foreach ($typeValues as $column => $value) {
-                    $query->where($column, $value);
-                }
-
-                $conflictingSetup = $query->first();
-
-                if (!empty($conflictingSetup)) {
-                    $existingActiveSetupDescription = $conflictingSetup->setup_description;
-                    return ServiceResponse::failure(trans('custom.pv_type_setup_active_conflict', ['description' => $existingActiveSetupDescription]));
+                $result = $this->checkApprovalLevelConflict($validatedData, $setup);
+                if (!$result['status']) {
+                    return ServiceResponse::failure($result['message']);
                 }
             }
             else {
+                $companySystemId = $validatedData['company_system_id'];
                 $activeLevel = ApprovalLevel::where('companySystemID', $companySystemId)
                     ->where('documentSystemID', 4)
                     ->where('pvTypeWise', 1)
@@ -160,6 +164,37 @@ class PvApprovalTypeSetupService
         $setup->delete();
 
         return ServiceResponse::success($setup, trans('custom.pv_approval_type_setup_deleted_successfully'));
+    }
+
+    private function checkApprovalLevelConflict($validatedData, $setup) {
+        $companySystemId = $validatedData['company_system_id'];
+        $documentAttachmentId = $validatedData['document_attachment_id'];
+
+        $typeValues = $this->getPvTypeFlagValues($validatedData, $setup);
+        $query = PvApprovalTypeSetup::where('company_system_id', $companySystemId)
+            ->where('document_attachment_id', $documentAttachmentId)
+            ->where('is_active', 1)
+            ->where('id', '!=', (int) $setup->id);
+
+        foreach ($typeValues as $column => $value) {
+            $query->where($column, $value);
+        }
+
+        $conflictingSetup = $query->first();
+
+        if (!empty($conflictingSetup)) {
+            $existingActiveSetupDescription = $conflictingSetup->setup_description;
+            return [
+                'status' => false,
+                'message' => trans('custom.pv_type_setup_active_conflict', ['description' => $existingActiveSetupDescription]),
+            ];
+        }
+        else {
+            return [
+                'status' => true,
+                'message' => 'No conflict found',
+            ];
+        }
     }
 
     private function getPvTypeFlagValues($data, $fallbackSetup = null): array
