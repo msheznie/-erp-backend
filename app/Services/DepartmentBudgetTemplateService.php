@@ -9,7 +9,7 @@ use App\Models\DepBudgetTemplateGl;
 use App\Models\BudgetTemplate;
 use App\Repositories\DepartmentBudgetTemplateRepository;
 use Illuminate\Support\Collection;
-
+use App\Models\DepartmentBudgetPlanningDetail;
 class DepartmentBudgetTemplateService
 {
     public function __construct(
@@ -100,6 +100,10 @@ class DepartmentBudgetTemplateService
             return [null, trans('custom.department_budget_template_not_found'), null];
         }
 
+        $checkBudgetExistsOnTemplate = DepartmentBudgetPlanningDetail::where('budget_template_id', $departmentBudgetTemplate->budgetTemplateID)->exists();
+        if ($checkBudgetExistsOnTemplate) {
+            return [null, "Budget template is not assigned to any department budget planning", null];
+        }
         $previousValue = $departmentBudgetTemplate->toArray();
         DepBudgetTemplateGl::where('departmentBudgetTemplateID', $id)->delete();
         $departmentBudgetTemplate->delete();

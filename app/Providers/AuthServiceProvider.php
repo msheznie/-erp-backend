@@ -67,6 +67,14 @@ class AuthServiceProvider extends ServiceProvider
                 if (isset($delegateUserPermission) && ($delegateUserPermission['status'] ?? false) === true) {
                     $access = $delegateUserPermission['access'] ?? [];
 
+                    // BudgetPermissionService can return `access` as a Laravel Collection.
+                    // Normalize to a plain array so array_key_exists / indexing won't error.
+                    if ($access instanceof \Illuminate\Support\Collection) {
+                        $access = $access->toArray();
+                    } elseif (is_object($access) && method_exists($access, 'toArray')) {
+                        $access = $access->toArray();
+                    }
+
                     if (!empty($access) && array_key_exists('input', $access) && $access['input'] === false) {
                         throw new AuthorizationException("User doesn't have permission to input data");
                     }
