@@ -124,4 +124,6 @@ class DepartmentAPIService
             'segments' => $segmentsPayload,
         ];
     }
+
+   
 }

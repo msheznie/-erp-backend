@@ -97,7 +97,7 @@ class CompanyDepartmentRepository extends BaseRepository
     }
 
     /**
-     * Eloquent query for external integration department search 
+     * External integration: GET /api/v1/integrations/departments/search
      *
      * @param  array  $filters  Keys: code (optional exact), status (ACTIVE|INACTIVE), type (Parent|Final)
      */
@@ -133,12 +133,10 @@ class CompanyDepartmentRepository extends BaseRepository
             $query->where('isActive', $filters['status'] === 'ACTIVE' ? 1 : 0);
         }
 
-        if (!empty($filters['type'])) {
-            if ($filters['type'] === 'Parent') {
-                $query->whereHas('children');
-            } else {
-                $query->whereDoesntHave('children');
-            }
+        if ($filters['type'] === 'Parent') {
+            $query->having('children_count', '>', 0);
+        } elseif ($filters['type'] === 'Final') {
+            $query->having('children_count', '=', 0);
         }
 
         return $query->orderBy('departmentCode');

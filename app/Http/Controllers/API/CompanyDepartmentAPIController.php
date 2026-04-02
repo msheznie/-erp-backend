@@ -76,7 +76,7 @@ class CompanyDepartmentAPIController extends AppBaseController
         }
 
         $input = $validator->validated();
-        $input['company_id'] = $request->get('company_id') ?? $input['company_id'] ?? null;
+        
 
         $response = $this->departmentAPIService->searchDepartments($input);
 
