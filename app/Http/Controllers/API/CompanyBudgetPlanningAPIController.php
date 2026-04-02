@@ -1181,7 +1181,11 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 ->where('isDefault', 1)
                 ->where('reportID', $reportID)
                 ->first();
-            $templateDescription = $defaultReportTemplate ? ($defaultReportTemplate->description ?? '-') : ($companyBudgetPlanning->planningCode ?? '-');
+            
+            if(empty($defaultReportTemplate)) {
+                return $this->sendError('No default report template found', 404);
+            }
+            $templateDescription = $defaultReportTemplate ? ($defaultReportTemplate->description ?? '-') : ('-');
             $payload = [
                 'templateDescription' => $templateDescription,
                 'department' => [
@@ -1805,7 +1809,6 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 return $this->sendError('Missing required fields: empID and budgetPlanningID are required', 400);
             }
 
-            
 
             // Process single record
             $result = DepartmentBudgetPlanningsDelegateAccess::createOrUpdateDelegateAccess($input);

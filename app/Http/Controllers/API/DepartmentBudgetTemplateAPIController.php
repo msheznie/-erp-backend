@@ -11,14 +11,18 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use Yajra\DataTables\DataTables;
 use App\Traits\AuditLogsTrait;
-
+use App\Repositories\DepartmentBudgetTemplateRepository;
+use App\Models\BudgetTemplate;
 class DepartmentBudgetTemplateAPIController extends AppBaseController
 {
     use AuditLogsTrait;
 
+    private $departmentBudgetTemplateRepository;
     public function __construct(
-        private DepartmentBudgetTemplateService $departmentBudgetTemplateService
+        private DepartmentBudgetTemplateService $departmentBudgetTemplateService,
+        DepartmentBudgetTemplateRepository $departmentBudgetTemplateRepository
     ) {
+        $this->departmentBudgetTemplateRepository = $departmentBudgetTemplateRepository;
     }
 
     /**
@@ -42,12 +46,15 @@ class DepartmentBudgetTemplateAPIController extends AppBaseController
      */
     public function store(CreateDepartmentBudgetTemplateAPIRequest $request)
     {
-        [$departmentBudgetTemplate, $errorMessage] = $this->departmentBudgetTemplateService->store($request->all());
+        $input = $request->all();
+        $budgetTemplate = BudgetTemplate::find($input['budgetTemplateID']);
 
         // Check if department already has a template of the same type (do not allow duplicate type)
         if ($this->departmentBudgetTemplateRepository->hasTemplateOfType($input['departmentSystemID'], $budgetTemplate->type)) {
             return $this->sendError(trans('custom.budget_template_type_already_assigned_to_department'));
         }
+
+        [$departmentBudgetTemplate, $errorMessage] = $this->departmentBudgetTemplateService->store($request->all());
 
         $uuid = $request->get('tenant_uuid', 'local');
         $db = $request->get('db', '');
