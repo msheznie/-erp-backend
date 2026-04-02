@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\CompanyDepartment;
 use App\Repositories\BaseRepository;
+use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Class CompanyDepartmentRepository
@@ -94,4 +95,50 @@ class CompanyDepartmentRepository extends BaseRepository
                               ->with('children')
                               ->get();
     }
-} 
+
+    /**
+     * External integration: GET /api/v1/integrations/departments/search
+     *
+     * @param  array  $filters  Keys: code (optional exact), status (ACTIVE|INACTIVE), type (Parent|Final)
+     */
+    public function departmentsSearchQuery(int $companySystemID, array $filters): Builder
+    {
+        $query = $this->model()::query()
+            ->select([
+                'departmentSystemID',
+                'companySystemID',
+                'parentDepartmentID',
+                'departmentCode',
+                'departmentDescription',
+                'isFinance',
+                'isActive',
+            ])
+            ->where('companySystemID', $companySystemID)
+            ->with([
+                'parent:departmentSystemID,departmentDescription',
+                'company:companySystemID,CompanyName',
+                'employees:departmentEmployeeSystemID,departmentSystemID,employeeSystemID,isHOD',
+                'employees.employee:employeeSystemID,empID,empFullName,empName',
+                'companyDepartmentSegments:departmentSegmentSystemID,departmentSystemID,serviceLineSystemID',
+                'companyDepartmentSegments.segment:serviceLineSystemID,ServiceLineCode,ServiceLineDes',
+                    ])
+            ->withCount('children');
+
+        $codes = $filters['code'] ?? [];
+        if (!empty($codes)) {
+            $query->whereIn('departmentCode', $codes);
+        }
+
+        if (!empty($filters['status'])) {
+            $query->where('isActive', $filters['status'] === 'ACTIVE' ? 1 : 0);
+        }
+
+        if ($filters['type'] === 'Parent') {
+            $query->having('children_count', '>', 0);
+        } elseif ($filters['type'] === 'Final') {
+            $query->having('children_count', '=', 0);
+        }
+
+        return $query->orderBy('departmentCode');
+    }
+}
