@@ -557,7 +557,6 @@ class TransactionsExportExcel extends AppBaseController
             $fileName = $translatedFileName;
         } 
 
-
         $basePath = CreateExcel::process($data,$type,$fileName,$path, $detail_array);
 
         if($basePath == '')

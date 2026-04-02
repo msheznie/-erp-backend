@@ -8,6 +8,7 @@ use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\SrmTenderBidEmployeeDetailsEditLog;
 use App\Models\SRMTenderUserAccess;
 use App\Models\SrmTenderUserAccessEditLog;
+use App\Models\TenderConfirmationDetail;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -175,11 +176,27 @@ class TenderBidEmployeeService
 
     public function getEmployees(Request $request){
         $isFromTenderEdit = $request->input('isFromTenderEdit') ?? false;
+        $isCommercialApproval = $request->boolean('isCommercialApproval', false);
         $requestData = $this->documentModifyService->checkForEditOrAmendRequest($request['tender_id']);
-        return $isFromTenderEdit && $requestData['enableRequestChange'] ?
+        $employees = $isFromTenderEdit && $requestData['enableRequestChange'] ?
             SrmTenderBidEmployeeDetailsEditLog::getTenderBidEmployees($request['tender_id'], $requestData['versionID']) :
             SrmTenderBidEmployeeDetails::getTenderBidEmployeesEdit($request['tender_id']);
 
+        $module = $isCommercialApproval
+            ? TenderConfirmationDetail::MODULE_COMMITTEE_BID_OPENING_APPROVAL
+            : TenderConfirmationDetail::MODULE_BID_OPENING_APPROVAL;
+        $fallbackCommentField = $isCommercialApproval ? 'commercial_eval_remarks' : 'remarks';
+
+        $empIds = collect($employees)->pluck('emp_id')->filter()->unique()->values();
+        $confirmationDetails = TenderConfirmationDetail::getTenderConfirmationDetails($request['tender_id'], $module, $empIds);
+
+        foreach ($employees as $employee) {
+            $confirmation = $confirmationDetails->get($employee->emp_id);
+            $employee->confirmation_comment = $confirmation ? $confirmation->comment : $employee->{$fallbackCommentField};
+            $employee->confirmation_action_at = $confirmation ? $confirmation->action_at : null;
+        }
+
+        return $employees;
     }
     public function deleteTenderBidEmployees(Request $request){
         return DB::transaction(function () use ($request){

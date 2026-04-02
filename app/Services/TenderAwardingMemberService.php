@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\SrmTenderAwardingMember;
 use App\Models\SrmTenderAwardingMemberEditLog;
 use App\Models\SrmTenderBidEmployeeDetails;
+use App\Models\TenderConfirmationDetail;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -122,7 +123,13 @@ class TenderAwardingMemberService
                 SrmTenderAwardingMemberEditLog::getAwardingMembers($tenderID, $versionId) :
                 SrmTenderAwardingMember::getAwardingMembers($tenderID);
 
-            return $members->map(function ($member) {
+            $memberUserIds = collect($members)->pluck('user_id')->filter()->unique()->values();
+            $confirmationDetails = TenderConfirmationDetail::getTenderConfirmationDetails(
+                $tenderID, TenderConfirmationDetail::MODULE_AWARDING_APPROVAL, $memberUserIds
+            );
+
+            return $members->map(function ($member) use ($confirmationDetails) {
+                $confirmation = $confirmationDetails->get($member->user_id);
                 return [
                     'id' => $member->id ?? null,
                     'tender_id' => $member->tender_id,
@@ -132,6 +139,8 @@ class TenderAwardingMemberService
                     'awarding_remarks' => $member->awarding_remarks ?? null,
                     'tender_award_commite_mem_status' => $member->status ?? 0,
                     'tender_award_commite_mem_comment' => $member->awarding_remarks ?? null,
+                    'confirmation_comment' => $confirmation ? $confirmation->comment : ($member->awarding_remarks ?? null),
+                    'confirmation_action_at' => $confirmation ? $confirmation->action_at : null,
                     'employee' => $member->employee ?? null,
                     'created_at' => $member->created_at ?? null,
                     'updated_at' => $member->updated_at ?? null,
