@@ -220,6 +220,10 @@ class DepartmentBudgetPlanningsDelegateAccess extends Model
             
             return $existingRecord;
         } else {
+
+            if($data['workStatus'] == 3) {
+                self::validateWorkStatusProgression(1, $data['workStatus']);
+            }else {
             // Create new record
             return self::create([
                 'empID' => $data['empID'],
@@ -227,6 +231,8 @@ class DepartmentBudgetPlanningsDelegateAccess extends Model
                 'workStatus' => $data['workStatus'],
                 'created_by' => $data['created_by']
             ]);
+            }
+
         }
     }
 

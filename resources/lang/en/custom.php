@@ -9938,7 +9938,7 @@ return
     'work_status_in_progress' => 'In Progress',
     'work_status_revision_in_progress' => 'Revision In Progress',
     'work_status_submit_to_finance' => 'Submitted to Finance',
-    'work_status_revision_submit_to_finance' => 'Revision Submit to Finance',
+    'work_status_revision_submit_to_finance' => 'Revision Submitted to Finance',
     'finance_status_open' => 'Open',
     'finance_status_under_review' => 'Under Review',
     'finance_status_sent_back_for_revision' => 'Sent Back for Revision',
