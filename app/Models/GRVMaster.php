@@ -98,13 +98,9 @@ class GRVMaster extends Model
     //use SoftDeletes;
     use Compoships;
     public $table = 'erp_grvmaster';
-    
     const CREATED_AT = 'createdDateTime';
     const UPDATED_AT = 'timeStamp';
-
     protected $primaryKey  = 'grvAutoID';
-
-
 
     public $fillable = [
         'grvTypeID',
@@ -193,7 +189,11 @@ class GRVMaster extends Model
         'approvedByUserSystemID',
         'postedDate',
         'deliveryAppoinmentID',
-        'isDelegation'
+        'isDelegation',
+        'isBulkItemJobRun',
+        'upload_job_status',
+        'successDetailsCount',
+        'excelRowCount'
     ];
 
     /**
@@ -280,6 +280,10 @@ class GRVMaster extends Model
         'approvedByUserID' => 'string',
         'approvedByUserSystemID' => 'integer',
         'deleted_at' => 'datetime',
+        'isBulkItemJobRun' => 'boolean',
+        'upload_job_status' => 'string',
+        'successDetailsCount' => 'integer',
+        'excelRowCount' => 'integer',
     ];
 
     /**
