@@ -278,13 +278,13 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
     {
         if ($isGrv) {
             $defaults = [
-                'creator'           => ['view' => true,  'create' => true],
-                'approver'          => ['view' => true,  'create' => false],
-                'reporting_manager' => ['view' => true,  'create' => true],
-                'hod'               => ['view' => true,  'create' => true],
-                'segment_owner'     => ['view' => false, 'create' => true],
-                'warehouse_owner'   => ['view' => false, 'create' => true],
-                'admin'             => ['view' => true,  'create' => true],
+                'creator'           => ['view' => true,  'edit' => true],
+                'approver'          => ['view' => true,  'edit' => true],
+                'reporting_manager' => ['view' => true,  'edit' => true],
+                'hod'               => ['view' => true,  'edit' => true],
+                'segment_owner'     => ['view' => false, 'edit' => true],
+                'warehouse_owner'   => ['view' => false, 'edit' => true],
+                'admin'             => ['view' => true,  'edit' => true],
             ];
 
             $persisted = [];
@@ -293,7 +293,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
                 foreach ($rows as $r) {
                     $persisted[$r->owner_key] = [
                         'view' => ((int)$r->can_view) !== 0,
-                        'create' => ((int)$r->can_edit) !== 0,
+                        'edit' => ((int)$r->can_edit) !== 0,
                     ];
                 }
             }
@@ -303,7 +303,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
                 $p = $persisted[$key] ?? null;
                 $out[$key] = [
                     'document_view_access' => $p ? $p['view'] : $d['view'],
-                    'create_access_on_behalf' => $p ? $p['create'] : $d['create'],
+                    'document_edit_access' => $p ? $p['edit'] : $d['edit'],
                 ];
             }
             return $out;
@@ -428,7 +428,10 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
         $documentAttachmentId =  $input['companyDocumentAttachmentID'];
         $ownerKey = $input['owner_key'];
         $documentViewAccess = filter_var($input['document_view_access'], FILTER_VALIDATE_BOOLEAN);
-        $createAccessOnBehalf = filter_var($input['create_access_on_behalf'], FILTER_VALIDATE_BOOLEAN);
+        $documentEditAccessValue = array_key_exists('document_edit_access', $input)
+            ? $input['document_edit_access']
+            : ($input['create_access_on_behalf'] ?? false);
+        $documentEditAccess = filter_var($documentEditAccessValue, FILTER_VALIDATE_BOOLEAN);
 
         if (empty($documentAttachmentId)) {
             return $this->sendError(trans('custom.document_attachment_id_required'));
@@ -463,7 +466,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
                     'owner_key' => $ownerKey,
                 ]);
                 $row->can_view = $documentViewAccess ? 1 : 0;
-                $row->can_edit = $createAccessOnBehalf ? 1 : 0;
+                $row->can_edit = $documentEditAccess ? 1 : 0;
                 $row->save();
 
                 $columnMap = [
@@ -473,7 +476,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
                 ];
                 if (isset($columnMap[$ownerKey])) {
                     $documentAccessRole->{$columnMap[$ownerKey]['view']} = $documentViewAccess ? 1 : 0;
-                    $documentAccessRole->{$columnMap[$ownerKey]['create']} = $createAccessOnBehalf ? 1 : 0;
+                    $documentAccessRole->{$columnMap[$ownerKey]['create']} = $documentEditAccess ? 1 : 0;
                     $documentAccessRole->save();
                 }
 
@@ -489,7 +492,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
                 return $this->sendError(trans('custom.invalid_owner_key'));
             }
             $documentAccessRole->{$columnMap[$ownerKey]['view']} = $documentViewAccess ? 1 : 0;
-            $documentAccessRole->{$columnMap[$ownerKey]['create']} = $createAccessOnBehalf ? 1 : 0;
+            $documentAccessRole->{$columnMap[$ownerKey]['create']} = $documentEditAccess ? 1 : 0;
             $documentAccessRole->save();
 
             return $this->sendResponse($documentAccessRole->toArray(), trans('custom.document_access_role_updated_successfully'));

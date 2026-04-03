@@ -52,17 +52,23 @@ class GrvRoleBasedAccessService
     }
 
     /**
+     * Per-owner toggles for GRV. *_edit keys align with Document Edit Access (legacy DB columns still use *_create).
+     *
      * @return array{
      *   reporting_manager_view: bool,
-     *   reporting_manager_create: bool,
+     *   reporting_manager_edit: bool,
      *   hod_view: bool,
-     *   hod_create: bool,
+     *   hod_edit: bool,
      *   admin_view: bool,
-     *   admin_create: bool,
+     *   admin_edit: bool,
      *   creator_view: bool,
+     *   creator_edit: bool,
      *   approver_view: bool,
+     *   approver_edit: bool,
      *   segment_view: bool,
+     *   segment_edit: bool,
      *   warehouse_view: bool,
+     *   warehouse_edit: bool,
      *   document_access_role_id: ?int
      * }
      */
@@ -73,29 +79,37 @@ class GrvRoleBasedAccessService
         // GRV UI defaults (used when doc_access_role row doesn't exist yet).
         $recommended = [
             'reporting_manager_view' => true,
-            'reporting_manager_create' => true,
+            'reporting_manager_edit' => true,
             'hod_view' => true,
-            'hod_create' => true,
+            'hod_edit' => true,
             'admin_view' => true,
-            'admin_create' => true,
+            'admin_edit' => true,
             'creator_view' => true,
+            'creator_edit' => true,
             'approver_view' => true,
+            'approver_edit' => true,
             'segment_view' => true,
+            'segment_edit' => true,
             'warehouse_view' => true,
+            'warehouse_edit' => true,
         ];
 
         if (empty($attachment)) {
             return [
                 'reporting_manager_view' => false,
-                'reporting_manager_create' => false,
+                'reporting_manager_edit' => false,
                 'hod_view' => false,
-                'hod_create' => false,
+                'hod_edit' => false,
                 'admin_view' => false,
-                'admin_create' => false,
+                'admin_edit' => false,
                 'creator_view' => false,
+                'creator_edit' => false,
                 'approver_view' => false,
+                'approver_edit' => false,
                 'segment_view' => false,
+                'segment_edit' => false,
                 'warehouse_view' => false,
+                'warehouse_edit' => false,
                 'document_access_role_id' => null,
             ];
         }
@@ -126,17 +140,31 @@ class GrvRoleBasedAccessService
 
         return [
             'reporting_manager_view' => $rm ? (bool)$rm['view'] : $this->isEnabledValue($documentAccessRole->reportingManager_view ?? 0),
-            'reporting_manager_create' => $rm ? (bool)$rm['edit'] : $this->isEnabledValue($documentAccessRole->reportingManager_create ?? 0),
+            'reporting_manager_edit' => $rm ? (bool)$rm['edit'] : $this->isEnabledValue($documentAccessRole->reportingManager_create ?? 0),
             'hod_view' => $hod ? (bool)$hod['view'] : $this->isEnabledValue($documentAccessRole->hod_view ?? 0),
-            'hod_create' => $hod ? (bool)$hod['edit'] : $this->isEnabledValue($documentAccessRole->hod_create ?? 0),
+            'hod_edit' => $hod ? (bool)$hod['edit'] : $this->isEnabledValue($documentAccessRole->hod_create ?? 0),
             'admin_view' => $admin ? (bool)$admin['view'] : $this->isEnabledValue($documentAccessRole->admin_view ?? 0),
-            'admin_create' => $admin ? (bool)$admin['edit'] : $this->isEnabledValue($documentAccessRole->admin_create ?? 0),
+            'admin_edit' => $admin ? (bool)$admin['edit'] : $this->isEnabledValue($documentAccessRole->admin_create ?? 0),
             'creator_view' => $creator ? (bool)$creator['view'] : true,
+            'creator_edit' => $creator ? (bool)$creator['edit'] : true,
             'approver_view' => $approver ? (bool)$approver['view'] : true,
+            'approver_edit' => $approver ? (bool)$approver['edit'] : true,
             'segment_view' => $segment ? (bool)$segment['view'] : true,
+            'segment_edit' => $segment ? (bool)$segment['edit'] : true,
             'warehouse_view' => $warehouse ? (bool)$warehouse['view'] : true,
+            'warehouse_edit' => $warehouse ? (bool)$warehouse['edit'] : true,
             'document_access_role_id' => (int)$documentAccessRole->id,
         ];
+    }
+
+    private function hasAnyNonCreatorEditPathEnabled(array $toggles): bool
+    {
+        return $toggles['reporting_manager_edit'] === true
+            || $toggles['hod_edit'] === true
+            || $toggles['admin_edit'] === true
+            || $toggles['approver_edit'] === true
+            || $toggles['segment_edit'] === true
+            || $toggles['warehouse_edit'] === true;
     }
 
     /**
@@ -187,7 +215,7 @@ class GrvRoleBasedAccessService
             (int)($toggles['document_access_role_id'] ?? 0),
             $employeeSystemID,
             self::DOC_ACCESS_TYPE_CREATE
-        ) && $toggles['admin_create'] === true;
+        ) && $toggles['admin_edit'] === true;
     }
 
     /**
@@ -245,8 +273,8 @@ class GrvRoleBasedAccessService
             $this->createdEmployeeIdsForRmHod(
                 $companySystemID,
                 $employeeSystemID,
-                $toggles['reporting_manager_create'] === true,
-                $toggles['hod_create'] === true
+                $toggles['reporting_manager_edit'] === true,
+                $toggles['hod_edit'] === true
             )
         );
 
@@ -315,17 +343,77 @@ class GrvRoleBasedAccessService
         $companySystemID = (int)$grvMaster->companySystemID;
         $toggles = $this->getOwnerToggles($companySystemID);
 
-        // Creator can edit own documents.
-        if ((int)$grvMaster->createdUserSystemID === (int)$employeeSystemID) {
+        if (!$this->canViewGrv($grvMaster, $employeeSystemID)) {
+            return false;
+        }
+
+        if ((int)$grvMaster->createdUserSystemID === (int)$employeeSystemID && $toggles['creator_edit'] === true) {
             return true;
+        }
+
+        // When every non-creator edit path is disabled in document config, other users' GRVs stay view-only.
+        if (!$this->hasAnyNonCreatorEditPathEnabled($toggles)) {
+            return false;
         }
 
         if ($this->hasAdminFullEdit($toggles, $employeeSystemID)) {
             return true;
         }
 
-        $allowedCreatedEmployeeIDs = $this->getAllowedCreatedEmployeeIDsForEdit($companySystemID, $employeeSystemID);
-        return in_array((int)$grvMaster->createdUserSystemID, $allowedCreatedEmployeeIDs, true);
+        $allowedCreatedEmployeeIDs = $this->createdEmployeeIdsForRmHod(
+            $companySystemID,
+            $employeeSystemID,
+            $toggles['reporting_manager_edit'] === true,
+            $toggles['hod_edit'] === true
+        );
+        if (in_array((int)$grvMaster->createdUserSystemID, $allowedCreatedEmployeeIDs, true)) {
+            return true;
+        }
+
+        if ($toggles['approver_edit'] === true && $this->isApproverForGrv($companySystemID, $employeeSystemID, (int)$grvMaster->grvAutoID)) {
+            return true;
+        }
+
+        if ($toggles['segment_edit'] === true) {
+            $allowedSegmentIDs = $this->getAllowedSegmentIDsForView($companySystemID, $employeeSystemID);
+            if (!empty($allowedSegmentIDs) && in_array((int)$grvMaster->serviceLineSystemID, $allowedSegmentIDs, true)) {
+                return true;
+            }
+        }
+
+        if ($toggles['warehouse_edit'] === true) {
+            $allowedWarehouseIDs = $this->getAllowedWarehouseIDsForView($companySystemID, $employeeSystemID);
+            if (!empty($allowedWarehouseIDs) && in_array((int)$grvMaster->grvLocation, $allowedWarehouseIDs, true)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     *
+     * @return array{canView: bool, canEdit: bool, accessMode: 'none'|'view'|'edit'}
+     */
+    public function resolveAccessForGrv(Request $request, GRVMaster $grvMaster, int $employeeSystemID): array
+    {
+        $navID = (int)$request->header('X-nav-ID', 0);
+        $rights = $this->getNavigationRights((int)$grvMaster->companySystemID, $employeeSystemID, $navID);
+
+        $docVisible = $this->canViewGrv($grvMaster, $employeeSystemID);
+        $canView = $rights['R'] === true && $docVisible;
+        $canEdit = $canView && $rights['E'] === true && $this->canEditGrv($grvMaster, $employeeSystemID);
+
+        $accessMode = 'none';
+        if ($canView) {
+            $accessMode = $canEdit ? 'edit' : 'view';
+        }
+
+        return [
+            'canView' => $canView,
+            'canEdit' => $canEdit,
+            'accessMode' => $accessMode,
+        ];
     }
 
     public function requireCanViewOrFail(GRVMaster $grvMaster, int $employeeSystemID): void
@@ -380,20 +468,29 @@ class GrvRoleBasedAccessService
         }
     }
 
-    public function getUiModeForGrv(Request $request, GRVMaster $grvMaster, int $employeeSystemID): string
+    public function requireCreateNavigationOrFail(Request $request, int $companySystemID, int $employeeSystemID): void
     {
         $navID = (int)$request->header('X-nav-ID', 0);
-        $rights = $this->getNavigationRights((int)$grvMaster->companySystemID, $employeeSystemID, $navID);
-
-        if ($rights['R'] !== true || !$this->canViewGrv($grvMaster, $employeeSystemID)) {
-            return 'none';
+        $rights = $this->getNavigationRights($companySystemID, $employeeSystemID, $navID);
+        if ($rights['C'] !== true) {
+            abort(403);
         }
+    }
 
-        if ($rights['E'] === true && $this->canEditGrv($grvMaster, $employeeSystemID)) {
-            return 'edit';
+    public function requireEditNavigationOrFail(Request $request, int $companySystemID, int $employeeSystemID): void
+    {
+        $navID = (int)$request->header('X-nav-ID', 0);
+        $rights = $this->getNavigationRights($companySystemID, $employeeSystemID, $navID);
+        if ($rights['E'] !== true) {
+            abort(403);
         }
+    }
 
-        return 'view';
+    public function getUiModeForGrv(Request $request, GRVMaster $grvMaster, int $employeeSystemID): string
+    {
+        $resolved = $this->resolveAccessForGrv($request, $grvMaster, $employeeSystemID);
+
+        return $resolved['accessMode'];
     }
 
     public function applyViewScope(Builder $query, int $companySystemID, int $employeeSystemID): Builder
@@ -465,4 +562,3 @@ class GrvRoleBasedAccessService
         return $query;
     }
 }
-
