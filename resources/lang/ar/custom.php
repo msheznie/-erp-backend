@@ -9978,4 +9978,5 @@ return
     'company_field_must_be_an_integer' => 'معرف الشركة يجب أن يكون رقمًا صحيحًا',
     'document_system_id_is_required' => 'معرف النظام المستندي مطلوب',
     'document_system_id_must_be_an_integer' => 'معرف النظام المستندي يجب أن يكون رقمًا صحيحًا',
+    'supplier_communication_requires_active_supplier' => 'لتفعيل خيار التواصل مع المورد، يجب أن يكون المورد نشطًا.<br>يرجى تفعيل المورد أولاً.',
 ];
