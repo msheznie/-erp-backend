@@ -86,6 +86,9 @@ class SupplierAssignedAPIController extends AppBaseController
         $input = Arr::except($input, ['final_approved_by','company']);
 
         $input = $this->convertArrayToValue($input);
+        if (isset($input['isActive']) && (int) $input['isActive'] === 0) {
+            $input['supplierCommunicationYN'] = 0;
+        }
         foreach($companies as $companie)
         {
                 if( array_key_exists ('supplierAssignedID' , $input )){
