@@ -51,9 +51,4 @@ class DocumentAccessRole extends Model
     {
         return $this->hasMany('App\Models\DocumentAccessEmployee', 'document_access_role_id', 'id');
     }
-
-    public function owners()
-    {
-        return $this->hasMany(DocumentAccessRoleOwner::class, 'document_access_role_id', 'id');
-    }
 }
