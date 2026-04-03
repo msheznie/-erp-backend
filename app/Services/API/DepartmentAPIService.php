@@ -87,8 +87,7 @@ class DepartmentAPIService
 
     private function mapDepartmentToApiRow(CompanyDepartment $department): array
     {
-        $hasChildren = ($department->children_count ?? 0) > 0;
-        $typeLabel = $hasChildren ? 'Parent' : 'Final';
+        $typeLabel = ((int) $department->type) === 1 ? 'Parent' : 'Final';
 
         $employeesPayload = [];
         foreach ($department->employees as $departmentEmployee) {

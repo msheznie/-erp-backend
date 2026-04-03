@@ -110,6 +110,7 @@ class CompanyDepartmentRepository extends BaseRepository
                 'parentDepartmentID',
                 'departmentCode',
                 'departmentDescription',
+                'type',
                 'isFinance',
                 'isActive',
             ])
@@ -121,8 +122,7 @@ class CompanyDepartmentRepository extends BaseRepository
                 'employees.employee:employeeSystemID,empID,empFullName,empName',
                 'companyDepartmentSegments:departmentSegmentSystemID,departmentSystemID,serviceLineSystemID',
                 'companyDepartmentSegments.segment:serviceLineSystemID,ServiceLineCode,ServiceLineDes',
-                    ])
-            ->withCount('children');
+                    ]);
 
         $codes = $filters['code'] ?? [];
         if (!empty($codes)) {
@@ -134,9 +134,9 @@ class CompanyDepartmentRepository extends BaseRepository
         }
 
         if ($filters['type'] === 'Parent') {
-            $query->having('children_count', '>', 0);
+            $query->where('type', 1);
         } elseif ($filters['type'] === 'Final') {
-            $query->having('children_count', '=', 0);
+            $query->where('type', 2);
         }
 
         return $query->orderBy('departmentCode');
