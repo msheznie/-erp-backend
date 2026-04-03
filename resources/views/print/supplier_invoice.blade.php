@@ -944,19 +944,12 @@
     @endif
     @if($masterdata->documentType == 0 || $masterdata->documentType == 2)
         @php
-            $siBookingAmountTrans = (float) ($masterdata->bookingAmountTrans ?? 0);
-            $siPoVatAmount = (float) ($poVATamount ?? ($masterdata->poVATamount ?? 0));
-            $siPct = (float) ($masterdata->retentionPercentage ?? 0);
+            $siOrderTrans = $grvTotTra + $directTotTra;
+            $siVatTrans = $masterdata->VATAmount ?? 0;
+            $siPct = $masterdata->retentionPercentage ?? 0;
             $siRcm = (int) ($masterdata->rcmActivated ?? 0);
             $siWhtDeduct = ($masterdata->whtApplicable && (int) ($masterdata->whtPaymentMethod ?? 0) != 2) ? (float) ($masterdata->whtAmount ?? 0) : 0;
             $siMol = (($masterdata->mol_applicable ?? 0) == 1 || (float) ($masterdata->mol_amount ?? 0) != 0) ? (float) ($masterdata->mol_amount ?? 0) : 0;
-            $siPoVatAdjustedTotal = $siBookingAmountTrans - $siPoVatAmount;
-            $siVatAmount = $siPoVatAmount - (($siPoVatAmount * $siPct) / 100);
-            $siNetTotal = $siRcm ? $siPoVatAdjustedTotal : ($siPoVatAdjustedTotal + $siVatAmount);
-            $siRetentionAmount = $siRcm
-                ? (($siBookingAmountTrans - $siPoVatAmount) * ($siPct / 100))
-                : ((($siBookingAmountTrans - $siPoVatAmount) * ($siPct / 100)) - $retentionVatPortion);
-            $siNetAmount = $siNetTotal - $siRetentionAmount - $siWhtDeduct - $siMol;
         @endphp
         <div class="row" style="margin-top: 30px">
             <table style="width:100%; border-collapse: collapse;">
@@ -971,7 +964,7 @@
                                     <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.total') }}</span>
                                 </td>
                                 <td class="text-right" style="width: 45%; padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
-                                    <span class="font-weight-bold">{{ number_format($siPoVatAdjustedTotal, $transDecimal) }}</span>
+                                    <span class="font-weight-bold">{{ number_format($siOrderTrans, $transDecimal) }}</span>
                                 </td>
                             </tr>
                             @if ($isVATEligible && $masterdata->vatRegisteredYN && !$siRcm)
@@ -980,7 +973,7 @@
                                         <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.vat') }}</span>
                                     </td>
                                     <td class="text-right" style="padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
-                                        <span class="font-weight-bold">{{ number_format($siVatAmount, $transDecimal) }}</span>
+                                        <span class="font-weight-bold">{{ number_format($siVatTrans - $retentionVatPortion, $transDecimal) }}</span>
                                     </td>
                                 </tr>
                             @endif
@@ -989,7 +982,13 @@
                                     <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.net_total') }}</span>
                                 </td>
                                 <td class="text-right" style="padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
-                                    <span class="font-weight-bold">{{ number_format($siNetTotal, $transDecimal) }}</span>
+                                    <span class="font-weight-bold">
+                                        @if(!$siRcm)
+                                            {{ number_format(($siOrderTrans + $siVatTrans) - $retentionVatPortion, $transDecimal) }}
+                                        @else
+                                            {{ number_format($siOrderTrans, $transDecimal) }}
+                                        @endif
+                                    </span>
                                 </td>
                             </tr>
                             <tr>
@@ -997,7 +996,13 @@
                                     <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.retention') }}</span>
                                 </td>
                                 <td class="text-right" style="padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
-                                    <span class="font-weight-bold">{{ number_format($siRetentionAmount, $transDecimal) }}</span>
+                                    <span class="font-weight-bold">
+                                        @if(!$siRcm)
+                                            {{ number_format((($siOrderTrans + $siVatTrans) * ($siPct / 100)) - $retentionVatPortion, $transDecimal) }}
+                                        @else
+                                            {{ number_format($siOrderTrans * ($siPct / 100), $transDecimal) }}
+                                        @endif
+                                    </span>
                                 </td>
                             </tr>
                             @if ($masterdata->whtApplicable)
@@ -1006,7 +1011,7 @@
                                         <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.wht') }}</span>
                                     </td>
                                     <td class="text-right" style="padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
-                                        <span class="font-weight-bold">{{ number_format($siWhtDeduct, $transDecimal) }}</span>
+                                        <span class="font-weight-bold">{{ number_format((float) ($masterdata->whtAmount ?? 0), $transDecimal) }}</span>
                                     </td>
                                 </tr>
                             @endif
@@ -1025,7 +1030,13 @@
                                     <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.net_amount') }}</span>
                                 </td>
                                 <td class="text-right" style="padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
-                                    <span class="font-weight-bold">{{ number_format($siNetAmount, $transDecimal) }}</span>
+                                    <span class="font-weight-bold">
+                                        @if(!$siRcm)
+                                            {{ number_format(($siOrderTrans + $siVatTrans) - (($siOrderTrans + $siVatTrans) * ($siPct / 100)) - $siWhtDeduct - $siMol, $transDecimal) }}
+                                        @else
+                                            {{ number_format($siOrderTrans - ($siOrderTrans * ($siPct / 100)) - $siWhtDeduct - $siMol, $transDecimal) }}
+                                        @endif
+                                    </span>
                                 </td>
                             </tr>
                             </tbody>
