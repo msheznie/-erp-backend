@@ -62,7 +62,6 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
 use App\Services\DecimalPrecisionService;
 use App\Services\POReceivedQtyUpdateService;
-use App\Services\GrvRoleBasedAccessService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -84,8 +83,6 @@ class GRVDetailsAPIController extends AppBaseController
     private $decimalPrecisionService;
     /** @var POReceivedQtyUpdateService */
     private $poReceivedQtyUpdateService;
-    /** @var GrvRoleBasedAccessService */
-    private $grvRoleBasedAccessService;
 
     public function __construct(
         GRVDetailsRepository $gRVDetailsRepo,
@@ -93,8 +90,7 @@ class GRVDetailsAPIController extends AppBaseController
         GRVMasterRepository $gRVMasterRepository,
         ExpenseAssetAllocationRepository $expenseAssetAllocationRepo,
         DecimalPrecisionService $decimalPrecisionService,
-        POReceivedQtyUpdateService $poReceivedQtyUpdateService,
-        GrvRoleBasedAccessService $grvRoleBasedAccessService
+        POReceivedQtyUpdateService $poReceivedQtyUpdateService
     )
     {
         $this->gRVDetailsRepository = $gRVDetailsRepo;
@@ -103,7 +99,6 @@ class GRVDetailsAPIController extends AppBaseController
         $this->expenseAssetAllocationRepo = $expenseAssetAllocationRepo;
         $this->decimalPrecisionService = $decimalPrecisionService;
         $this->poReceivedQtyUpdateService = $poReceivedQtyUpdateService;
-        $this->grvRoleBasedAccessService = $grvRoleBasedAccessService;
     }
 
     /**
@@ -192,6 +187,9 @@ class GRVDetailsAPIController extends AppBaseController
             if (empty($grvMaster)) {
                 return $this->sendError(trans('custom.grv_not_found'));
             }
+            $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+            $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+            $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
 
             if (is_null($input['noQty'])) {
                 $input['noQty'] = 0;
@@ -439,6 +437,12 @@ class GRVDetailsAPIController extends AppBaseController
         }
 
         $grvMaster = GRVMaster::find($gRVDetails->grvAutoID);
+        if (empty($grvMaster)) {
+            return $this->sendError(trans('custom.grv_master_not_found'));
+        }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail(request(), (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireEditNavigationOrFail(request(), (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
 
         if($grvMaster->grvTypeID == 2 && $grvMaster->pullType != 2) {
             $allowPartialGRVPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 23)
@@ -639,13 +643,6 @@ class GRVDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $grvAutoID = $input['grvAutoID'];
-        $grvMaster = GRVMaster::find($grvAutoID);
-        if (empty($grvMaster)) {
-            return $this->sendError(trans('custom.grv_master_not_found'));
-        }
-        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireCanViewOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
-
         $items = GRVDetails::where('grvAutoID', $grvAutoID)
             ->with(['unit' => function ($query) {
             }, 'po_master' => function ($query) {
@@ -861,6 +858,13 @@ class GRVDetailsAPIController extends AppBaseController
             } else {
                 $grvAutoID = $input['grvAutoID'];
             }
+            $existingMaster = GRVMaster::find($grvAutoID);
+            if (empty($existingMaster)) {
+                return $this->sendError(trans('custom.grv_master_not_found'));
+            }
+            $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$existingMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+            $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$existingMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+            $this->grvRoleBasedAccessService->requireCanEditOrFail($existingMaster, (int)Helper::getEmployeeSystemID());
 
         $GRVMaster = GRVMaster::where('grvAutoID', $grvAutoID)
             ->first();
@@ -1260,8 +1264,6 @@ class GRVDetailsAPIController extends AppBaseController
         if (empty($grvMaster)) {
             return $this->sendError(trans('custom.grv_master_not_found'));
         }
-        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
 
         if ($grvMaster->serviceLineSystemID) {
             $checkDepartmentActive = SegmentMaster::find($grvMaster->serviceLineSystemID);
@@ -1479,8 +1481,6 @@ class GRVDetailsAPIController extends AppBaseController
         if (empty($grvMaster)) {
             return $this->sendError(trans('custom.grv_master_not_found'));
         }
-        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
 
         if ($grvMaster->serviceLineSystemID) {
             $checkDepartmentActive = SegmentMaster::find($grvMaster->serviceLineSystemID);
@@ -1622,8 +1622,6 @@ class GRVDetailsAPIController extends AppBaseController
         if (!$grvMasterData) {
             return $this->sendError(trans('custom.grv_master_not_found'));
         }
-        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMasterData->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMasterData, (int)Helper::getEmployeeSystemID());
 
         // check logistic item exist
         $logisticItems = PoAdvancePayment::where('grvAutoID', $grvAutoID)
@@ -1843,6 +1841,9 @@ class GRVDetailsAPIController extends AppBaseController
         if (empty($grvMaster)) {
             return $this->sendError(trans('custom.grv_not_found'));
         }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
 
         if ($grvMaster->isMarkupUpdated==1) {
             return $this->sendError('GRV markup update process restricted',500);
@@ -1881,6 +1882,9 @@ class GRVDetailsAPIController extends AppBaseController
         if(empty($GRVMaster)){
             $this->sendError(trans('custom.grv_not_found'),500);
         }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$GRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$GRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($GRVMaster, (int)Helper::getEmployeeSystemID());
 
         $PRMaster = PurchaseReturn::find($input['purhaseReturnAutoID']);
 
