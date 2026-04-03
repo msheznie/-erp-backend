@@ -137,6 +137,9 @@ class ApprovalLevelAPIController extends AppBaseController
 
         if (isset($input['documentSystemID']) && $input['documentSystemID'] == 4) {
             $input['serviceLineWise'] = 0;
+            $input['serviceLineSystemID'] = null;
+            $input['serviceLineCode'] = null;
+            
             $input['isCategoryWiseApproval'] = 0;
             $input['isDelegation'] = 0;
             $input['prTypeWise'] = 0;
