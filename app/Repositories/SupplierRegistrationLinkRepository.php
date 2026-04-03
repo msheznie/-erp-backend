@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\helper\StatusService;
 use App\Models\SRMPublicLink;
 use App\Models\SupplierRegistrationLink;
 use Carbon\Carbon;
@@ -58,9 +59,9 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         }
         $supplierRegistrationLink->sub_domain = $request->input('domain');
         $result = $supplierRegistrationLink->save();
-        if($result){ 
+        if($result){
             return ['status' => true,'id' =>$supplierRegistrationLink->id];
-        }else { 
+        }else {
             return ['status' => false];
         }
     }
@@ -72,24 +73,24 @@ class SupplierRegistrationLinkRepository extends BaseRepository
         DB::beginTransaction();
         try
         {
-                $inputData = $input['extra'];
-                $supplierLink = $this->model->newInstance();
-                $supplierLink->name = $inputData['name'];
-                $supplierLink->email = $inputData['email'];
-                $supplierLink->registration_number =  $inputData['registration_number'];
-                $supplierLink->company_id = $inputData['company_id'];
-                $supplierLink->token = $inputData['token'];
-                $supplierLink->created_by = -1;
-                $supplierLink->updated_by = '';
-                $supplierLink->STATUS = ($inputData['status']) ?? 0;
-                $supplierLink->uuid = ($inputData['tenantUuid']) ?? null;
-                $supplierLink->is_bid_tender =  $inputData['is_bid_tender'];
-                $supplierLink->created_via =  3;
-                $supplierLink->is_existing_erp_supplier = 0;
-                $supplierLink->sub_domain = ' ';
-                $supplierLink->save();
-                DB::commit();
-                return ['success' => true, 'message' => 'Successfully Saved', 'data' => true];
+            $inputData = $input['extra'];
+            $supplierLink = $this->model->newInstance();
+            $supplierLink->name = $inputData['name'];
+            $supplierLink->email = $inputData['email'];
+            $supplierLink->registration_number =  $inputData['registration_number'];
+            $supplierLink->company_id = $inputData['company_id'];
+            $supplierLink->token = $inputData['token'];
+            $supplierLink->created_by = -1;
+            $supplierLink->updated_by = '';
+            $supplierLink->STATUS = ($inputData['status']) ?? 0;
+            $supplierLink->uuid = ($inputData['tenantUuid']) ?? null;
+            $supplierLink->is_bid_tender =  $inputData['is_bid_tender'];
+            $supplierLink->created_via =  3;
+            $supplierLink->is_existing_erp_supplier = 0;
+            $supplierLink->sub_domain = ' ';
+            $supplierLink->save();
+            DB::commit();
+            return ['success' => true, 'message' => 'Successfully Saved', 'data' => true];
 
         }
         catch (\Exception $exception)
@@ -98,5 +99,128 @@ class SupplierRegistrationLinkRepository extends BaseRepository
             return ['success' => false, 'message' => $exception->getMessage(), 'data' => false];
         }
 
+    }
+
+    public function setExportExcelData($dataSet) {
+
+        $dataSet = $dataSet->orderBy('id', 'desc')->get();
+        if (count($dataSet) > 0) {
+            $x = 0;
+
+            foreach ($dataSet as $val) {
+                $data[$x][trans('custom.e_supplier_name')] = $val->name;
+                $data[$x][trans('custom.email')] = $val->email;
+                $data[$x][trans('custom.registration_number')] = $val->registration_number;
+                $data[$x][trans('custom.created_at')] = Helper::dateFormat($val->created_at);
+                $data[$x][trans('custom.status')] = $this->supplierRegistrationLinkStatus($val->confirmed_yn,$val->approved_yn, $val->refferedBackYN);
+                $data[$x][trans('custom.is_linked')] = !empty($val->supplier_master_id) ? 'Yes' : 'No';
+                $data[$x][trans('custom.linked_supplier_code')] = !empty($val->supplier) ? $val->supplier->primarySupplierCode : '-';
+                $data[$x][trans('custom.linked_supplier_name')] = !empty($val->supplier) ? $val->supplier->supplierName : '-';
+                $x++;
+            }
+        } else {
+            $data = array();
+        }
+
+        return $data;
+    }
+
+    public function getSupplierRegistrationData($request)
+    {
+        $query =  SupplierRegistrationLink::getSupplierRegData();
+
+        $search = $request->input('search.value');
+
+        if (!empty($search)) {
+            $search = str_replace("\\", "\\\\", $search);
+
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('registration_number', 'LIKE', "%{$search}%")
+                    ->orWhereHas('supplier', function ($supplierQuery) use ($search) {
+                        $supplierQuery->where('supplierName', 'LIKE', "%{$search}%")
+                            ->orWhere('primarySupplierCode', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        $status = $request->input('approved_yn');
+
+        if ($status !== null && $status !== '') {
+
+            $status = (int) $status;
+
+            switch ($status) {
+                case 0:
+                    $query->where('confirmed_yn', 0)
+                        ->where('approved_yn', 0);
+                    break;
+
+                case 1:
+                    $query->where('confirmed_yn', 1)
+                        ->where('approved_yn', 0)
+                        ->where('refferedBackYN', 0);
+                    break;
+
+                case 2:
+                    $query->where('confirmed_yn', 1)
+                        ->where('approved_yn', -1);
+                    break;
+            }
+        }
+
+        return $query;
+    }
+
+    public static function supplierRegistrationLinkStatus($confirmedYn, $approvedYn, $refferedBackYN)
+    {
+        $type = "";
+        if ($confirmedYn == 0 && $approvedYn == 0) {
+            $type = 'Not Confirmed';
+        }
+        else if ($confirmedYn == 1 && $approvedYn == 0 && $refferedBackYN == 0) {
+            $type = 'Pending Approval';
+        } else if ($confirmedYn == 1 && $approvedYn == 0 && $refferedBackYN == -1) {
+            $type = 'Referred Back';
+        }else if ($confirmedYn == 1 && $approvedYn == 0 && $refferedBackYN == -1) {
+            $type = 'Rejected';
+        }
+        else if ($confirmedYn == 1 && ($approvedYn == -1 || $approvedYn == 1 )) {
+            $type = 'Fully Approved';
+        }
+        return $type;
+    }
+
+    public function getNonRegisteredSupplierList($request)
+    {
+        $search = $request->input('search.value');
+        $input = $request->all();
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
+
+        $linkData = SupplierRegistrationLink::getUnapprovedSuppliers($input['tenderMasterId'],
+            $input['companyId'],true);
+
+
+        if($search){
+            $search = str_replace("\\", "\\\\", $search);
+            $linkData =   $linkData->where(function ($query) use($search) {
+                $query->where('name','LIKE',"%{$search}%")
+                    ->orWhere('registration_number', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%");
+            });
+        }
+
+
+
+        return \DataTables::of($linkData)
+            ->addIndexColumn()
+            ->with('orderCondition', $sort)
+            ->addColumn('Actions', 'Actions', "Actions")
+            ->make(true);
     }
 }

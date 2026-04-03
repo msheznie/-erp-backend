@@ -545,7 +545,8 @@ class TenderCircularsAPIController extends AppBaseController
                     $dataEmail['companySystemID'] = $request->input('company_id');
                     $dataEmail['alertMessage'] = $documentName . " Circular";
                     $dataEmail['empEmail'] = $emailFormatted;
-                    $body = "Dear Supplier,"."<br /><br />"." Please find published <span style='text-transform: lowercase;'>". $documentName ."</span> circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description .$companyName."</b><br /><br />"."Thank You"."<br /><br /><b>";
+                    $body = "Dear Supplier,"."<br /><br />"." Please find published <span style='text-transform: lowercase;'>". $documentName ."</span> circular details below."."<br /><br /><b>". "Circular Name : ". "</b>".$circular[0]['circular_name'] ." "."<br /><br />". $description ."Thank You"."<br />";
+                    $body .= \Helper::getSupplierEmailFooter($request->input('company_id'));
                     $dataEmail['emailAlertMessage'] = $body;
                     $dataEmail['attachmentList'] = $file;
                     $sendEmail = Email::sendEmailErp($dataEmail);

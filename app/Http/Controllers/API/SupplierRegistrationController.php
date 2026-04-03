@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API;
 
 use App\helper\Helper;
 use App\Models\SupplierRegistrationLink;
+use App\Repositories\SupplierRegistrationLinkRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
@@ -13,10 +14,12 @@ use App\Services\SupplierRegistrationService;
 class SupplierRegistrationController extends Controller
 {
     private $supplierRegistrationService;
+    private $supplierRegistrationLinkRepo;
 
-    public function __construct(SupplierRegistrationService $supplierRegistrationService)
+    public function __construct(SupplierRegistrationService $supplierRegistrationService, SupplierRegistrationLinkRepository $supplierRegistrationLinkRepo)
     {
         $this->supplierRegistrationService = $supplierRegistrationService;
+        $this->supplierRegistrationLinkRepo = $supplierRegistrationLinkRepo;
     }
 
     /**
@@ -36,22 +39,7 @@ class SupplierRegistrationController extends Controller
         $companyID = $request->companyId;
         $empID = Helper::getEmployeeSystemID();
 
-        $suppliersDetail = SupplierRegistrationLink::select('*')
-        ->with(['supplier' => function ($q)  {
-            $q->select('supplierCodeSystem','supplierName','primarySupplierCode');
-        }]);
-
-        $search = $request->input('search.value');
-
-        if ($search) {
-            $search = str_replace("\\", "\\\\", $search);
-            $suppliersDetail = $suppliersDetail->where(function ($query) use ($search) {
-                $query->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('email', 'LIKE', "%{$search}%")
-                    ->orWhere('registration_number', 'LIKE', "%{$search}%");
-            });
-        }
-
+        $suppliersDetail = $this->supplierRegistrationLinkRepo->getSupplierRegistrationData($request);
         return \DataTables::of($suppliersDetail)
             ->order(function ($query) use ($input) {
                 $query->orderBy('created_at', 'DESC');

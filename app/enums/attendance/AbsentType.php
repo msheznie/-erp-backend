@@ -16,4 +16,6 @@ class AbsentType{
     const ON_TRIP = 14;
     const EXTERNAL_SECONDMENT = 17;
     const EXTERNAL_ASSIGNMENT = 18;
+    const MISSED_PUNCH = 15;
+    const EXCEPTION = 16;
 }

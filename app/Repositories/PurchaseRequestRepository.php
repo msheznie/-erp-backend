@@ -446,6 +446,7 @@ class PurchaseRequestRepository extends BaseRepository
                 trans('custom.tender_code') => $item['tenderCode'] ?? '',
                 trans('custom.tender_approvals') => $this->formatApprovals($item['tenderApprovals'] ?? []),
                 trans('custom.published_date') => $item['publishedDate'] ?? '',
+                trans('custom.tender_awarded_date') => $item['tenderAwardedDate'] ?? '',
                 trans('custom.bid_submission_date') => $item['bidSubmissionDate'] ?? '',
                 trans('custom.technical_evaluation_date') => $item['technicalEvaluationDate'] ?? '',
                 trans('custom.commercial_evaluation_date') => $item['commercialEvaluationDate'] ?? '',

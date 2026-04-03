@@ -35,6 +35,13 @@ Route::post('tender-bid-employee-get-all','TenderBidEmployeeDetailsController@ge
 Route::post('tender-bid-employee-delete','TenderBidEmployeeDetailsController@deleteEmp')->name("Delete tender bid employee");
 Route::post('tender-bid-employee-approval-count','TenderBidEmployeeDetailsController@getEmployeesApproval')->name("Get employees approval");
 
+// Awarding Members Routes
+Route::post('tender-awarding-members-store','TenderAwardingMemberController@store')->name("Store awarding members");
+Route::post('tender-awarding-members-get','TenderAwardingMemberController@getAwardingMembers')->name("Get awarding members");
+Route::post('tender-awarding-members-delete','TenderAwardingMemberController@deleteAwardingMember')->name("Delete awarding member");
+Route::post('tender-awarding-members-approval-count','TenderAwardingMemberController@getAwardingApprovalCount')->name("Get awarding approval count");
+Route::post('tender-awarding-members-delete-all','TenderAwardingMemberController@deleteAllAwardingMembers')->name("Delete all awarding members");
+
 Route::post('getTenderBits', 'BidSubmissionMasterAPIController@getTenderBits')->name("Get tender bits");
 Route::post('getTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@getTenderBidGoNoGoResponse')->name("Get tender bid go no go response");
 Route::post('updateTenderBidGoNoGoResponse', 'BidSubmissionMasterAPIController@updateTenderBidGoNoGoResponse')->name("Update tender bid go no go response");
@@ -99,6 +106,8 @@ Route::post('getTenderMasterApproval', 'TenderMasterAPIController@getTenderMaste
 Route::post('getTenderMasterFullApproved', 'TenderMasterAPIController@getTenderMasterFullApproved')->name("Get tender master full approved");
 Route::post('approveTender', 'TenderMasterAPIController@approveTender')->name("Approve tender");
 Route::post('rejectTender', 'TenderMasterAPIController@rejectTender')->name("Reject tender");
+Route::post('createTenderCancellation', 'TenderMasterAPIController@createTenderCancellation')->name("Create tender cancellation");
+Route::post('getTenderCancellationStatus', 'TenderMasterAPIController@getTenderCancellationStatus')->name("Get tender cancellation status");
 Route::post('deletePreTender', 'TenderBidClarificationsAPIController@deletePreTender')->name("Delete pre tender");
 Route::post('getPreBidEditData', 'TenderBidClarificationsAPIController@getPreBidEditData')->name("Get pre bid edit data");
 Route::post('updatePreBid', 'TenderBidClarificationsAPIController@updatePreBid')->name("Update pre bid");
@@ -204,6 +213,8 @@ Route::post('getEvalCompletedTenderList', 'TenderMasterAPIController@getEvalComp
 Route::post('getTechnicalRanking', 'TenderMasterAPIController@getTechnicalRanking')->name("Get technical ranking");
 Route::post('getCommercialRanking', 'TenderMasterAPIController@getCommercialRanking')->name("Get commercial ranking");
 Route::post('getBidItemSelection', 'TenderMasterAPIController@getBidItemSelection')->name("Get bid item selection");
+Route::post('getItemWiseAwardingData', 'TenderMasterAPIController@getItemWiseAwardingData')->name("Get item wise awarding data");
+Route::post('confirmItemWiseCombinedRanking', 'TenderMasterAPIController@confirmItemWiseCombinedRanking')->name("Confirm item wise combined ranking");
 Route::post('updateBidLineItem', 'TenderMasterAPIController@updateBidLineItem')->name("Update bid line item");
 Route::post('confirmCommBidLineItem', 'TenderMasterAPIController@confirmCommBidLineItem')->name("Confirm commercial bid line item");
 Route::post('confirmFinalCommercial', 'TenderMasterAPIController@confirmFinalCommercial')->name("Confirm final commercial");
@@ -215,6 +226,18 @@ Route::post('getEmployeesTenderAwardinglApproval','TenderBidEmployeeDetailsContr
 Route::post('confirmFinalBidAwardComment', 'TenderMasterAPIController@confirmFinalBidAwardComment')->name("Confirm final bid award comment");
 Route::post('getTenderConfirmationDetails', 'TenderMasterAPIController@getTenderConfirmationDetails')->name("Get tender confirmation details");
 Route::post('sendTenderAwardEmail', 'TenderMasterAPIController@sendTenderAwardEmail')->name("Send tender award email");
+Route::post('awardItemWiseSupplier', 'TenderMasterAPIController@awardItemWiseSupplier')->name("Award item-wise supplier and send email");
+Route::post('markSupplierItemWiseAwarded', 'TenderMasterAPIController@markSupplierItemWiseAwarded')->name("Mark supplier item-wise awarded");
+Route::post('getItemWiseAwardedSuppliers', 'TenderMasterAPIController@getItemWiseAwardedSuppliers')->name("Get item-wise awarded suppliers");
+Route::post('sendItemWiseAwardEmail', 'TenderMasterAPIController@sendItemWiseAwardEmail')->name("Send item-wise award email");
+Route::post('getItemWiseAwardingForPO', 'TenderMasterAPIController@getItemWiseAwardingForPO')->name("Get item-wise awarding for PO");
+Route::post('getItemWiseLoiLoaList', 'TenderMasterAPIController@getItemWiseLoiLoaList')->name("Get item-wise LOA/LOI list");
+Route::post('getLoiLoaEmailData', 'TenderMasterAPIController@getLoiLoaEmailData')->name("Get LOA/LOI email data");
+Route::post('getTenderRfxAwardEmailData', 'TenderMasterAPIController@getTenderRfxAwardEmailData')->name("Get Tender/RFX award or regret email data");
+Route::post('saveTenderRfxAwardEmailDraft', 'TenderMasterAPIController@saveTenderRfxAwardEmailDraft')->name("Save Tender/RFX award or regret email draft");
+Route::post('saveItemWiseLoiLoaEmail', 'TenderMasterAPIController@saveItemWiseLoiLoaEmail')->name("Save item-wise LOA/LOI email draft");
+Route::post('sendItemWiseLoiLoaEmail', 'TenderMasterAPIController@sendItemWiseLoiLoaEmail')->name("Send item-wise LOA/LOI email");
+Route::post('sendScheduleWiseLoiLoaEmail', 'TenderMasterAPIController@sendScheduleWiseLoiLoaEmail')->name("Send schedule-wise LOA/LOI email");
 Route::post('getNegotiationStartedTenderList', 'TenderMasterAPIController@getNegotiationStartedTenderList')->name("Get negotiation started tender list");
 Route::post('getContractTypes', 'TenderMasterAPIController@getContractTypes')->name("Get Contract Types");
 Route::post('createContract', 'TenderMasterAPIController@createContract')->name("Create Contract");
@@ -309,4 +332,14 @@ Route::post('removeCustomEmailSupplier', 'TenderCustomEmailController@deleteBySu
 Route::post('getCustomEmailSupplier', 'TenderCustomEmailController@getCustomEmailSupplier')->name("Get Negotiation Supplier Custom Email");
 Route::post('deleteAllBidMinimumApprovalDetails', 'TenderBidEmployeeDetailsController@deleteAllBidMinimumApprovalDetails')->name("Delete All Bid Minimum Approval Details");
 Route::post('deleteAllTenderUserAccess', 'TenderBidEmployeeDetailsController@deleteAllTenderUserAccess')->name("Delete All Tender User Access");
+Route::post('getAllSRMDocumentMaster', 'SRMDocumentMasterAPIController@getAllDocumentMaster')->name("Get All SRM Document Master");
+Route::post('getSRMDocumentFormData', 'SRMDocumentMasterAPIController@getDocumentDropData')->name("Get All SRM Form Data");
+Route::resource('document_master', 'SRMDocumentMasterAPIController');
+Route::post('documentMasterSRMCrud', 'SRMDocumentMasterAPIController@documentMasterCrud')->name("Create SRM Document Master");
+Route::post('getTenderDocumentMaster', 'SRMDocumentMasterAPIController@getTenderDocumentMaster')->name("GET SRM Tender Document Master");
+Route::post('removeSRMDocMasterDelete', 'SRMDocumentMasterAPIController@removeDocMasterDelete')->name("Remove SRM Document Master");
+Route::post('getAllEmailMaster', 'SRMScenarioMasterAPIController@getAllEmailMaster')->name("GET SRM Email Master");
+Route::post('saveEmailData', 'SRMScenarioDetailsAPIController@saveEmailData')->name("Store SRM Email Master");;
+Route::post('getEmailEditData', 'SRMScenarioDetailsAPIController@getEmailDetailsData')->name("GET SRM Email Edit Data");
+Route::post('getNonRegisteredSupplierList', 'TenderMasterAPIController@getNonRegisteredSupplierList')->name("GET SRM Email Edit Data");
 /*TenderPaymentDetailAPIController*/
