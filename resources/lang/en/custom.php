@@ -10101,4 +10101,5 @@ return
     'company_field_must_be_an_integer' => 'Company field must be an integer',
     'document_system_id_is_required' => 'Document system ID is required',
     'document_system_id_must_be_an_integer' => 'Document system ID must be an integer',
+    'supplier_communication_requires_active_supplier' => 'To enable Supplier Communication Option, the supplier must be active. Please activate the supplier first.',
 ];
