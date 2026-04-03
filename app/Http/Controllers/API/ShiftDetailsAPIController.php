@@ -570,7 +570,7 @@ class ShiftDetailsAPIController extends AppBaseController
             ->get();
 
         $posPayments = DB::table('pos_source_paymentglconfigdetail')
-            ->selectRaw('ID, description, GLCode')
+            ->selectRaw('pos_source_paymentglconfigdetail.ID, pos_source_paymentglconfigmaster.description, pos_source_paymentglconfigdetail.GLCode')
             ->join('pos_source_paymentglconfigmaster', 'pos_source_paymentglconfigmaster.autoID', '=', 'pos_source_paymentglconfigdetail.paymentConfigMasterID')
             ->where('pos_source_paymentglconfigdetail.companyID', $companySystemID)
             ->where('pos_source_paymentglconfigdetail.erp_bank_acc_id', 0)
