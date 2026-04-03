@@ -9847,6 +9847,7 @@ return
     'per_page_is_required_when_getAll_is_true' => 'العدد لكل صفحة مطلوب عندما يكون getAll صحيح',
     'per_page_must_be_an_integer' => 'العدد لكل صفحة يجب أن يكون رقمًا صحيحًا',
     'per_page_must_be_at_least_1' => 'العدد لكل صفحة يجب أن يكون على الأقل 1',
+    'per_page_cannot_exceed_500' => 'العدد لكل صفحة لا يمكن أن يتجاوز 500',
     'the_company_system_ID_not_matching_with_system' => 'معرف الشركة المطابق للنظام غير موجود :companySystemID',
     'the_item_code_not_matching_with_system' => 'رمز العنصر المطابق للنظام غير موجود :itemCode',
     'the_selected_item_is_not_fully_approved' => 'العنصر المحدد :itemCode غير موافق عليه بالكامل',
