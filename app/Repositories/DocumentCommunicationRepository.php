@@ -31,6 +31,29 @@ class DocumentCommunicationRepository extends BaseRepository
         if ($thread) {
             return $thread;
         }
+
+        $masterIds = DocumentCommunicationConfigurationMaster::where('feature_key', 'RICHTEXT')
+            ->pluck('id')
+            ->toArray();
+
+        $configuration = DocumentCommunicationConfiguration::firstOrCreate(
+            ['companySystemID' => $data['companySystemID'], 'isActive' => 1],
+            [
+                'uuid' => $this->generateUuid(16),
+                'communication_configuration_master_id' => $masterIds,
+            ]
+        );
+
+        $thread = DocumentCommunicationThread::firstOrCreate(
+            ['documentSystemID' => $data['documentSystemID']],
+            [
+                'uuid' => $this->generateUuid(16),
+                'communication_configuration_by_company_id' => $configuration->uuid,
+                'createdUserSystemID' => null,
+            ]
+        );
+
+        return $thread->load('communicationConfigurationByCompany');
     }
 
     public function getMessages(string $threadId, int $documentSystemCode, string $sort = 'newest')

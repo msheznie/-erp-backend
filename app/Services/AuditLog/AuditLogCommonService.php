@@ -536,9 +536,9 @@ class AuditLogCommonService
 
             case 'erp_document_communication_messages':
                 return [
-                    'tableName' => 'erp_document_communication_messages',
-                    'primaryKey' => 'documentSystemCode',
-                    'docCodeColumn' => 'documentSystemCode',
+                    'tableName' => 'erp_purchaseordermaster',
+                    'primaryKey' => 'purchaseOrderID',
+                    'docCodeColumn' => 'purchaseOrderCode',
                     'companySystemIdColumn' => 'companySystemID'
                 ];
                 
