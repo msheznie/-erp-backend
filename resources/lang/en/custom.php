@@ -1130,6 +1130,8 @@ return
     'company_element_cannot_be_add_more_than_once' => 'Company element cannot be add more than once',
     'company_finance_period_not_found' => 'Company finance period not found',
     'company_finance_periods' => 'Company Finance Periods',
+    'finance_period_audit_doc_code' => 'Finance Period | :department | :from - :to',
+    'finance_period_audit_narration_variable' => ':department | :from - :to',
     'company_finance_year_not_found' => 'Company Finance Year not found',
     'company_finance_year_not_found_1' => 'Company finance year not found',
     'company_finance_year_period_masters' => 'Company Finance Yearperiod Masters',

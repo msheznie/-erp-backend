@@ -1115,6 +1115,8 @@ return
     'company_element_cannot_be_add_more_than_once' => 'لا يمكن إضافة عنصر المؤسسة أكثر من مرة',
     'company_finance_period_not_found' => 'الفترة المالية للمؤسسة غير موجودة',
     'company_finance_periods' => 'الفترات المالية للمؤسسة',
+    'finance_period_audit_doc_code' => 'فترة مالية | :department | :from - :to',
+    'finance_period_audit_narration_variable' => ':department | :from - :to',
     'company_finance_year_not_found' => 'السنة المالية للمؤسسة غير موجودة',
     'company_finance_year_not_found_1' => 'السنة المالية للمؤسسة غير موجودة',
     'company_finance_year_period_masters' => 'السجلات الرئيسية لفترات السنة المالية للمؤسسة',

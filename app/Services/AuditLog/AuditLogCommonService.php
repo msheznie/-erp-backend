@@ -2,6 +2,7 @@
 
 namespace App\Services\AuditLog;
 
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
@@ -132,6 +133,12 @@ class AuditLogCommonService
                 break;
                 
             case 'chartofaccounts':
+                if ($crudType === 'U') {
+                    return 'audit.variable_has_updated';
+                }
+                break;
+
+            case 'companyfinanceperiod':
                 if ($crudType === 'U') {
                     return 'audit.variable_has_updated';
                 }
@@ -316,6 +323,32 @@ class AuditLogCommonService
                     return '';
                 }
             }
+
+            // Finance period audit logs only — other tables keep normal doc code columns (e.g. AccountCode).
+            if ($type === 'docCodeColumn' && $table === 'companyfinanceperiod' && ($docCodeInfo['tableName'] ?? '') === 'companyfinanceperiod') {
+                $fp = DB::table('companyfinanceperiod as cfp')
+                    ->leftJoin('departmentmaster as dm', 'cfp.departmentSystemID', '=', 'dm.departmentSystemID')
+                    ->where('cfp.' . $docCodeInfo['primaryKey'], $autoId)
+                    ->select('cfp.dateFrom', 'cfp.dateTo', 'cfp.departmentID', 'dm.DepartmentDescription')
+                    ->first();
+                if ($fp && $fp->dateFrom && $fp->dateTo) {
+                    try {
+                        $from = Carbon::parse($fp->dateFrom)->format('d/m/Y');
+                        $to = Carbon::parse($fp->dateTo)->format('d/m/Y');
+                        $department = $fp->DepartmentDescription ?? $fp->departmentID ?? '-';
+
+                        return trans('custom.finance_period_audit_doc_code', [
+                            'department' => $department,
+                            'from' => $from,
+                            'to' => $to,
+                        ]);
+                    } catch (\Throwable $e) {
+                        return '';
+                    }
+                }
+
+                return '';
+            }
             
             $record = DB::table($docCodeInfo['tableName'])
                 ->where($docCodeInfo['primaryKey'], $autoId)
@@ -364,6 +397,14 @@ class AuditLogCommonService
                     'primaryKey' => 'chartOfAccountSystemID',
                     'docCodeColumn' => 'AccountCode',
                     'companySystemIdColumn' => 'primaryCompanySystemID'
+                ];
+
+            case 'companyfinanceperiod':
+                return [
+                    'tableName' => 'companyfinanceperiod',
+                    'primaryKey' => 'companyFinancePeriodID',
+                    'docCodeColumn' => 'companyFinancePeriodID',
+                    'companySystemIdColumn' => 'companySystemID'
                 ];
                 
             case 'suppliermaster':

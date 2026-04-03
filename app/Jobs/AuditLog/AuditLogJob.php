@@ -22,6 +22,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use App\helper\CommonJobService;
 use App\Services\AuditLog\AssetFinanceCategoryAuditService;
 use App\Services\AuditLog\ChartOfAccountAuditService;
+use App\Services\AuditLog\CompanyFinancePeriodAuditService;
 use App\Services\AuditLog\ItemFinanceCategoryAuditService;
 use App\Services\AuditLog\ErpAttributeAuditService;
 use App\Services\AuditLog\CustomerMasterAuditService;
@@ -126,6 +127,9 @@ class AuditLogJob implements ShouldQueue
             case 'chartofaccounts':
                 $data = ChartOfAccountAuditService::process($auditData);
                 break;
+            case 'companyfinanceperiod':
+                $data = CompanyFinancePeriodAuditService::process($auditData);
+                break;
             case 'itemmaster':
                 $data = ItemMasterAuditService::process($auditData);
                 break;
@@ -193,13 +197,15 @@ class AuditLogJob implements ShouldQueue
             
             $languages = self::getActiveLanguages();
 
-            $docCode = AuditLogCommonService::getDocCompanyCode(
-                $this->transactionID,
-                $this->table,
-                $this->parentID,
-                $this->parentTable,
-                'docCodeColumn'
-            );
+            $docCode = $this->table !== 'companyfinanceperiod'
+                ? AuditLogCommonService::getDocCompanyCode(
+                    $this->transactionID,
+                    $this->table,
+                    $this->parentID,
+                    $this->parentTable,
+                    'docCodeColumn'
+                )
+                : '';
 
             $companySystemId = AuditLogCommonService::getDocCompanyCode(
                 $this->transactionID,
@@ -209,6 +215,8 @@ class AuditLogJob implements ShouldQueue
                 'companySystemIdColumn'
             );
 
+            $appLocaleBefore = app()->getLocale();
+
             foreach ($languages as $locale) {
                 $translatedNarration = AuditLogCommonService::translateNarration(
                     $narrationVariables,  
@@ -217,6 +225,19 @@ class AuditLogJob implements ShouldQueue
                     $locale,
                     $this->parentTable  
                 );
+
+                if ($this->table === 'companyfinanceperiod') {
+                    app()->setLocale($locale);
+                    $docCodeForLog = AuditLogCommonService::getDocCompanyCode(
+                        $this->transactionID,
+                        $this->table,
+                        $this->parentID,
+                        $this->parentTable,
+                        'docCodeColumn'
+                    );
+                } else {
+                    $docCodeForLog = $docCode;
+                }
                 
                 $logData = [
                     'channel' => 'audit',
@@ -236,12 +257,21 @@ class AuditLogJob implements ShouldQueue
                     'data' => json_encode($data),
                     'locale' => $locale,  
                     'company_system_id' => $companySystemId,
-                    'doc_code' => $docCode,
+                    'doc_code' => $docCodeForLog,
                     'log_uuid' => bin2hex(random_bytes(16)),
                 ];
+
+                if ($this->table === 'companyfinanceperiod' && $this->transactionID) {
+                    $fp = \App\Models\CompanyFinancePeriod::find($this->transactionID);
+                    if ($fp) {
+                        $logData['department_system_id'] = (string) $fp->departmentSystemID;
+                    }
+                }
                 
                 StoreAuditLogJob::dispatch($logData)->onQueue('audit-logs');
             }
+
+            app()->setLocale($appLocaleBefore);
         }
     }
     

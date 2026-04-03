@@ -175,6 +175,7 @@ class PendingApprovalDocumentsService
             $this->applyPeriodStrategyForList($query, $table, $def, $period);
 
             $strategy = $def['periodStrategy'] ?? 'direct';
+            $extraSelectFields = array_values(array_filter(($def['selectFields'] ?? [])));
 
             if ($strategy === 'year_month') {
                 $y = $def['yearField'];
@@ -182,12 +183,17 @@ class PendingApprovalDocumentsService
                 $docSysSelect = $skipDocSysCol
                     ? (string)$docSystemIdDef . ' as documentSystemID'
                     : '`' . $table . '`.`' . $docSystemIdCol . '` as documentSystemID';
+                $extraSelectRaw = '';
+                foreach ($extraSelectFields as $f) {
+                    $extraSelectRaw .= ', `' . $table . '`.`' . $f . '` as `' . $f . '`';
+                }
                 $docs = $query
                     ->selectRaw(
                         '`' . $table . '`.`' . $def['primaryKey'] . '` as _id, '
                         . $docSysSelect . ', '
                         . '`' . $table . '`.`' . $def['codeField'] . '` as documentCode, '
                         . 'STR_TO_DATE(CONCAT(`' . $table . '`.`' . $y . '`, \'-\', LPAD(CAST(`' . $table . '`.`' . $m . '` AS CHAR), 2, \'0\'), \'-01\'), \'%Y-%m-%d\') as documentDate'
+                        . $extraSelectRaw
                     )
                     ->orderBy($table . '.' . $y, 'asc')
                     ->orderBy($table . '.' . $m, 'asc')
@@ -197,35 +203,44 @@ class PendingApprovalDocumentsService
                 $dateSelect = $def['dateField'] ?? $def['codeField'];
 
                 if ($skipDocSysCol) {
+                    $extraSelectRaw = '';
+                    foreach ($extraSelectFields as $f) {
+                        $extraSelectRaw .= ', `' . $table . '`.`' . $f . '` as `' . $f . '`';
+                    }
                     $docs = $query
                         ->selectRaw(
                             '`' . $table . '`.`' . $def['primaryKey'] . '` as _id, '
                             . (string)$docSystemIdDef . ' as documentSystemID, '
                             . '`' . $table . '`.`' . $def['codeField'] . '` as documentCode, '
                             . '`' . $table . '`.`' . $dateSelect . '` as documentDate'
+                            . $extraSelectRaw
                         )
                         ->orderBy($orderCol, 'asc')
                         ->get();
                 } else {
+                    $select = [
+                        $def['primaryKey'] . ' as _id',
+                        $docSystemIdCol . ' as documentSystemID',
+                        $def['codeField'] . ' as documentCode',
+                        $dateSelect . ' as documentDate',
+                    ];
+                    foreach ($extraSelectFields as $f) {
+                        $select[] = $f;
+                    }
                     $docs = $query
-                        ->select([
-                            $def['primaryKey'] . ' as _id',
-                            $docSystemIdCol . ' as documentSystemID',
-                            $def['codeField'] . ' as documentCode',
-                            $dateSelect . ' as documentDate',
-                        ])
+                        ->select($select)
                         ->orderBy($orderCol, 'asc')
                         ->get();
                 }
             }
 
-            $rows = $rows->merge($docs->map(function ($d) use ($docMasterBySystemId, $departmentBySystemId) {
+            $rows = $rows->merge($docs->map(function ($d) use ($docMasterBySystemId, $departmentBySystemId, $extraSelectFields) {
                 $docSystemId = (int)($d->documentSystemID ?? 0);
                 $docMaster = $docSystemId ? ($docMasterBySystemId[$docSystemId] ?? null) : null;
                 $depSystemId = $docMaster ? (int)($docMaster->departmentSystemID ?? 0) : 0;
                 $dep = $depSystemId ? ($departmentBySystemId[$depSystemId] ?? null) : null;
 
-                return [
+                $row = [
                     'documentSystemID' => $docSystemId,
                     'documentCode' => $d->documentCode,
                     'documentDate' => $this->formatDocumentDate($d->documentDate),
@@ -234,6 +249,12 @@ class PendingApprovalDocumentsService
                     'module' => $dep ? $dep->DepartmentDescription : null,
                     'document' => $docMaster ? $docMaster->documentDescription : null,
                 ];
+
+                foreach ($extraSelectFields as $f) {
+                    $row[$f] = $d->{$f} ?? null;
+                }
+
+                return $row;
             }));
         }
 
@@ -655,6 +676,8 @@ class PendingApprovalDocumentsService
                 'periodField' => 'companyFinancePeriodID',
                 'codeField' => 'JVcode',
                 'dateField' => 'JVdate',
+                // Needed to differentiate Salary JV (jvType == 3) for finance-period close blocking.
+                'selectFields' => ['jvType'],
                 'confirmedField' => 'confirmedYN',
                 'approvedField' => 'approved',
             ],
@@ -1155,6 +1178,12 @@ class PendingApprovalDocumentsService
                 return false;
             }
             if (!$this->columnExists($table, (string)$column)) {
+                return false;
+            }
+        }
+
+        foreach (($def['selectFields'] ?? []) as $column) {
+            if ($column && !$this->columnExists($table, (string)$column)) {
                 return false;
             }
         }
