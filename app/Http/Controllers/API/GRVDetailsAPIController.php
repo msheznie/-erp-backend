@@ -20,6 +20,7 @@ use App\helper\Helper;
 use App\helper\ItemTracking;
 use App\Http\Requests\API\CreateGRVDetailsAPIRequest;
 use App\Http\Requests\API\UpdateGRVDetailsAPIRequest;
+use App\Jobs\AddMultipleItemsToGRV;
 use App\Models\FinanceItemCategorySub;
 use App\Models\GRVDetails;
 use App\Models\TaxVatCategories;
@@ -58,6 +59,7 @@ use App\Models\DocumentMaster;
 use App\Models\GRVTypes;
 use App\Models\SupplierCurrency;
 use App\Criteria\LimitOffsetCriteria;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
 use App\Services\DecimalPrecisionService;
@@ -67,6 +69,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Response;
 use Illuminate\Support\Arr;
+use Storage;
 
 /**
  * Class GRVDetailsController
@@ -1450,6 +1453,113 @@ class GRVDetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.error_occurred'));
         }
 
+    }
+
+
+    public function downloadGRVItemUploadTemplate(Request $request)
+    {
+        $input = $request->all();
+        $disk = Helper::policyWiseDisk($input['companySystemID'], 'public');
+        if ($exists = Storage::disk($disk)->exists('grv_item_upload_template/grv_item_upload_template.xlsx')) {
+            return Storage::disk($disk)->download('grv_item_upload_template/grv_item_upload_template.xlsx', 'grv_item_upload_template.xlsx');
+        } else {
+            return $this->sendError(trans('custom.attachments_not_found'), 500);
+        }
+    }
+
+    public function grvItemsUpload(request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $input = $request->all();
+            $excelUpload = $input['itemExcelUpload'];
+            $input = Arr::except($request->all(), 'itemExcelUpload');
+            $input = $this->convertArrayToValue($input);
+
+            $decodeFile = base64_decode($excelUpload[0]['file']);
+            $originalFileName = $excelUpload[0]['filename'];
+            $extension = $excelUpload[0]['filetype'];
+            $size = $excelUpload[0]['size'];
+            $fileExtension = strtolower(pathinfo($originalFileName, PATHINFO_EXTENSION));
+
+            if ($fileExtension !== 'xlsx') {
+                return $this->sendError(trans('custom.file_type_not_allowed_upload_xlsx_only'), 500);
+            }
+
+            $grvMaster = GRVMaster::where('grvAutoID', $input['grvAutoID'])->first();
+
+            $disk = 'local';
+            Storage::disk($disk)->put($originalFileName, $decodeFile);
+            $filePath = Storage::disk($disk)->path($originalFileName);
+            $spreadsheet = IOFactory::load($filePath);
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->removeRow(1, 6);
+            $writer = IOFactory::createWriter($spreadsheet, 'Xlsx');
+            $writer->save($filePath);
+            $formatChk = \App\helper\ExcelSheetReader::rawSheetToAssocArray($sheet->toArray());
+            $uniqueData = array_filter(collect($formatChk)->toArray());
+
+            if(empty($uniqueData)) {
+                return $this->sendError(trans('custom.no_data_found_in_the_excel_file'), 500);
+            }
+
+            $validateHeaderCode = false;
+            $totalItemCount = 0;
+
+            $templateHeaders = ['item_code', 'net_qty', 'unit_cost', 'comments', 'vat_percentage', 'project'];
+            $headerRow = $sheet->toArray(null, true, true, false)[0] ?? [];
+            $excelHeaders = array_values(array_filter(array_map(function ($header) {
+                $normalizedHeader = strtolower(trim((string)$header));
+                return preg_replace('/[^a-z0-9]+/', '_', $normalizedHeader);
+            }, $headerRow)));
+
+            $excelHeaders = array_values(array_unique($excelHeaders));
+            $missingHeaders = array_diff($templateHeaders, $excelHeaders);
+            $unexpectedHeader = array_diff($excelHeaders, $templateHeaders);
+
+            if (!empty($missingHeaders) || !empty($unexpectedHeader)) {
+                return $this->sendError(trans('custom.upload_failed_due_to_changes_made_in_the_excel_tem'), 500);
+            }
+
+            foreach ($uniqueData as $key => $value) {
+                if (isset($value['item_code'])) {
+                    $validateHeaderCode = true;
+                }
+
+                if ((isset($value['item_code']) && !is_null($value['item_code'])) || isset($value['no_qty']) && !is_null($value['no_qty']) || isset($value['unit_cost']) && !is_null($value['unit_cost'])) {
+                    $totalItemCount = $totalItemCount + 1;
+                }
+            }
+
+            if (!$validateHeaderCode || !$validateHeaderCode) {
+                return $this->sendError(trans('custom.items_cannot_be_uploaded_as_there_are_null_values_'), 500);
+            }
+
+            $record = \App\helper\ExcelSheetReader::sheetToAssocArray(Storage::disk($disk)->path($originalFileName), 0, ['item_code', 'net_qty', 'unit_cost', 'comments', 'vat_percentage', 'project']);
+
+            if ($grvMaster->cancelledYN == -1) {
+                return $this->sendError(trans('custom.grv_already_closed_cannot_add'), 500);
+            }
+
+            if ($grvMaster->approved == 1) {
+                return $this->sendError(trans('custom.grv_fully_approved_cannot_add'), 500);
+            }
+
+            if (count($record) > 0) {
+                $grvMaster->isBulkItemJobRun = 1;
+                $grvMaster->save();
+                $db = isset($input['db']) ? $input['db'] : "";
+                AddMultipleItemsToGRV::dispatch(array_filter($record),($grvMaster->toArray()),$db,Auth::id());
+            } else {
+                return $this->sendError('No Records found!', 500);
+            }
+
+            DB::commit();
+            return $this->sendResponse([], trans('custom.items_uploaded_successfully'));
+        } catch (\Exception $exception) {
+            DB::rollBack();
+            return $this->sendError($exception->getMessage());
+        }
     }
 
     public function updateGRVDetailsDirect(Request $request)

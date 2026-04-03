@@ -63,6 +63,8 @@ Route::group([], function () {
     Route::get('segment/projects', 'ProcumentOrderAPIController@getProjectsBySegment')->name("Get Projects By Segment");
     Route::get('getBinLocationsByWarehouse', 'GRVMasterAPIController@getBinLocationsByWarehouse')->name("Get Bin Locations By Warehouse");
     Route::get('getItemsByGRVMaster', 'GRVDetailsAPIController@getItemsByGRVMaster')->name("Get Items By GRV Master");
+    Route::get('downloadGRVItemUploadTemplate', 'GRVDetailsAPIController@downloadGRVItemUploadTemplate')->name("Download grv item upload template");
+    Route::post('grvItemsUpload', 'GRVDetailsAPIController@grvItemsUpload')->name('grv items upload');
     Route::get('getLogisticsItemsByGRV', 'PoAdvancePaymentAPIController@loadPoPaymentTermsLogisticForGRV')->name("Load Po Payment Terms Logistic For GRV");
     Route::get('getItemsOptionForGRV', 'GRVMasterAPIController@getItemsOptionForGRV')->name("Get Items Option For GRV");
     Route::get('getLogisticPrintDetail', 'PoAdvancePaymentAPIController@getLogisticPrintDetail')->name("Get Logistic Print Detail");
