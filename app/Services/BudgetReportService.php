@@ -111,8 +111,7 @@ class BudgetReportService
                         ->where('budgetYear',$previousYear)
                         ->whereHas('detail', function ($query) use ($chartOfAccountID) {
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
-                        })
-                        ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate]);
+                        });
 
                     $commitments = ($currencyID == 1) ? $commitments->selectRaw('SUM(poTotalLocalCurrency - VATAmountLocal) as amount')->first()->amount : $commitments->selectRaw('SUM(poTotalComRptCurrency - VATAmountRpt) as amount')->first()->amount;
 
