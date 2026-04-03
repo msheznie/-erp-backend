@@ -1179,16 +1179,8 @@ WHERE employees.empCompanySystemID IN (3,7 ,11,15,16,17,18,19,20,21,22,23,24,26,
     public function getDelegatedEmployees(Request $request)
     {
         $currentEmployee = Helper::getEmployeeInfo();
-        $companyId = $request->input('companySystemID');
-        if (empty($companyId)) {
-            $companyId = $request->input('selectedCompanyId') ?: $request->input('companyId');
-        }
-        if (empty($companyId)) {
-            $companyId = $currentEmployee && isset($currentEmployee->empCompanySystemID) ? $currentEmployee->empCompanySystemID : null;
-        }
-        if (empty($companyId)) {
-            return $this->sendError('Company is required', 422);
-        }
+        $input = $request->all();
+        $companyId = $input['companySystemID'];
         $employees = Employee::where('empCompanySystemID', $companyId)
             ->where('discharegedYN', 0)
             ->where('employeeSystemID', '!=', $currentEmployee->employeeSystemID)

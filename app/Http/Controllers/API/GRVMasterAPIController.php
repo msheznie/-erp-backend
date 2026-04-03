@@ -1750,10 +1750,6 @@ class GRVMasterAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
         $documentSystemID = $input['documentSystemID'];
 
-        $grvMasterData = $this->gRVMasterRepository->findWithoutFail($grvAutoID);
-        if (empty($grvMasterData)) {
-            return $this->sendError(trans('custom.grv_master_not_found'));
-        }
         $poIDS = GRVDetails::where('grvAutoID', $grvAutoID)
             ->groupBy('purchaseOrderMastertID')
             ->pluck('purchaseOrderMastertID');
