@@ -3,8 +3,6 @@
 namespace App\Http\Requests\POS;
 
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Contracts\Validation\Validator;
-use Illuminate\Http\Exceptions\HttpResponseException;
 
 class PosShiftSyncRequest extends FormRequest
 {
@@ -17,24 +15,72 @@ class PosShiftSyncRequest extends FormRequest
 
     public function rules(): array
     {
-             $base = [
-                'type' => 'required|string|in:GPOS,RPOS',
-                'company_id' => 'required|integer',
-                'shift' => 'required|array',
-                'shift.shiftID' => 'required|integer',
-                'shift.posType' => 'required|integer|in:1,2',
-                'shift.startTime' => 'required|date',
-                'shift.endTime' => 'required|date|after:shift.startTime',
-                'shift.wareHouseID' => 'required|integer',
-                'shift.createdUserName' => 'nullable|string',
-                'shift.transactionCurrencyDecimalPlaces' => 'nullable|integer',
-            ];
+        return static::rulesForPayload($this->all());
+    }
 
-        if ($this->input('type') === 'GPOS') {
-            return array_merge($base, $this->gposRules());
+
+    public static function rulesForPayload(array $input): array
+    {
+        $base = [
+            'type' => 'required|string|in:GPOS,RPOS',
+            'company_id' => 'required|integer',
+            'shift' => 'required|array',
+            'shift.shiftID' => 'required|integer',
+            'shift.posType' => 'required|integer|in:1,2',
+            'shift.startTime' => 'required|date',
+            'shift.endTime' => 'required|date|after:shift.startTime',
+            'shift.wareHouseID' => 'required|integer',
+            'shift.createdUserName' => 'nullable|string',
+            'shift.transactionCurrencyDecimalPlaces' => 'nullable|integer',
+        ];
+
+        $typeNorm = null;
+        if (array_key_exists('type', $input) && is_string($input['type'])) {
+            $typeNorm = strtoupper(trim($input['type']));
+        } elseif (array_key_exists('type', $input)) {
+            $typeNorm = $input['type'];
         }
 
-        return array_merge($base, $this->rposRules());
+        $self = new self;
+        if ($typeNorm === 'GPOS') {
+            return array_merge($base, $self->gposRules());
+        }
+        if ($typeNorm === 'RPOS') {
+            return array_merge($base, $self->rposRules());
+        }
+        return $base;
+    }
+
+ 
+    public static function attributeLabels(): array
+    {
+        return [
+            'type' => 'POS type',
+            'company_id' => 'Company ID',
+            'shift' => 'Shift',
+            'shift.shiftID' => 'Shift ID',
+            'shift.posType' => 'POS type (shift)',
+            'shift.startTime' => 'Shift start time',
+            'shift.endTime' => 'Shift end time',
+            'shift.wareHouseID' => 'Warehouse ID',
+            'shift.createdUserName' => 'Created user name',
+            'shift.transactionCurrencyDecimalPlaces' => 'Transaction currency decimal places',
+
+            'invoices' => 'Invoices',
+            'invoices.*.invoiceID' => 'Invoice ID',
+            'invoices.*.invoiceDate' => 'Invoice date',
+            'invoices.*.netTotal' => 'Net total',
+            'invoices.*.details' => 'Invoice details',
+            'invoices.*.details.*.invoiceID' => 'Invoice line invoice ID',
+            'invoices.*.details.*.invoiceDetailsID' => 'Invoice details ID',
+            'invoices.*.details.*.qty' => 'Invoice line quantity',
+            'invoices.*.details.*.price' => 'Invoice line price',
+        ];
+    }
+
+    public function attributes(): array
+    {
+        return static::attributeLabels();
     }
 
     private function gposRules(): array
@@ -42,7 +88,7 @@ class PosShiftSyncRequest extends FormRequest
         return [
             // Shift-only payloads may omit invoices.
             'invoices'                              => 'nullable|array|min:1',
-            'invoices.*.invoiceID'                  => 'nullable|integer',
+            'invoices.*.invoiceID'                  => 'required|integer',
             'invoices.*.invoiceDate'                => 'required|date',
             'invoices.*.invoiceCode'                => 'nullable|string',
             'invoices.*.invoiceSequenceNo'          => 'nullable|integer',
@@ -61,7 +107,7 @@ class PosShiftSyncRequest extends FormRequest
             'invoices.*.balanceAmount'              => 'nullable|numeric',
             'invoices.*.cashAmount'                 => 'nullable|numeric',
             'invoices.*.cardAmount'                 => 'nullable|numeric',
-            'invoices.*.isCreditSales'              => 'nullable|boolean',
+            'invoices.*.isCreditSales'              => 'required|boolean',
             'invoices.*.creditSalesAmount'          => 'nullable|numeric',
             'invoices.*.wareHouseAutoID'            => 'nullable|integer',
 
@@ -134,7 +180,6 @@ class PosShiftSyncRequest extends FormRequest
             'payment_config.*.isActive'                 => 'nullable|integer|in:0,1',
             'payment_config.*.sortOrder'                => 'nullable|integer',
             'payment_config.*.selectBoxName'            => 'nullable|string|max:100',
-            'payment_config.*.timesstamp'               => 'nullable|date',
 
             'payment_config.*.details'                  => 'nullable|array',
             'payment_config.*.details.*.ID'             => 'required_with:payment_config.*.details|integer',
@@ -207,7 +252,6 @@ class PosShiftSyncRequest extends FormRequest
             'menuSales.*.netTotal'                           => 'required|numeric',
             'menuSales.*.paidAmount'                         => 'nullable|numeric',
             'menuSales.*.balanceAmount'                      => 'nullable|numeric',
-            'menuSales.*.timestamp'                          => 'nullable|date',
 
             // Items per menu sale (your payload key)
             'menuSales.*.menuSales_items'                    => 'nullable|array',
@@ -225,7 +269,6 @@ class PosShiftSyncRequest extends FormRequest
             'menuSales.*.menuSales_items.*.menuSales_itemdetails.*.itemAutoID' => 'nullable|integer',
             'menuSales.*.menuSales_items.*.menuSales_itemdetails.*.qty' => 'required_with:menuSales.*.menuSales_items.*.menuSales_itemdetails|numeric|min:0',
             'menuSales.*.menuSales_items.*.menuSales_itemdetails.*.cost' => 'nullable|numeric',
-            'menuSales.*.menuSales_items.*.menuSales_itemdetails.*.timeStamp' => 'nullable|date',
 
             // Service charge list
             'menuSales.*.menuSales_serviceCharge'            => 'nullable|array',
@@ -233,7 +276,6 @@ class PosShiftSyncRequest extends FormRequest
             'menuSales.*.menuSales_serviceCharge.*.menuSalesID' => 'nullable|integer',
             'menuSales.*.menuSales_serviceCharge.*.menuSalesItemID' => 'nullable|integer',
             'menuSales.*.menuSales_serviceCharge.*.serviceChargeAmount' => 'nullable|numeric',
-            'menuSales.*.menuSales_serviceCharge.*.timestamp' => 'nullable|date',
 
             // Item-level tax details
             'menuSales.*.menuSales_tax_details'              => 'nullable|array',
@@ -242,7 +284,6 @@ class PosShiftSyncRequest extends FormRequest
             'menuSales.*.menuSales_tax_details.*.menuSalesItemID' => 'nullable|integer',
             'menuSales.*.menuSales_tax_details.*.taxPercentage' => 'nullable|numeric',
             'menuSales.*.menuSales_tax_details.*.taxAmount' => 'nullable|numeric',
-            'menuSales.*.menuSales_tax_details.*.timestamp' => 'nullable|date',
 
             // Outlet-level tax details
             'menuSales.*.menuSales_outletTax_details'        => 'nullable|array',
@@ -250,7 +291,6 @@ class PosShiftSyncRequest extends FormRequest
             'menuSales.*.menuSales_outletTax_details.*.menuSalesID' => 'nullable|integer',
             'menuSales.*.menuSales_outletTax_details.*.taxPercentage' => 'nullable|numeric',
             'menuSales.*.menuSales_outletTax_details.*.taxAmount' => 'nullable|numeric',
-            'menuSales.*.menuSales_outletTax_details.*.timestamp' => 'nullable|date',
 
             // Additional RPOS master payloads
             'menuSales_customerType'                            => 'nullable|array',
@@ -260,12 +300,6 @@ class PosShiftSyncRequest extends FormRequest
             'menuSales_customerType.*.isThirdPartyDelivery'     => 'nullable|integer',
             'menuSales_customerType.*.isDineIn'                 => 'nullable|integer',
             'menuSales_customerType.*.isDefault'                => 'nullable|integer',
-            'menuSales_customerType.*.createdBy'                => 'nullable|integer',
-            'menuSales_customerType.*.createdDatetime'          => 'nullable|date',
-            'menuSales_customerType.*.createdPc'                => 'nullable|string|max:50',
-            'menuSales_customerType.*.timestamp'                => 'nullable|date',
-            'menuSales_customerType.*.imageName'                => 'nullable|string|max:255',
-
             'menuSales_menuMaster'                              => 'nullable|array',
             'menuSales_menuMaster.*.menuMasterID'               => 'required_with:menuSales_menuMaster|integer',
             'menuSales_menuMaster.*.menuMasterDescription'      => 'nullable|string|max:255',
@@ -292,18 +326,6 @@ class PosShiftSyncRequest extends FormRequest
             'menuSales_menuMaster.*.sortOrder'                  => 'nullable|integer',
             'menuSales_menuMaster.*.sortOder'                   => 'nullable|integer',
             'menuSales_menuMaster.*.isDeleted'                  => 'nullable|integer',
-            'menuSales_menuMaster.*.deletedBy'                  => 'nullable|integer',
-            'menuSales_menuMaster.*.deletedDatetime'            => 'nullable|date',
-            'menuSales_menuMaster.*.createdPCID'                => 'nullable|string|max:50',
-            'menuSales_menuMaster.*.createdUserID'              => 'nullable|integer',
-            'menuSales_menuMaster.*.createdDateTime'            => 'nullable|date',
-            'menuSales_menuMaster.*.createdUserName'            => 'nullable|string|max:100',
-            'menuSales_menuMaster.*.createdUserGroup'           => 'nullable|string|max:100',
-            'menuSales_menuMaster.*.modifiedPCID'               => 'nullable|string|max:50',
-            'menuSales_menuMaster.*.modifiedUserID'             => 'nullable|integer',
-            'menuSales_menuMaster.*.modifiedDateTime'           => 'nullable|date',
-            'menuSales_menuMaster.*.modifiedUserName'           => 'nullable|string|max:100',
-            'menuSales_menuMaster.*.timeStamp'                  => 'nullable|date',
 
             'menuSales_menuCategory'                            => 'nullable|array',
             'menuSales_menuCategory.*.menuCategoryID'           => 'required_with:menuSales_menuCategory|integer',
@@ -319,29 +341,7 @@ class PosShiftSyncRequest extends FormRequest
             'menuSales_menuCategory.*.isActive'                 => 'nullable|integer',
             'menuSales_menuCategory.*.showImageYN'              => 'nullable|integer',
             'menuSales_menuCategory.*.isDeleted'                => 'nullable|integer',
-            'menuSales_menuCategory.*.deletedBy'                => 'nullable|integer',
-            'menuSales_menuCategory.*.deletedDatetime'          => 'nullable|date',
-            'menuSales_menuCategory.*.createdPCID'              => 'nullable|string|max:50',
-            'menuSales_menuCategory.*.createdUserID'            => 'nullable|integer',
-            'menuSales_menuCategory.*.createdDateTime'          => 'nullable|date',
-            'menuSales_menuCategory.*.createdUserName'          => 'nullable|string|max:100',
-            'menuSales_menuCategory.*.createdUserGroup'         => 'nullable|string|max:100',
-            'menuSales_menuCategory.*.modifiedPCID'             => 'nullable|string|max:50',
-            'menuSales_menuCategory.*.modifiedUserID'           => 'nullable|integer',
-            'menuSales_menuCategory.*.modifiedDateTime'         => 'nullable|date',
-            'menuSales_menuCategory.*.modifiedUserName'         => 'nullable|string|max:100',
-            'menuSales_menuCategory.*.timeStamp'                => 'nullable|date',
         ];
     }
 
-    protected function failedValidation(Validator $validator): void
-    {
-        $response = response()->json([
-            'success' => false,
-            'message' => 'POS shift payload validation failed',
-            'errors'  => $validator->errors()->toArray(),
-        ], 422);
-
-        throw new HttpResponseException($response);
-    }
 }
