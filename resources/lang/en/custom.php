@@ -9965,6 +9965,7 @@ return
     'per_page_is_required_when_getAll_is_true' => 'Per page is required when getAll is true',
     'per_page_must_be_an_integer' => 'Per page must be an integer',
     'per_page_must_be_at_least_1' => 'Per page must be at least 1',
+    'per_page_cannot_exceed_500' => 'Per page cannot exceed 500',
     'the_company_system_ID_not_matching_with_system' => 'The company system ID :companySystemID not matching with system',
     'the_item_code_not_matching_with_system' => 'The item code :itemCode not matching with system',
     'the_selected_item_is_not_fully_approved' => 'The selected item :itemCode is not fully approved',
