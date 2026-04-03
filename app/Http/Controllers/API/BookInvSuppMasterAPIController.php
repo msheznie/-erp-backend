@@ -2396,23 +2396,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
        switch ($output->documentType)
        {
            case 0 :
-                $items = BookInvSuppDet::where('bookingSuppMasInvAutoID', $input['bookingSuppMasInvAutoID'])
-                ->with(['grvmaster' => function($q){
-                    $q->with('details');
-                }, 'pomaster','suppinvmaster'=>function($q){
-                    $q->select('bookingSuppMasInvAutoID','documentType');
-                }])
-                ->get();
-
-                $itemsArray = $items->map(function($item) {
-                    $itemArray = $item->toArray();
-                    $itemArray['vatAmountSum'] = $item->getSupplierInvoiceItemDetailsVATAmountSum();
-                    $itemArray['vatAmountSumWithoutExemptVAT'] = $item->getVATAmountSumWithoutExemptVAT();
-                    return $itemArray;
-                })->toArray();
-
-                $totalVatAmount = collect($itemsArray)->sum('vatAmountSum');
-                $stdVatAmountTotal = collect($itemsArray)->sum('vatAmountSumWithoutExemptVAT');
+               $totalVatAmount = $output->detail->sum('VATAmount') + $output->directdetail->sum('VATAmount');
+               $stdVatAmountTotal = $output->detail->filter(function ($item) {
+                   return optional($item->vat_sub_category)->subCatgeoryType == 1;
+               })->sum('VATAmount')
+                   + $output->directdetail->filter(function ($item) {
+                       return optional($item->vat_sub_category)->subCatgeoryType == 1;
+                   })->sum('VATAmount');
                break;
            case 1 :
                $totalVatAmount = $output->directdetail->sum('VATAmount');
@@ -2421,23 +2411,10 @@ class BookInvSuppMasterAPIController extends AppBaseController
                })->sum('VATAmount');
                break;
            case 2 :
-            $items = BookInvSuppDet::where('bookingSuppMasInvAutoID', $input['bookingSuppMasInvAutoID'])
-            ->with(['grvmaster' => function($q){
-                $q->with('details');
-            }, 'pomaster','suppinvmaster'=>function($q){
-                $q->select('bookingSuppMasInvAutoID','documentType');
-            }])
-            ->get();
-
-            $itemsArray = $items->map(function($item) {
-                $itemArray = $item->toArray();
-                $itemArray['vatAmountSum'] = $item->getSupplierInvoiceItemDetailsVATAmountSum();
-                $itemArray['vatAmountSumWithoutExemptVAT'] = $item->getVATAmountSumWithoutExemptVAT();
-                return $itemArray;
-            })->toArray();
-
-            $totalVatAmount = collect($itemsArray)->sum('vatAmountSum');
-            $stdVatAmountTotal = collect($itemsArray)->sum('vatAmountSumWithoutExemptVAT');
+               $totalVatAmount = $output->detail->sum('VATAmount');
+               $stdVatAmountTotal = $output->detail->filter(function ($item) {
+                   return optional($item->vat_sub_category)->subCatgeoryType == 1;
+               })->sum('VATAmount');           
                break;
            case 3 :
                $totalVatAmount = $output->item_details->sum(function ($item) {
@@ -2454,12 +2431,6 @@ class BookInvSuppMasterAPIController extends AppBaseController
            case 4 :
                $totalVatAmount = $output->directdetail->sum('VATAmount');
                $stdVatAmountTotal = $output->directdetail->filter(function ($item) {
-                   return optional($item->vat_sub_category)->subCatgeoryType == 1;
-               })->sum('VATAmount');
-               break;
-           case 0 :
-               $totalVatAmount = $output->detail->sum('VATAmount');
-               $stdVatAmountTotal = $output->detail->filter(function ($item) {
                    return optional($item->vat_sub_category)->subCatgeoryType == 1;
                })->sum('VATAmount');
                break;
@@ -2483,7 +2454,8 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $output['isProjectBase'] = $isProjectBase;
         $output['vatAmountAfterRetention'] = round($vatAmount,$output->transactioncurrency->DecimalPlaces ?? 2);
-        $output['poVATamount'] = round($vatAmount,$output->transactioncurrency->DecimalPlaces ?? 2);
+        $output['poVATamount'] = round($poVATamount, $output->transactioncurrency->DecimalPlaces ?? 2);
+
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
 
