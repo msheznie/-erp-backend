@@ -689,7 +689,7 @@
                             @if($masterdata->documentType == 1 && $isProjectBase)
                                 <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
                             @endif
-                            <td class="text-right" style="background-color: rgb(215,215,215)">{{ __('custom.retention_amount') }}</td>
+                            <td class="text-right" style="background-color: rgb(215,215,215)">{{ __('custom.retention') }}</td>
                             @if($masterdata->rcmActivated)
                                 <td class="text-right"
                                     style="background-color: rgb(215,215,215)">{{number_format($directTotNet * ($masterdata->retentionPercentage/100), $transDecimal)}}</td>
@@ -704,7 +704,7 @@
                             @if($masterdata->documentType == 1 && $isProjectBase)
                                 <td colspan="3" class="text-right border-bottom-remov">&nbsp;</td>
                             @endif
-                            <td class="text-right" style="background-color: rgb(215,215,215)">{{ __('custom.mol_contribution') }}</td>
+                            <td class="text-right" style="background-color: rgb(215,215,215)">{{ __('custom.mol') }}</td>
                             <td class="text-right"
                                     style="background-color: rgb(215,215,215)">{{number_format($masterdata->mol_amount, $transDecimal)}}
                             </td>
@@ -911,7 +911,7 @@
                         &nbsp;</td>
                     <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;"><span
                                 class="font-weight-bold"
-                                style="font-size: 11px">{{ __('custom.retention_amount') }}</span>
+                                style="font-size: 11px">{{ __('custom.retention') }}</span>
                     </td>
                     <td class="text-right"
                         style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
@@ -936,6 +936,100 @@
                             {{number_format(($subTotal + $VATTotal + $directTotTra) - (($subTotal + $VATTotal + $directTotTra)* ($masterdata->retentionPercentage/100)), $transDecimal)}}
                         @endif
                     </span>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    @endif
+    @if($masterdata->documentType == 0 || $masterdata->documentType == 2)
+        @php
+            $siBookingAmountTrans = (float) ($masterdata->bookingAmountTrans ?? 0);
+            $siPoVatAmount = (float) ($poVATamount ?? ($masterdata->poVATamount ?? 0));
+            $siPct = (float) ($masterdata->retentionPercentage ?? 0);
+            $siRcm = (int) ($masterdata->rcmActivated ?? 0);
+            $siWhtDeduct = ($masterdata->whtApplicable && (int) ($masterdata->whtPaymentMethod ?? 0) != 2) ? (float) ($masterdata->whtAmount ?? 0) : 0;
+            $siMol = (($masterdata->mol_applicable ?? 0) == 1 || (float) ($masterdata->mol_amount ?? 0) != 0) ? (float) ($masterdata->mol_amount ?? 0) : 0;
+            $siPoVatAdjustedTotal = $siBookingAmountTrans - $siPoVatAmount;
+            $siVatAmount = $siPoVatAmount - (($siPoVatAmount * $siPct) / 100);
+            $siNetTotal = $siRcm ? $siPoVatAdjustedTotal : ($siPoVatAdjustedTotal + $siVatAmount);
+            $siRetentionAmount = $siRcm
+                ? (($siBookingAmountTrans - $siPoVatAmount) * ($siPct / 100))
+                : ((($siBookingAmountTrans - $siPoVatAmount) * ($siPct / 100)) - $retentionVatPortion);
+            $siNetAmount = $siNetTotal - $siRetentionAmount - $siWhtDeduct - $siMol;
+        @endphp
+        <div class="row" style="margin-top: 30px">
+            <table style="width:100%; border-collapse: collapse;">
+                <tbody>
+                <tr>
+                    <td style="width: 60%;">&nbsp;</td>
+                    <td style="width: 40%; padding: 0; border: none;">
+                        <table style="width:100%; border-collapse: collapse;">
+                            <tbody>
+                            <tr>
+                                <td class="text-left" style="width: 55%; padding: 7px 10px; border: none;">
+                                    <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.total') }}</span>
+                                </td>
+                                <td class="text-right" style="width: 45%; padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
+                                    <span class="font-weight-bold">{{ number_format($siPoVatAdjustedTotal, $transDecimal) }}</span>
+                                </td>
+                            </tr>
+                            @if ($isVATEligible && $masterdata->vatRegisteredYN && !$siRcm)
+                                <tr>
+                                    <td class="text-left" style="padding: 7px 10px; border: none;">
+                                        <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.vat') }}</span>
+                                    </td>
+                                    <td class="text-right" style="padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
+                                        <span class="font-weight-bold">{{ number_format($siVatAmount, $transDecimal) }}</span>
+                                    </td>
+                                </tr>
+                            @endif
+                            <tr>
+                                <td class="text-left" style="padding: 7px 10px; border: none;">
+                                    <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.net_total') }}</span>
+                                </td>
+                                <td class="text-right" style="padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
+                                    <span class="font-weight-bold">{{ number_format($siNetTotal, $transDecimal) }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-left" style="padding: 7px 10px; border: none;">
+                                    <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.retention') }}</span>
+                                </td>
+                                <td class="text-right" style="padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
+                                    <span class="font-weight-bold">{{ number_format($siRetentionAmount, $transDecimal) }}</span>
+                                </td>
+                            </tr>
+                            @if ($masterdata->whtApplicable)
+                                <tr>
+                                    <td class="text-left" style="padding: 7px 10px; border: none;">
+                                        <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.wht') }}</span>
+                                    </td>
+                                    <td class="text-right" style="padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
+                                        <span class="font-weight-bold">{{ number_format($siWhtDeduct, $transDecimal) }}</span>
+                                    </td>
+                                </tr>
+                            @endif
+                            @if (($masterdata->mol_applicable ?? 0) == 1 || (float) ($masterdata->mol_amount ?? 0) != 0)
+                                <tr>
+                                    <td class="text-left" style="padding: 7px 10px; border: none;">
+                                        <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.mol') }}</span>
+                                    </td>
+                                    <td class="text-right" style="padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
+                                        <span class="font-weight-bold">{{ number_format((float) ($masterdata->mol_amount ?? 0), $transDecimal) }}</span>
+                                    </td>
+                                </tr>
+                            @endif
+                            <tr>
+                                <td class="text-left" style="padding: 7px 10px; border: none;">
+                                    <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.net_amount') }}</span>
+                                </td>
+                                <td class="text-right" style="padding: 7px 12px; border: 1px solid #bfbfbf; background-color: #efefef; font-size: 11px;">
+                                    <span class="font-weight-bold">{{ number_format($siNetAmount, $transDecimal) }}</span>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
                     </td>
                 </tr>
                 </tbody>
