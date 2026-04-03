@@ -122,7 +122,7 @@ class AuditRoutesTenantService
             'api/v1/document-communications/messages',
             'api/v1/document-communications/messages/reply',
             'api/v1/document-communications/messages/{id}',
-            'api/v1/document-communications/messages/{id}/delete',
+            'api/v1/document-communications/messages/{id}/delete'
         ];
 
         return $lokiTenantRoutes;

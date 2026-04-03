@@ -834,7 +834,6 @@
                             @else 
                                 {{number_format($podata->VATAmount, $numberFormatting)}}
                             @endif
-
                         </span>
                     </td>
                 </tr>
