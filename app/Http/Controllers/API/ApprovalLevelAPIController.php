@@ -453,9 +453,10 @@ class ApprovalLevelAPIController extends AppBaseController
                 $isCategoryWiseApproval = isset($input['isCategoryWiseApproval']) && ($input['isCategoryWiseApproval'] || $input['isCategoryWiseApproval'] == -1) ? -1 : 0;
                 $serviceLineWise = isset($input['serviceLineWise']) && ($input['serviceLineWise'] || $input['serviceLineWise'] == 1) ? -1 : 0;
                 $valueWise = isset($input['valueWise']) && ($input['valueWise'] || $input['valueWise'] == 1) ? -1 : 0;
+                $prTypeWise = isset($input['prTypeWise']) && ($input['prTypeWise'] || $input['prTypeWise'] == 1) ? -1 : 0;
                 $docSubcategoryApproval = \App\Services\CompanyDocumentAttachmentService::isApprovalEnabled($documentConf->isSubcategoryApproval ?? 0);
 
-                if (($isCategoryWiseApproval != $documentConf->isCategoryApproval) || ($serviceLineWise != $documentConf->isServiceLineApproval) || ($valueWise != $documentConf->isAmountApproval)) {
+                if (($isCategoryWiseApproval != $documentConf->isCategoryApproval) || ($serviceLineWise != $documentConf->isServiceLineApproval) || ($valueWise != $documentConf->isAmountApproval) || ($prTypeWise != $documentConf->isPRTypeApproval)) {
                     return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
                 }
                 if ($input['documentSystemID'] == 3 && $docSubcategoryApproval && empty($input['subcategoryID'])) {
@@ -490,10 +491,20 @@ class ApprovalLevelAPIController extends AppBaseController
             }
         }
 
-        $approvalLevelValidation = $this->approvalLevelValidation($approvalLevel->toArray(), true);
+        if ($approvalLevel->documentSystemID == 4) {
+            if ($request->isActive) {
+                $pvActivationValidation = $this->approvalLevelService->validatePaymentVoucherActivation($approvalLevel, $request);
+                if (!$pvActivationValidation['status']) {
+                    return $this->sendError($pvActivationValidation['message'], 500);
+                }
+            }
+        } 
+        else {
+            $approvalLevelValidation = $this->approvalLevelValidation($approvalLevel->toArray(), true);
 
-        if (!$approvalLevelValidation['status']) {
-            return $this->sendError($approvalLevelValidation['message'], 500);
+            if (!$approvalLevelValidation['status']) {
+                return $this->sendError($approvalLevelValidation['message'], 500);
+            }
         }
 
         if ($request->isActive) {

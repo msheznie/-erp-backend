@@ -199,27 +199,9 @@ class PvApprovalTypeSetupService
 
     private function getPvTypeFlagValues($data, $fallbackSetup = null): array
     {
-        $columns = [
-            'is_amount_approval',
-            'is_general_approval',
-            'is_supplier_payment',
-            'is_supplier_advance_payment',
-            'is_employee_payment',
-            'is_employee_advance_payment',
-            'is_direct_payment_general',
-            'is_iou_voucher',
-            'is_salary_transfer',
-            'is_expense_claim',
-            'is_petty_cash',
-            'is_cash',
-            'is_inter_company_funds_transfer',
-            'is_collection_on_behalf',
-            'is_inter_bank_account_transfer',
-        ];
-
         $values = [];
 
-        foreach ($columns as $column) {
+        foreach (PvApprovalTypeSetup::TYPE_FINGERPRINT_COLUMNS as $column) {
             if (array_key_exists($column, $data)) {
                 $values[$column] = (int) $data[$column];
             } 

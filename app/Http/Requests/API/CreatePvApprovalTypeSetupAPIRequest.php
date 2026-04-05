@@ -34,6 +34,7 @@ class CreatePvApprovalTypeSetupAPIRequest extends FormRequest
             'is_inter_company_funds_transfer' => $binary,
             'is_collection_on_behalf' => $binary,
             'is_inter_bank_account_transfer' => $binary,
+            'is_refund' => $binary,
             'is_active' => $binary,
         ];
     }
