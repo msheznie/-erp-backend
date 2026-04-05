@@ -169,7 +169,20 @@ class RevisionAPIController extends AppBaseController
         $revision = $this->revisionRepository->create($input);
 
         // Update budget planning status to "Sent Back for Revision"
+        $oldBudget = $budgetPlanning->toArray();
         $budgetPlanning->update(['financeTeamStatus' => 3]);
+        $budgetPlanning->refresh();
+        $this->auditLog(
+            $request->get('db', ''),
+            $budgetPlanning->id,
+            $request->get('tenant_uuid', 'local'),
+            'department_budget_plannings',
+            $budgetPlanning->planningCode,
+            'U',
+            $budgetPlanning->toArray(),
+            $oldBudget,
+            0
+        );
 
         // Log the action
         $this->logAuditTrail('Revision', 'Created', $revision->id, 'Revision created for budget planning ID: ' . $input['budgetPlanningId']);
@@ -459,7 +472,20 @@ class RevisionAPIController extends AppBaseController
             $revision = $this->revisionRepository->create($revisionData);
 
             // Update budget planning status to "Sent Back for Revision"
+            $oldBudget = $budgetPlanning->toArray();
             $budgetPlanning->update(['financeTeamStatus' => 3, 'workStatus' => 1]);
+            $budgetPlanning->refresh();
+            $this->auditLog(
+                $request->get('db', ''),
+                $budgetPlanning->id,
+                $request->get('tenant_uuid', 'local'),
+                'department_budget_plannings',
+                $budgetPlanning->planningCode,
+                'U',
+                $budgetPlanning->toArray(),
+                $oldBudget,
+                0
+            );
 
             // Handle attachments if provided
             if (isset($input['attachments']) && is_array($input['attachments']) && !empty($input['attachments'])) {
@@ -730,7 +756,20 @@ class RevisionAPIController extends AppBaseController
         // Update budget planning status back to "Under Review"
         $budgetPlanning = DepartmentBudgetPlanning::find($revision->budgetPlanningId);
         if ($budgetPlanning) {
+            $oldBudget = $budgetPlanning->toArray();
             $budgetPlanning->update(['financeTeamStatus' => 2]);
+            $budgetPlanning->refresh();
+            $this->auditLog(
+                $request->get('db', ''),
+                $budgetPlanning->id,
+                $request->get('tenant_uuid', 'local'),
+                'department_budget_plannings',
+                $budgetPlanning->planningCode,
+                'U',
+                $budgetPlanning->toArray(),
+                $oldBudget,
+                0
+            );
         }
 
         // Log the action

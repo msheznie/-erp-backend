@@ -2,9 +2,11 @@
 
 namespace App\Services\AuditLog;
 
+use Illuminate\Support\Carbon;
 use App\Models\CompanyFinanceYear;
 use App\Models\WorkflowConfiguration;
-
+use App\Models\Employee;
+use App\Models\CompanyDepartmentEmployee;
 class DepartmentBudgetPlanningAuditService
 {
     public static function process($auditData)
@@ -36,22 +38,115 @@ class DepartmentBudgetPlanningAuditService
         else if ($auditData['crudType'] == "U") {
             // For updates, compare old and new values
             if ($auditData['parentID'] == 0) {
-                if($auditData['previosValue']['workStatus'] != $auditData['newValue']['workStatus']) {
-                    $modifiedData[] = ['amended_field' => "work_status", 'previous_value' => self::getWorkStatus($auditData['previosValue']['workStatus']), 'new_value' => self::getWorkStatus($auditData['newValue']['workStatus'])];
+                $pv = is_array($auditData['previosValue'] ?? null) ? $auditData['previosValue'] : [];
+                $nv = is_array($auditData['newValue'] ?? null) ? $auditData['newValue'] : [];
+
+
+                if (($pv['workStatus'] ?? null) != ($nv['workStatus'] ?? null)) {
+                    $modifiedData[] = ['amended_field' => "department_status", 'previous_value' => self::getWorkStatus($pv['workStatus'] ?? null), 'new_value' => self::getWorkStatus($nv['workStatus'] ?? null)];
                 }
-            }
-            else {
-                if($auditData['previosValue']['status'] != $auditData['newValue']['status']) {
-                    $modifiedData[] = ['amended_field' => "status", 'previous_value' => self::getTimeExtensionStatus($auditData['previosValue']['status']), 'new_value' => self::getTimeExtensionStatus($auditData['newValue']['status'])];
+                if (($pv['financeTeamStatus'] ?? null) != ($nv['financeTeamStatus'] ?? null)) {
+                    $modifiedData[] = ['amended_field' => "finance_team_status", 'previous_value' => self::getFinanceTeamStatus($pv['financeTeamStatus'] ?? null), 'new_value' => self::getFinanceTeamStatus($nv['financeTeamStatus'] ?? null)];
+                }
+                if (($pv['confirmed_yn'] ?? null) != ($nv['confirmed_yn'] ?? null)) {
+                    $modifiedData[] = ['amended_field' => "department_confirmed", 'previous_value' => self::yesNo($pv['confirmed_yn'] ?? null), 'new_value' => self::yesNo($nv['confirmed_yn'] ?? null)];
+                }
+                if (($pv['typeID'] ?? null) != ($nv['typeID'] ?? null)) {
+                    $modifiedData[] = ['amended_field' => "budget_type", 'previous_value' => self::getType($pv['typeID'] ?? null), 'new_value' => self::getType($nv['typeID'] ?? null)];
+                }
+            } elseif ($auditData['parentID'] == 2) {
+                // Delegate work status / context (synthetic payloads from controllers)
+                $pv = is_array($auditData['previosValue'] ?? null) ? $auditData['previosValue'] : [];
+                $nv = is_array($auditData['newValue'] ?? null) ? $auditData['newValue'] : [];
+                if (($pv['delegate_work_status'] ?? null) != ($nv['delegate_work_status'] ?? null)) {
+                    $modifiedData[] = [
+                        'amended_field' => 'Delegate work status',
+                        'previous_value' => self::formatDelegateWorkStatusForAudit($pv['delegate_work_status'] ?? null),
+                        'new_value' => self::formatDelegateWorkStatusForAudit($nv['delegate_work_status'] ?? null),
+                    ];
+                }
+                if (($pv['budget_planning_detail_id'] ?? null) != ($nv['budget_planning_detail_id'] ?? null)) {
+                    $modifiedData[] = [
+                        'amended_field' => 'Budget planning detail ID',
+                        'previous_value' => (string) ($pv['budget_planning_detail_id'] ?? ''),
+                        'new_value' => (string) ($nv['budget_planning_detail_id'] ?? ''),
+                    ];
+                }
+                if (($pv['delegatee_employee_system_id'] ?? null) != ($nv['delegatee_employee_system_id'] ?? null)) {
+                    $modifiedData[] = [
+                        'amended_field' => 'Delegatee employee ID',
+                        'previous_value' => (string) self::getEmployeeName($pv['delegatee_employee_system_id'] ?? ''),
+                        'new_value' => (string) self::getEmployeeName($nv['delegatee_employee_system_id'] ?? ''),
+                    ];
+                }
+            } else {
+                $pv = is_array($auditData['previosValue'] ?? null) ? $auditData['previosValue'] : [];
+                $nv = is_array($auditData['newValue'] ?? null) ? $auditData['newValue'] : [];
+                if (($pv['status'] ?? null) != ($nv['status'] ?? null)) {
+                    $modifiedData[] = ['amended_field' => "status", 'previous_value' => self::getTimeExtensionStatus($pv['status'] ?? null), 'new_value' => self::getTimeExtensionStatus($nv['status'] ?? null)];
+                }
+                if (($pv['new_time'] ?? null) != ($nv['new_time'] ?? null)) {
+                    $modifiedData[] = [
+                        'amended_field' => 'new_submission_time',
+                        'previous_value' => self::formatDateOnlyForAudit($pv['new_time'] ?? null),
+                        'new_value' => self::formatDateOnlyForAudit($nv['new_time'] ?? null),
+                    ];
                 }
             }
 
         }
         else if ($auditData['crudType'] == "D") {
-            // For deletion, log all the previous values
+            // For deletion, log all the previous values (time extension: parentID 1, same fields as create)
+            if ($auditData['parentID'] == 1 && is_array($auditData['previosValue']) && !empty($auditData['previosValue'])) {
+                $pv = $auditData['previosValue'];
+                $modifiedData[] = ['amended_field' => "request_code", 'previous_value' => $pv['request_code'] ?? '', 'new_value' => ''];
+                $modifiedData[] = ['amended_field' => "current_submission_date", 'previous_value' => $pv['current_submission_date'] ?? '', 'new_value' => ''];
+                $modifiedData[] = ['amended_field' => "date_of_request", 'previous_value' => $pv['date_of_request'] ?? '', 'new_value' => ''];
+                $modifiedData[] = ['amended_field' => "reason_for_extension", 'previous_value' => $pv['reason_for_extension'] ?? '', 'new_value' => ''];
+                $modifiedData[] = ['amended_field' => "status", 'previous_value' => self::getTimeExtensionStatus($pv['status'] ?? null), 'new_value' => ''];
+            }
+            // Department planning row deleted (parentID 0)
+            if ($auditData['parentID'] == 0 && is_array($auditData['previosValue']) && !empty($auditData['previosValue'])) {
+                $pv = $auditData['previosValue'];
+                $modifiedData[] = ['amended_field' => "planning_code", 'previous_value' => $pv['planningCode'] ?? '', 'new_value' => ''];
+                $modifiedData[] = ['amended_field' => "department_id", 'previous_value' => (string) ($pv['departmentID'] ?? ''), 'new_value' => ''];
+            }
         }
 
         return $modifiedData;
+    }
+
+    public static function getEmployeeName($employeeID)
+    {
+
+        $employee = Employee::find($employeeID);
+
+        if(empty($employee))
+        {
+            return '';
+        }
+
+        return $employee->empFullName . ' (' . $employee->empID . ')';
+    }
+    public static function getFinanceTeamStatus($status)
+    {
+        switch ((int) $status) {
+            case 1:
+                return 'Open';
+            case 2:
+                return 'Under Review';
+            case 3:
+                return 'Sent Back for Revision';
+            case 4:
+                return 'Completed';
+            default:
+                return '';
+        }
+    }
+
+    public static function yesNo($value)
+    {
+        return ((int) $value === 1 || $value === true || $value === '1') ? 'Yes' : 'No';
     }
 
     public static function getTimeExtensionStatus($status)
@@ -72,13 +167,14 @@ class DepartmentBudgetPlanningAuditService
 
     public static function getWorkStatus($status)
     {
+
         switch ($status) {
             case 1 :
                 return "Not Started";
             case 2 :
                 return "In Progress";
             case 3 :
-                return "Submitted";
+                return "Submitted to Finance";
             default :
                 return "";
         }
@@ -95,6 +191,60 @@ class DepartmentBudgetPlanningAuditService
                 return 'Common';
             default:
                 return '';
+        }
+    }
+
+    /**
+     * Maps dep_budget_pl_delegate_details.work_status codes to UI labels (avoids raw "1" being shown as Yes/No in audit viewers).
+     *
+     * @see \App\Models\BudgetDelegateAccessRecord work status constants
+     */
+    public static function getDelegateWorkStatusLabel($status)
+    {
+        $key = is_numeric($status) ? (int) $status : $status;
+        switch ($key) {
+            case 1:
+            case '1':
+                return trans('custom.work_status_not_started');
+            case 2:
+            case '2':
+                return trans('custom.work_status_in_progress');
+            case 3:
+            case '3':
+                return 'Submitted to HOD';
+            default:
+                return $status === null || $status === '' ? '' : (string) $status;
+        }
+    }
+
+    public static function formatDelegateWorkStatusForAudit($status)
+    {
+        if ($status === null || $status === '') {
+            return '';
+        }
+        if (is_string($status) && !is_numeric($status) && $status !== 'batch_assigned') {
+            return $status;
+        }
+
+        return self::getDelegateWorkStatusLabel($status);
+    }
+
+    /**
+     * Normalize values for audit display as calendar date only (no time component).
+     */
+    public static function formatDateOnlyForAudit($value): string
+    {
+        if ($value === null || $value === '') {
+            return '';
+        }
+        try {
+            if ($value instanceof \DateTimeInterface) {
+                return Carbon::instance($value)->format('Y-m-d');
+            }
+
+            return Carbon::parse($value)->addDays(1)->format('Y-m-d');
+        } catch (\Throwable $e) {
+            return (string) $value;
         }
     }
 }

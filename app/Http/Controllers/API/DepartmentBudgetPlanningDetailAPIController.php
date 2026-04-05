@@ -205,6 +205,19 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         $controller = app(CompanyBudgetPlanningAPIController::class);
         $userPermission = ($controller->getBudgetPlanningUserPermissions($newRequest))->original;
 
+        $allStatusFalse = collect($userPermission['data'])
+        ->every(fn($user) => $user['status'] === false);
+        
+        if($allStatusFalse)
+        {
+            return response()->json([
+                'data' => [],
+                'total' => 0,
+                'page' => 1,
+                'pageSize' => 0,
+                'lastPage' => 1
+            ]);
+        }
         try {
             
             // Check if isCompany parameter is true
@@ -241,6 +254,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $query ->whereHas('budgetDelegateAccessDetails' , function ($q)use ($delegateIDs) {
                     $q->whereIn('delegatee_id',$delegateIDs);
                 });
+
 
             }
 
@@ -614,6 +628,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             if($checkUserHasApprovalAccess->exists()) {
                 $isFinanceApprovalUser = true;
             }
+
             
             // Handle workflow and revision logic based on isCompany
             if ($isCompany === true || $isCompany === 'true') {
@@ -659,6 +674,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $selectedGlSections = json_decode($revision->selectedGlSections, true);
                     }
                 }
+
             }
 
             
@@ -1554,10 +1570,24 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 return $this->sendError("Status can only be changed forward.", 422);
             }
 
+            $oldValue = $budgetPlanning->toArray();
             $budgetPlanning->financeTeamStatus = $newStatus;
-
-
             $budgetPlanning->save();
+            $budgetPlanning->refresh();
+            $uuid = $request->get('tenant_uuid', 'local');
+            $db = $request->get('db', '');
+            $this->auditLog(
+                $db,
+                $input['budgetPlanningId'],
+                $uuid,
+                'department_budget_plannings',
+                $budgetPlanning->planningCode,
+                'U',
+                $budgetPlanning->toArray(),
+                $oldValue,
+                0
+            );
+
             return $this->sendResponse("Finance team status updated",200);
 
         }catch (\Exception $exception)

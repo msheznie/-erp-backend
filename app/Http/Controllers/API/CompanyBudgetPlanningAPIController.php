@@ -31,6 +31,7 @@ use App\Models\WorkflowConfiguration;
 use App\Repositories\CompanyBudgetPlanningRepository;
 use App\Services\BudgetPermissionService;
 use App\Services\BudgetNotificationService;
+use App\Traits\AuditLogsTrait;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -53,6 +54,8 @@ use App\helper\email as Email;
 
 class CompanyBudgetPlanningAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
+
     /** @var  CompanyBudgetPlanningRepository */
     private $companyBudgetPlanningRepository;
     
@@ -213,9 +216,19 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         $data['RollLevForApp_curr'] = 1;
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->create($data);
 
-
-
         $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog(
+            $db,
+            $companyBudgetPlanning->id,
+            $uuid,
+            'company_budget_plannings',
+            $companyBudgetPlanning->planningCode,
+            'C',
+            $companyBudgetPlanning->toArray(),
+            []
+        );
+
         $url = Helper::checkDomai();
         ProcessDepartmentBudgetPlanning::dispatch($request->db ?? '', $companyBudgetPlanning->id, $uuid,Auth::user()->employee_id,$url);
 
@@ -349,6 +362,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
 
+        $oldValue = $companyBudgetPlanning->toArray();
 
         if($input['confirmed_yn'] == 1) {
 
@@ -403,6 +417,20 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         }
 
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->update($input, $id);
+        $companyBudgetPlanning->refresh();
+
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog(
+            $db,
+            $id,
+            $uuid,
+            'company_budget_plannings',
+            $companyBudgetPlanning->planningCode,
+            'U',
+            $companyBudgetPlanning->toArray(),
+            $oldValue
+        );
 
         return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.companybudgetplanning_updated_successfully'));
     }
@@ -425,6 +453,7 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
 
+        $oldValue = $companyBudgetPlanning->toArray();
 
         if($input['confirmed_yn'] == 1) {
 
@@ -479,6 +508,20 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
         }
 
         $companyBudgetPlanning = $this->companyBudgetPlanningRepository->update($input, $id);
+        $companyBudgetPlanning->refresh();
+
+        $uuid = $request->get('tenant_uuid', 'local');
+        $db = $request->get('db', '');
+        $this->auditLog(
+            $db,
+            $id,
+            $uuid,
+            'company_budget_plannings',
+            $companyBudgetPlanning->planningCode,
+            'U',
+            $companyBudgetPlanning->toArray(),
+            $oldValue
+        );
 
         return $this->sendResponse($companyBudgetPlanning->toArray(), trans('custom.companybudgetplanning_updated_successfully'));
     }
@@ -531,7 +574,23 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             return $this->sendError(trans('custom.company_budget_planning_not_found'));
         }
 
+        $previousValue = $companyBudgetPlanning->toArray();
+        $planningCode = $companyBudgetPlanning->planningCode;
+        $rowId = $companyBudgetPlanning->id;
         $companyBudgetPlanning->delete();
+
+        $uuid = request()->get('tenant_uuid', 'local');
+        $db = request()->get('db', '');
+        $this->auditLog(
+            $db,
+            $rowId,
+            $uuid,
+            'company_budget_plannings',
+            $planningCode,
+            'D',
+            [],
+            $previousValue
+        );
 
         return $this->sendSuccess('Company Budget Planning deleted successfully');
     }
@@ -1809,6 +1868,12 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 return $this->sendError('Missing required fields: empID and budgetPlanningID are required', 400);
             }
 
+            $beforeDelegateRecord = BudgetDelegateAccessRecord::with(['budgetPlanningDetail.departmentBudgetPlanning', 'delegatee'])
+                ->whereHas('budgetPlanningDetail.departmentBudgetPlanning', function ($query) use ($input) {
+                    $query->where('id', $input['budgetPlanningID']);
+                })->whereHas('delegatee', function ($q) use ($input) {
+                    $q->where('employeeSystemID', $input['empID']);
+                })->first();
 
             // Process single record
             $result = DepartmentBudgetPlanningsDelegateAccess::createOrUpdateDelegateAccess($input);
@@ -1823,6 +1888,29 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
             $budgetPlan = DepartmentBudgetPlanning::with('delegateAccess','masterBudgetPlannings')->find($input['budgetPlanningID']);
 
+            $detailId = $beforeDelegateRecord ? $beforeDelegateRecord->budget_planning_detail_id : '';
+            $oldDelegateStatus = $beforeDelegateRecord ? $beforeDelegateRecord->work_status : '';
+            $uuid = $request->get('tenant_uuid', 'local');
+            $db = $request->get('db', '');
+            $this->auditLog(
+                $db,
+                $input['budgetPlanningID'],
+                $uuid,
+                'department_budget_plannings',
+                $budgetPlan->planningCode,
+                'U',
+                [
+                    'delegate_work_status' => $input['workStatus'],
+                    'budget_planning_detail_id' => $detailId,
+                    'delegatee_employee_system_id' => $input['empID'],
+                ],
+                [
+                    'delegate_work_status' => $oldDelegateStatus,
+                    'budget_planning_detail_id' => $detailId,
+                    'delegatee_employee_system_id' => $input['empID'],
+                ],
+                2
+            );
 
             if($input['workStatus'] == 3)
             {
@@ -2118,6 +2206,10 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
             $companyBudgetPlanning = CompanyBudgetPlanning::find($input['companyBudgetPlanningID']);
 
+            if (!$companyBudgetPlanning) {
+                return $this->sendError(trans('custom.budget_planning_not_found'), 404);
+            }
+
             $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
                 'companyId' => $companyBudgetPlanning->companySystemID,
                 'delegateUser' =>  Auth::user()->employee_id
@@ -2125,10 +2217,6 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
 
             if($userPermission['data']['financeUser']['status'] == false && $userPermission['data']['financeApprovalUser']['status'] == false) {
                 return $this->sendError(trans('custom.only_finance_user_or_finance_approval_user_can_reopen_budget_planning'));
-            }
-            
-            if (!$companyBudgetPlanning) {
-                return $this->sendError(trans('custom.budget_planning_not_found'), 404);
             }
 
             // Check if confirmed_yn == 1 and approved_yn == 0
@@ -2144,6 +2232,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
                 return $this->sendError(trans('custom.cannot_reopen_budget_planning_already_approved'), 400);
             }
 
+            $oldValue = $companyBudgetPlanning->toArray();
+
             // Update the budget planning to reopen it
             $companyBudgetPlanning->confirmed_yn = 0;
             $companyBudgetPlanning->confirmed_by_emp_id = null;
@@ -2153,11 +2243,25 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
     
 
             $companyBudgetPlanning->save();
+            $companyBudgetPlanning->refresh();
 
             $delete = DocumentApproved::where('documentSystemID', 133)->where('documentSystemCode', $companyBudgetPlanning->id)->delete();
 
             // TODO: Add email notification logic here if needed
             // Similar to ReopenDocument helper
+
+            $uuid = $request->get('tenant_uuid', 'local');
+            $db = $request->get('db', '');
+            $this->auditLog(
+                $db,
+                $companyBudgetPlanning->id,
+                $uuid,
+                'company_budget_plannings',
+                $companyBudgetPlanning->planningCode,
+                'U',
+                $companyBudgetPlanning->toArray(),
+                $oldValue
+            );
 
             DB::commit();
 
@@ -2248,18 +2352,18 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             DB::beginTransaction();
 
             $companyBudgetPlanning = CompanyBudgetPlanning::with('departmentBudgetPlannings')->find($input['companyBudgetPlanningID']);
-                    $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
-            'companyId' => $companyBudgetPlanning->companySystemID,
-            'delegateUser' =>  Auth::user()->employee_id
-        ]);
-
-
-            if($userPermission['data']['financeUser']['status'] == false && $userPermission['data']['financeApprovalUser']['status'] == false) {
-                return $this->sendError(trans('custom.only_finance_user_or_finance_approval_user_can_return_back_to_amend_budget_planning'));
-            }
 
             if (!$companyBudgetPlanning) {
                 return $this->sendError(trans('custom.budget_planning_not_found'), 404);
+            }
+
+            $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
+                'companyId' => $companyBudgetPlanning->companySystemID,
+                'delegateUser' =>  Auth::user()->employee_id
+            ]);
+
+            if($userPermission['data']['financeUser']['status'] == false && $userPermission['data']['financeApprovalUser']['status'] == false) {
+                return $this->sendError(trans('custom.only_finance_user_or_finance_approval_user_can_return_back_to_amend_budget_planning'));
             }
 
             // Check if budget planning is confirmed
@@ -2277,6 +2381,8 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             // Store confirmed_by_emp_system_id before clearing it for email notification
             $confirmedByEmpSystemID = $companyBudgetPlanning->confirmed_by_emp_system_id;
 
+            $oldValue = $companyBudgetPlanning->toArray();
+
             // Update the budget planning to return it back to amend
             $companyBudgetPlanning->confirmed_yn = 0;
             $companyBudgetPlanning->confirmed_by_emp_id = null;
@@ -2292,6 +2398,20 @@ class CompanyBudgetPlanningAPIController extends AppBaseController
             $companyBudgetPlanning->timesReferred = 0;
 
             $companyBudgetPlanning->save();
+            $companyBudgetPlanning->refresh();
+
+            $uuid = $request->get('tenant_uuid', 'local');
+            $db = $request->get('db', '');
+            $this->auditLog(
+                $db,
+                $companyBudgetPlanning->id,
+                $uuid,
+                'company_budget_plannings',
+                $companyBudgetPlanning->planningCode,
+                'U',
+                $companyBudgetPlanning->toArray(),
+                $oldValue
+            );
 
             // Delete document approvals
             DocumentApproved::where('documentSystemID', 133)
