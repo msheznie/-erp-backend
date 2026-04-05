@@ -19,10 +19,10 @@ class AuditLogCommonService
      * @param string $parentTable Optional parent table for disambiguation
      * @return string Translated narration with variables injected at exact positions
      */
-    public static function translateNarration($narrationVariables, $table, $crudType, $locale, $parentTable = null, $jobParentId = null)
+    public static function translateNarration($narrationVariables, $table, $crudType, $locale, $parentTable = null)
     {
         try {
-            $translationKey = self::getTranslationKey($table, $crudType, $parentTable, $jobParentId);
+            $translationKey = self::getTranslationKey($table, $crudType, $parentTable);
             
             $translated = trans($translationKey, [], $locale);
             
@@ -58,7 +58,7 @@ class AuditLogCommonService
      * @param string|null $parentTable
      * @return string Translation key
      */
-    private static function getTranslationKey($table, $crudType, $parentTable = null, $jobParentId = null)
+    private static function getTranslationKey($table, $crudType, $parentTable = null)
     {
         switch ($table) {
             case 'company_departments':
@@ -101,15 +101,22 @@ class AuditLogCommonService
                 }
                 break;
 
+            case 'dept_budget_planning_time_requests':
+                if ($crudType === 'C') {
+                    return 'audit.time_extension_request_variable_has_been_created';
+                } elseif ($crudType === 'U') {
+                    return 'audit.time_extension_request_variable_has_been_updated';
+                } elseif ($crudType === 'D') {
+                    return 'audit.time_extension_request_variable_has_been_deleted';
+                }
+                break;
+
             case 'department_budget_plannings':
                 if ($crudType === 'C') {
                     return 'audit.department_budget_planning_variable_has_been_created';
                 } elseif ($crudType === 'U') {
                     return 'audit.department_budget_planning_variable_has_been_updated';
                 } elseif ($crudType === 'D') {
-                    if ((int) $jobParentId === 1) {
-                        return 'audit.time_extension_request_variable_has_been_deleted';
-                    }
                     return 'audit.department_budget_planning_variable_has_been_deleted';
                 }
                 break;
@@ -417,6 +424,14 @@ class AuditLogCommonService
                     'primaryKey' => 'id',
                     'docCodeColumn' => 'planningCode',
                     'companySystemIdColumn' => 'companySystemID'
+                ];
+
+            case 'dept_budget_planning_time_requests':
+                return [
+                    'tableName' => 'dept_budget_planning_time_requests',
+                    'primaryKey' => 'id',
+                    'docCodeColumn' => 'request_code',
+                    'companySystemIdColumn' => null,
                 ];
 
             case 'department_budget_plannings':

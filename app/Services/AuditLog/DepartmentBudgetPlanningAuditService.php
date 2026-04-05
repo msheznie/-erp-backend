@@ -27,13 +27,6 @@ class DepartmentBudgetPlanningAuditService
                 $modifiedData[] = ['amended_field' => "budget_year", 'previous_value' => '', 'new_value' => $year->bigginingDate . " | " . $year->endingDate];
                 $modifiedData[] = ['amended_field' => "budget_period", 'previous_value' => '', 'new_value' => 'Yearly'];
             }
-            else {
-                $modifiedData[] = ['amended_field' => "request_code", 'previous_value' => '', 'new_value' => $auditData['newValue']['request_code']];
-                $modifiedData[] = ['amended_field' => "current_submission_date", 'previous_value' => '', 'new_value' => $auditData['newValue']['current_submission_date']];
-                $modifiedData[] = ['amended_field' => "date_of_request", 'previous_value' => '', 'new_value' => $auditData['newValue']['date_of_request']];
-                $modifiedData[] = ['amended_field' => "reason_for_extension", 'previous_value' => '', 'new_value' => $auditData['newValue']['reason_for_extension']];
-                $modifiedData[] = ['amended_field' => "status", 'previous_value' => '', 'new_value' => self::getTimeExtensionStatus($auditData['newValue']['status'])];
-            }
         }
         else if ($auditData['crudType'] == "U") {
             // For updates, compare old and new values
@@ -79,32 +72,10 @@ class DepartmentBudgetPlanningAuditService
                         'new_value' => (string) self::getEmployeeName($nv['delegatee_employee_system_id'] ?? ''),
                     ];
                 }
-            } else {
-                $pv = is_array($auditData['previosValue'] ?? null) ? $auditData['previosValue'] : [];
-                $nv = is_array($auditData['newValue'] ?? null) ? $auditData['newValue'] : [];
-                if (($pv['status'] ?? null) != ($nv['status'] ?? null)) {
-                    $modifiedData[] = ['amended_field' => "status", 'previous_value' => self::getTimeExtensionStatus($pv['status'] ?? null), 'new_value' => self::getTimeExtensionStatus($nv['status'] ?? null)];
-                }
-                if (($pv['new_time'] ?? null) != ($nv['new_time'] ?? null)) {
-                    $modifiedData[] = [
-                        'amended_field' => 'new_submission_time',
-                        'previous_value' => self::formatDateOnlyForAudit($pv['new_time'] ?? null),
-                        'new_value' => self::formatDateOnlyForAudit($nv['new_time'] ?? null),
-                    ];
-                }
             }
 
         }
         else if ($auditData['crudType'] == "D") {
-            // For deletion, log all the previous values (time extension: parentID 1, same fields as create)
-            if ($auditData['parentID'] == 1 && is_array($auditData['previosValue']) && !empty($auditData['previosValue'])) {
-                $pv = $auditData['previosValue'];
-                $modifiedData[] = ['amended_field' => "request_code", 'previous_value' => $pv['request_code'] ?? '', 'new_value' => ''];
-                $modifiedData[] = ['amended_field' => "current_submission_date", 'previous_value' => $pv['current_submission_date'] ?? '', 'new_value' => ''];
-                $modifiedData[] = ['amended_field' => "date_of_request", 'previous_value' => $pv['date_of_request'] ?? '', 'new_value' => ''];
-                $modifiedData[] = ['amended_field' => "reason_for_extension", 'previous_value' => $pv['reason_for_extension'] ?? '', 'new_value' => ''];
-                $modifiedData[] = ['amended_field' => "status", 'previous_value' => self::getTimeExtensionStatus($pv['status'] ?? null), 'new_value' => ''];
-            }
             // Department planning row deleted (parentID 0)
             if ($auditData['parentID'] == 0 && is_array($auditData['previosValue']) && !empty($auditData['previosValue'])) {
                 $pv = $auditData['previosValue'];
@@ -231,6 +202,7 @@ class DepartmentBudgetPlanningAuditService
 
     /**
      * Normalize values for audit display as calendar date only (no time component).
+     * Adds one day after parsing to align stored UTC datetimes with the intended calendar date.
      */
     public static function formatDateOnlyForAudit($value): string
     {
@@ -239,7 +211,7 @@ class DepartmentBudgetPlanningAuditService
         }
         try {
             if ($value instanceof \DateTimeInterface) {
-                return Carbon::instance($value)->format('Y-m-d');
+                return Carbon::instance($value)->addDays(1)->format('Y-m-d');
             }
 
             return Carbon::parse($value)->addDays(1)->format('Y-m-d');

@@ -911,14 +911,15 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             $narrationVariables = $timeRequest->request_code;
             $this->auditLog(
                 $db,
-                $input['budgetPlanningId'],
+                $timeRequest->id,
                 $uuid,
-                "department_budget_plannings",
+                'dept_budget_planning_time_requests',
                 $narrationVariables,
-                "C",
+                'C',
                 $timeRequest->toArray(),
                 [],
-                1
+                $input['budgetPlanningId'],
+                'department_budget_plannings'
             );
 
             \DB::commit();
@@ -1281,14 +1282,15 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $narrationVariables = $timeExtensionRequest->request_code;
         $this->auditLog(
             $db,
-            $timeExtensionRequest->department_budget_planning_id,
+            $timeExtensionRequest->id,
             $uuid,
-            "department_budget_plannings",
+            'dept_budget_planning_time_requests',
             $narrationVariables,
-            "U",
+            'U',
             $timeExtensionRequest->refresh()->toArray(),
             $oldValue,
-            1
+            $timeExtensionRequest->department_budget_planning_id,
+            'department_budget_plannings'
         );
 
         return $this->sendResponse(null,'Time extension request cancelled successfully');
@@ -1326,14 +1328,15 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $db = $request->get('db', '');
         $this->auditLog(
             $db,
-            $timeExtensionRequest->department_budget_planning_id,
+            $timeExtensionRequest->id,
             $uuid,
-            "department_budget_plannings",
+            'dept_budget_planning_time_requests',
             $narrationVariables,
-            "D",
+            'D',
             null,
             $oldValue,
-            1
+            $timeExtensionRequest->department_budget_planning_id,
+            'department_budget_plannings'
         );
 
         $timeExtensionRequest->delete();
@@ -1402,14 +1405,15 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
         $narrationVariables = $timeExtensionRequest->request_code;
         $this->auditLog(
             $db,
-            $timeExtensionRequest->department_budget_planning_id,
+            $timeExtensionRequest->id,
             $uuid,
-            "department_budget_plannings",
+            'dept_budget_planning_time_requests',
             $narrationVariables,
-            "U",
+            'U',
             $timeExtensionRequest->refresh()->toArray(),
             $oldValue,
-            1
+            $timeExtensionRequest->department_budget_planning_id,
+            'department_budget_plannings'
         );
 
         return $this->sendResponse(null,'Time extension request accepted successfully');
