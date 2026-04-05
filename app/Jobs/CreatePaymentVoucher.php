@@ -2046,7 +2046,6 @@ class CreatePaymentVoucher implements ShouldQueue
         return $returnData;
     }
 
-
     private static function validateRefundPVAdvanceDetailsData(array $masterData, array $request): array
     {
         $errorData = [];
