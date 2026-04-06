@@ -215,5 +215,77 @@ class PvApprovalTypeSetupService
 
         return $values;
     }
+
+    public static function getPVDocumentTypeForApproval($masterRec) {
+        $invoiceType = $masterRec->invoiceType ?? null;
+        $expenseClaimOrPettyCash = $masterRec->expenseClaimOrPettyCash ?? null;
+
+        $invoiceTypeColumnName = null;
+        $expenseClaimOrPettyCashColumnName = null;
+
+        switch ($invoiceType) {
+            case 2:
+                $invoiceTypeColumnName = 'is_supplier_payment';
+                break;
+            case 3:
+                $invoiceTypeColumnName = 'is_direct_payment_general';
+                switch ($expenseClaimOrPettyCash) {
+                    case 1:
+                        $expenseClaimOrPettyCashColumnName = 'is_expense_claim';
+                        break;
+                    case 2:
+                        $expenseClaimOrPettyCashColumnName = 'is_petty_cash';
+                        break;
+                    case 3:
+                        $expenseClaimOrPettyCashColumnName = 'is_cash';
+                        break;
+                    case 6:
+                        $expenseClaimOrPettyCashColumnName = 'is_inter_company_funds_transfer';
+                        break;
+                    case 7:
+                        $expenseClaimOrPettyCashColumnName = 'is_collection_on_behalf';
+                        break;
+                    case 15:
+                        $expenseClaimOrPettyCashColumnName = 'is_inter_bank_account_transfer';
+                        break;
+                    default:
+                        $expenseClaimOrPettyCashColumnName = null;
+                        break;
+                }
+
+                if (is_null($expenseClaimOrPettyCashColumnName)) {
+                    if ((in_array($masterRec->finalSettlementYN, [1,5])) && ($masterRec->partyTblID != 0)) {
+                        if ($masterRec->finalSettlementYN == 1) {
+                            $expenseClaimOrPettyCashColumnName = 'is_salary_transfer';
+                        }
+                        else {
+                            $expenseClaimOrPettyCashColumnName = 'is_iou_voucher';
+                        }
+                    }
+                }
+
+                break;
+            case 5:
+                $invoiceTypeColumnName = 'is_supplier_advance_payment';
+                break;
+            case 6:
+                $invoiceTypeColumnName = 'is_employee_payment';
+                break;
+            case 7:
+                $invoiceTypeColumnName = 'is_employee_advance_payment';
+                break;
+            case 8:
+                $invoiceTypeColumnName = 'is_refund';
+                break;
+            default:
+                $invoiceTypeColumnName = null;
+                break;
+        }
+
+        return [
+            'invoiceTypeColumnName' => $invoiceTypeColumnName,
+            'expenseClaimOrPettyCashColumnName' => $expenseClaimOrPettyCashColumnName,
+        ];
+    }
 }
 

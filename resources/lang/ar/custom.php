@@ -9978,4 +9978,6 @@ return
     'document_system_id_must_be_an_integer' => 'معرف النظام المستندي يجب أن يكون رقمًا صحيحًا',
     'pv_approval_type_setup_has_approval_levels' => 'إعداد اعتماد نوع سند الصرف مخصص لموافقات، لا يمكن حذفه',
     'supplier_communication_requires_active_supplier' => 'لتفعيل خيار التواصل مع المورد، يجب أن يكون المورد نشطًا.<br>يرجى تفعيل المورد أولاً.',
+    'no_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'لم يتم العثور على إعداد موافقة نشط قائم على النوع لهذا النوع من سندات الصرف',
+    'multiple_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'تم العثور على أكثر من إعداد موافقة نشط قائم على النوع لهذا النوع من سندات الصرف. يرجى الاتصال بمدير النظام.',
 ];

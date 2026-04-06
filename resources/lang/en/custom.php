@@ -10103,4 +10103,6 @@ return
     'document_system_id_must_be_an_integer' => 'Document system ID must be an integer',
     'pv_approval_type_setup_has_approval_levels' => 'Approvel type setup is assigned to approval levels, cannot be deleted',
     'supplier_communication_requires_active_supplier' => 'To enable Supplier Communication Option, the supplier must be active. Please activate the supplier first.',
+    'no_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'No active Type-based approval setup found for this Payment Voucher Type',
+    'multiple_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'Multiple active Type-based approval setups found for this Payment Voucher Type. Please contact system administrator.',
 ];
