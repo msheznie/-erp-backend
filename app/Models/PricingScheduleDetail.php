@@ -318,4 +318,12 @@ class PricingScheduleDetail extends Model
             ->select('id','tender_id','pricing_schedule_master_id')
             ->first();
     }
+
+    public static function getByIdsKeyed(array $ids)
+    {
+        if (empty($ids)) {
+            return collect();
+        }
+        return self::whereIn('id', $ids)->get()->keyBy('id');
+    }
 }

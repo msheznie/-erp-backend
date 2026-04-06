@@ -10026,6 +10026,10 @@ return
     'column_must_be_string' => 'Each column name must be a string',
     'column_max_length' => 'Column name cannot exceed 100 characters',
     'invalid_date_format' => 'Invalid date format',
+    'tender_awarded_date' => 'Tender/RFX Awarded Date',
+    'is_linked' => 'Is Linked',
+    'linked_supplier_code' => 'Linked Supplier Code',
+    'linked_supplier_name' => 'Linked Supplier Name',
     'document_attachment_id_required' => 'Document attachment ID is required',
     'owner_key_required' => 'Owner key is required',
     'invalid_owner_key' => 'Invalid owner key. Must be one of: reporting_manager, hod, admin',
@@ -10038,6 +10042,10 @@ return
     'product_access_value_not_matching' => 'The Product access value not matching with system',
     'user_type_not_found' => 'The User Type not Found',
     'input_value_not_matching' => 'The input value not matching',
+    'tender_awarded_date' => 'Tender/RFX Awarded Date',
+    'is_linked' => 'Is Linked',
+    'linked_supplier_code' => 'Linked Supplier Code',
+    'linked_supplier_name' => 'Linked Supplier Name',
     'wareHouse_code_must_be_array' => 'Warehouse code must be an array',
     'item_code_must_be_a_array' => 'Item code must be an array',
     'wareHouse_code_must_be_a_string' => 'Warehouse code must be a string',
@@ -10098,4 +10106,5 @@ return
     'document_system_id_is_required' => 'Document system ID is required',
     'document_system_id_must_be_an_integer' => 'Document system ID must be an integer',
     'supplier_communication_requires_active_supplier' => 'To enable Supplier Communication Option, the supplier must be active. Please activate the supplier first.',
+    'payment_voucher_interbank_transfer' => 'Payment Voucher - Interbank Transfer'
 ];

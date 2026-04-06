@@ -192,7 +192,8 @@ class TenderSupplierAssigneeEditLog extends Model
         'supplier_name' => 'string',
         'tender_master_id' => 'integer',
         'updated_by' => 'integer',
-        'version_id' => 'integer'
+        'version_id' => 'integer',
+        'unApprovedSupplier' => 'integer',
     ];
 
     /**

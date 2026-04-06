@@ -14,6 +14,7 @@ use App\Models\TenderNegotiation;
 use App\Models\SupplierTenderNegotiation;
 use App\Models\TenderMaster;
 use App\Models\SupplierRegistrationLink;
+use App\Services\SrmNotificationService;
 use Illuminate\Http\Request;
 use Flash;
 use Illuminate\Support\Facades\Log;
@@ -25,10 +26,15 @@ class TenderNegotiationApprovalController extends AppBaseController
 {
     /** @var  TenderNegotiationApprovalRepository */
     private $tenderNegotiationApprovalRepository;
+    private $srmNotificationService;
 
-    public function __construct(TenderNegotiationApprovalRepository $tenderNegotiationApprovalRepo)
+    public function __construct(
+        TenderNegotiationApprovalRepository $tenderNegotiationApprovalRepo,
+        SrmNotificationService $srmNotificationService
+    )
     {
         $this->tenderNegotiationApprovalRepository = $tenderNegotiationApprovalRepo;
+        $this->srmNotificationService = $srmNotificationService;
     }
 
     /**
@@ -188,15 +194,21 @@ class TenderNegotiationApprovalController extends AppBaseController
         $tenderNegotiation = TenderNegotiation::select('status','id')->find($input['id']);
         $tenderNegotiation->status = 2;
         $tenderNegotiation->save();
-        $tenderMaster = TenderMaster::select('negotiation_published','id', 'tender_code', 'title')->find($input['srm_tender_master_id']);
+        $tenderMaster = TenderMaster::select('negotiation_published','id', 'tender_code', 'title', 'document_system_id')->find($input['srm_tender_master_id']);
         $tenderMaster->negotiation_published = 1;
         $tenderMaster->save();
 
         $this->sendEmailToSuppliers($input, $tenderMaster->tender_code, $tenderMaster->title);
+        $this->srmNotificationService->sendNegotiationStartedNotificationByNegotiation(
+            $input['id'],
+            $tenderMaster->title,
+            $tenderMaster->document_system_id
+        );
         return $this->sendResponse($tenderNegotiation->toArray(), trans('srm_ranking.tender_negotiation_published'));
     }
 
     public function sendEmailToSuppliers($input, $code, $title) {
+        $tender = TenderMaster::select('id', 'company_id')->find($input['srm_tender_master_id']);
         $srmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::select('id','emp_id','tender_id')->where('tender_id', $input['srm_tender_master_id'])->with('employee')->get();
         $supplierTenderNegotiations = SupplierTenderNegotiation::where('tender_negotiation_id',$input['id'])->select('suppliermaster_id','bidSubmissionCode')->get();
         if($srmTenderBidEmployeeDetails) {
@@ -211,19 +223,19 @@ class TenderNegotiationApprovalController extends AppBaseController
                     }
 
                     $dataEmail['empEmail'] = $employee->email;
-                    $dataEmail['companySystemID'] = $employee->company_id;
+                    $dataEmail['companySystemID'] = $tender ? $tender->company_id : $employee->company_id;
                     $loginUrl = env('SRM_LINK');
                     $url = trim($loginUrl,"/register");
                     $redirectUrl= $url."/tender-management/tenders/1";
-                    $companyName = (Auth::user()->employee && Auth::user()->employee->company) ? Auth::user()->employee->company->CompanyName : null ;
                     $dataEmail['ccEmail'] = [];
                     $dataEmail['attachmentList'] = [];
                     if ($tenderCustomEmail) {
-                        $emailBody =  "<p>Dear " . $employee->name . $tenderCustomEmail->email_body . $companyName . '</p>';
+                        $emailBody =  "<p>Dear " . $employee->name . $tenderCustomEmail->email_body . '</p>';
                         $ccEmails = json_decode($tenderCustomEmail->cc_email, true);
                     } else {
-                        $emailBody = "<p>Dear " . $employee->name . ',</p><p>We would like to inform you that you have been shortlisted for the tender negotiation ' . $code . ' | ' . $title . ' tender, and for that we would like to arrange a meeting with you, before submitting the final proposal.</p><br/><br/><p>Kind Regards,</p><p>' . $companyName . '</p>';
+                        $emailBody = "<p>Dear " . $employee->name . ',</p><p>We would like to inform you that you have been shortlisted for the tender negotiation ' . $code . ' | ' . $title . ' tender, and for that we would like to arrange a meeting with you, before submitting the final proposal.</p><br/>';
                     }
+                    $emailBody .= Helper::getSupplierEmailFooter($dataEmail['companySystemID']);
 
                     $dataEmail['alertMessage'] = "Tender Negotiation Invitation";
                     $dataEmail['emailAlertMessage'] = $emailBody;
@@ -241,4 +253,5 @@ class TenderNegotiationApprovalController extends AppBaseController
             }
         }
     }
+
 }

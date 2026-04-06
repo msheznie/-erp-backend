@@ -101,4 +101,21 @@ class TenderCustomEmail extends Model
             ->where('document_code', $documentCode)
             ->first();
     }
+
+    /**
+     * Get saved regret email draft for tender.
+     * documentCode: 'TRD' (Tender Regret) or 'RRD' (RFX Regret).
+     * supplierId: for item-wise regret use the awarded supplier id; for schedule-wise use 0.
+     */
+    public static function getRegretDraftEmail(int $tenderId, string $documentCode, int $supplierId = 0)
+    {
+        return self::select('email_body', 'cc_email', 'document_id', 'email_subject')
+            ->with(['attachment' => function ($q) {
+                $q->select('attachmentID', 'path', 'originalFileName');
+            }])
+            ->where('tender_id', $tenderId)
+            ->where('document_code', $documentCode)
+            ->where('supplier_id', $supplierId)
+            ->first();
+    }
 }

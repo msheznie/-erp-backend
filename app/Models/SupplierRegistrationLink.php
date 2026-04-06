@@ -47,7 +47,7 @@ class SupplierRegistrationLink extends Model
         'id' => 'integer',
         'supplier_master_id' => 'integer',
         'uuid' => 'string',
-        'is_existing_erp_supplier' => 'integer',
+        'is_existing_erp_supplier' => 'integer'
         ];
 
     public function supplier(){
@@ -93,5 +93,86 @@ class SupplierRegistrationLink extends Model
             ->where('id', $supplierId)
             ->where('company_id', $companySystemId)
             ->first();
+    }
+
+    public static function getSupplierRegData()
+    {
+        return SupplierRegistrationLink::with([
+            'supplier' => function ($q) {
+                $q->select('supplierCodeSystem', 'supplierName', 'primarySupplierCode');
+            }
+        ]);
+    }
+
+    public static function getByIdsKeyed(array $ids)
+    {
+        if (empty($ids)) {
+            return collect();
+        }
+        return self::whereIn('id', $ids)->get()->keyBy('id');
+    }
+    public static function getUnapprovedSuppliers($tenderId, $companyId, $isDataTable = false)
+    {
+        $query = self::select('id', 'name', 'email', 'registration_number','approved_yn','uuid')
+            ->where(function ($q) {
+                $q->where('approved_yn', 0)
+                    ->whereNotNull('uuid');
+            })
+            ->whereDoesntHave('tenderSupplierAssigned', function ($query) use ($tenderId) {
+                $query->where('tender_master_id', $tenderId);
+            });
+
+
+
+        return $query;
+    }
+
+    public function tenderSupplierAssigned(){
+        return $this->hasOne('App\Models\TenderSupplierAssignee', 'registration_link_id','id');
+
+    }
+    public static function getallUnApprovedSuppliers($tenderId, $removedSuppliersId, $companySystemId, $editOrAmend, $versionID)
+    {
+        $query = self::getUnapprovedSuppliers($tenderId, $companySystemId)
+            ->when($editOrAmend, function ($q) use ($tenderId, $versionID) {
+                $q->whereDoesntHave('tenderSupplierAssignedLog', function ($query) use ($tenderId, $versionID) {
+                    $query->where('tender_master_id', $tenderId)
+                        ->where('version_id', $versionID)
+                        ->where('is_deleted', 0);
+                });
+            })
+            ->whereNotIn('id', $removedSuppliersId);
+
+        return collect($query->get())->pluck('id')->toArray();
+    }
+    public function tenderSupplierAssignedLog(){
+        return $this->hasOne('App\Models\TenderSupplierAssignee', 'registration_link_id','id');
+    }
+    public static function getFullyApprovedSuppliers($companyId){
+        return self::join('supplierassigned', 'supplierCodeSytem', '=', 'supplier_master_id')
+        ->whereNotNull('supplier_master_id')
+        ->where('supplierassigned.companySystemID', $companyId)
+        ->where('supplierassigned.isActive', 1)
+        ->select('id')
+        ->distinct()
+        ->get();
+    }
+
+    public static function getOpenTenderCancellationRecipients(int $companyId)
+    {
+        return self::join('supplierassigned', 'supplierCodeSytem', '=', 'supplier_master_id')
+            ->whereNotNull('supplier_master_id')
+            ->where('supplierassigned.companySystemID', $companyId)
+            ->where('supplierassigned.isActive', 1)
+            ->selectRaw('MAX(srm_supplier_registration_link.id) as registration_link_id,
+                srm_supplier_registration_link.email as supplier_email, srm_supplier_registration_link.name'
+            )
+            ->groupBy('srm_supplier_registration_link.email')
+            ->get();
+    }
+    public static function getSupplierRegistrationLinkId(int $supplierId): ?int
+    {
+        return self::where('supplier_master_id', $supplierId)
+            ->value('id');
     }
 }

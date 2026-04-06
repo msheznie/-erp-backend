@@ -112,7 +112,8 @@ class TenderSupplierAssignee extends Model
         'registration_number' => 'string',
         'tender_master_id' => 'integer',
         'mail_sent' => 'integer',
-        'updated_by' => 'integer'
+        'updated_by' => 'integer',
+        'unApprovedSupplier' => 'integer'
     ];
 
     /**
@@ -163,4 +164,38 @@ class TenderSupplierAssignee extends Model
             ->where('company_id', $companyId)
             ->where('tender_master_id', $tenderMasterId);
     }
+
+    public static function getCancellationNotificationSuppliers(int $tenderId, int $companyId)
+    {
+        return self::where('tender_master_id', $tenderId)
+            ->where('company_id', $companyId)
+            ->select('supplier_email', 'registration_link_id')
+            ->get()
+            ->unique('registration_link_id')
+            ->values();
+    }
+
+    public static function getInvitedCancellationNotificationSuppliers(int $tenderId, int $companyId)
+    {
+        return self::leftJoin('srm_supplier_registration_link as srl', 'srl.id', '=', 'srm_tender_supplier_assignee.registration_link_id')
+            ->where('srm_tender_supplier_assignee.tender_master_id', $tenderId)
+            ->where('srm_tender_supplier_assignee.company_id', $companyId)
+            ->where('srm_tender_supplier_assignee.mail_sent', 1)
+            ->selectRaw('COALESCE(srm_tender_supplier_assignee.supplier_email, srl.email) as supplier_email,
+              srm_tender_supplier_assignee.registration_link_id,
+              COALESCE(srm_tender_supplier_assignee.supplier_name, srl.name) as name'
+            )
+            ->get()
+            ->unique('registration_link_id')
+            ->values();
+    }
+    public static function getSupplierAssignedForNotification(int $tenderId)
+    {
+        return self::where('tender_master_id', $tenderId)
+                ->whereNotNull('registration_link_id')
+                ->pluck('registration_link_id')
+                ->unique()
+                ->values();
+    }
+    
 }
