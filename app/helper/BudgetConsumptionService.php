@@ -6085,10 +6085,27 @@ class BudgetConsumptionService
 
 		
         }
-		
+
+		$manuallyClosedPoConsumedRpt = (float) BudgetConsumedData::query()
+			->where('consumeYN', -1)
+			->where('companySystemID', $detail->companySystemID)
+			->when(($DLBCPolicy || $departmentsWiseCheck), function ($query) use ($detail) {
+				$query->where('serviceLineSystemID', $detail->serviceLineSystemID);
+			})
+			->where(function ($query) {
+				$query->where('projectID', 0)->orWhereNull('projectID');
+			})
+			->where('chartOfAccountID', $detail->chartOfAccountID)
+			->where('companyFinanceYearID', $detail->companyFinanceYearID)
+			->where('documentSystemID', 2)
+			->whereHas('purchase_order', function ($query) {
+				$query->where('manuallyClosed', 1);
+			})
+			->sum('consumedRptAmount');
+
 		if(!$isAssets){
 
-			$actuallConsumptionAmount = $detail->consumed_amount - $committedAmount;
+			$actuallConsumptionAmount = $detail->consumed_amount - $committedAmount - $manuallyClosedPoConsumedRpt;
 
 		}
 		else

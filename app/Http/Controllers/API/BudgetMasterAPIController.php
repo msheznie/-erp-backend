@@ -682,7 +682,6 @@ class BudgetMasterAPIController extends AppBaseController
                                 'erp_budjetdetails.chartOfAccountID', 'erp_budjetdetails.companyFinanceYearID'])
                             ->orderBy('erp_companyreporttemplatedetails.description','ASC')
                             ->get();
-                                
         foreach ($reportData as $key => $value) {
             $commitedConsumedAmount = BudgetConsumptionService::getCommitedConsumedAmount($value, $DLBCPolicy, true);
             $value['actuallConsumptionAmount'] = $commitedConsumedAmount['actuallConsumptionAmount'];
@@ -2881,7 +2880,8 @@ class BudgetMasterAPIController extends AppBaseController
                             ->where('serviceLineSystemID', $data['serviceLineSystemID'])
                             ->with(['purchase_order' => function ($query) use($data){
                                 
-                                $query->with(['detail','grv_details'=>function($query) use($data){
+                                $query->where('manuallyClosed', 0)
+                                    ->with(['detail','grv_details'=>function($query) use($data){
                                     $query->select('grvDetailsID','grvAutoID','purchaseOrderMastertID','purchaseOrderDetailsID','financeGLcodePLSystemID','netAmount')->with(['grv_master'=>function($query){
                                         $query->select('grvAutoID','grvPrimaryCode','approved','grvConfirmedYN','grvTotalComRptCurrency');
                                     }]);
@@ -2895,6 +2895,7 @@ class BudgetMasterAPIController extends AppBaseController
                             ->where('documentSystemID', 2)
                             ->when($data['controlAccountsSystemID'] != 3,function($query){
                                 $query->whereHas('purchase_order', function ($query) {
+                                  $query->where('manuallyClosed', 0);
                                   //$query->where('grvRecieved', '!=', 2);
                                 });
                             })
