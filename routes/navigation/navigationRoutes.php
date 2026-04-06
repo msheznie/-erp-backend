@@ -18,6 +18,8 @@ Route::group([], function(){
     Route::post('getUserGroupByCompanyDatatable', 'UserGroupAPIController@getUserGroupByCompanyDatatable')->name('Get user group by company data table'); 
     Route::post('getUserGroupEmployeesDatatable', 'EmployeeNavigationAPIController@getUserGroupEmployeesByCompanyDatatable')->name('Get user group employees data table');
     Route::post('getEmployeesByUserGroupDatatable', 'EmployeeNavigationAPIController@getEmployeesByUserGroupDatatable')->name('Get employees by user group data table');
+    Route::post('userGroups/assignDefaultAndUntick', 'UserGroupAPIController@assignDefaultAndUntick')->name('Assign default and untick');
+    Route::post('userGroups/createDefaultAndUntick', 'UserGroupAPIController@createDefaultAndUntick')->name('Create default and untick');
     Route::resource('userGroups', 'UserGroupAPIController'); 
     Route::resource('employee_navigations', 'EmployeeNavigationAPIController');
     Route::get('getUserGroup', 'UserGroupAPIController@getUserGroup')->name('Get user group');
