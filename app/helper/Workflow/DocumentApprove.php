@@ -871,7 +871,7 @@ class DocumentApprove
                     }
                 }
 
-                if (["documentSystemID"] == 46) {
+                if ($input["documentSystemID"] == 46) {
                     if ($isConfirmed['year'] != date("Y")) {
                         return ['success' => false, 'message' => trans('custom.budget_transfer_not_current_year')];
                     }
@@ -891,7 +891,10 @@ class DocumentApprove
                         if ($input["rollLevelOrder"] == 1) {
                             if (BudgetConsumptionService::budgetCheckDocumentList($input["documentSystemID"]) && !$budgetBlockOveride) {
                                 $budgetCheck = BudgetConsumptionService::checkBudget($input["documentSystemID"], $input["documentSystemCode"],$docApproved->companySystemID);
-                                if ($budgetCheck['status'] && $budgetCheck['message'] != "") {
+                                if (!is_array($budgetCheck)) {
+                                    $budgetCheck = ['status' => true, 'message' => ''];
+                                }
+                                if (($budgetCheck['status'] ?? false) && ($budgetCheck['message'] ?? '') != "") {
                                     if (BudgetConsumptionService::budgetBlockUpdateDocumentList($input["documentSystemID"])) {
                                         $prMasterUpdate = $namespacedModel::find($input["documentSystemCode"])->update(['budgetBlockYN' => -1]);
                                     }
@@ -900,7 +903,7 @@ class DocumentApprove
                                         return ['success' => false, 'message' => $budgetCheck['message'], 'type' => isset($budgetCheck['type']) ? $budgetCheck['type'] : ""];
                                     }
                                 } else {
-                                    if ($budgetCheck['status'] && isset($budgetCheck['warning']) && $budgetCheck['warning'] && isset($input['isBudgetCheck']) && $input['isBudgetCheck']) {
+                                    if (($budgetCheck['status'] ?? false) && isset($budgetCheck['warning']) && $budgetCheck['warning'] && isset($input['isBudgetCheck']) && $input['isBudgetCheck']) {
                                             return [
                                                 'success' => false,
                                                 'code' => 500,
