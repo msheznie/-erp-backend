@@ -260,10 +260,49 @@ class GeneralLedgerPdfJob implements ShouldQueue
                         erp_generalledger.chartOfAccountSystemID
                         ) AS erp_qry_gl_bf 
                         ) AS GL_final 
-                    ORDER BY
-                        documentDate, glCode ASC';
+                    ' . $this->buildGlPdfOrderBy($request) . '
+                    ';
         $output = \DB::select($query);
         //dd(DB::getQueryLog());
         return $output;
+    }
+
+    /**
+     * Build ORDER BY clause for GL PDF query. Uses sortKey/sortDir from request when present; nulls last.
+     */
+    private function buildGlPdfOrderBy($request)
+    {
+        $sortKey = is_object($request) ? ($request->sortKey ?? null) : ($request['sortKey'] ?? null);
+        $sortDir = is_object($request) ? ($request->sortDir ?? null) : ($request['sortDir'] ?? null);
+        if (!$sortKey || !$sortDir) {
+            return 'ORDER BY documentDate ASC, glCode ASC';
+        }
+        $dir = strtoupper($sortDir) === 'DESC' ? 'DESC' : 'ASC';
+        $columnMap = [
+            'glCode' => 'glCode',
+            'accountDescription' => 'AccountDescription',
+            'documentType' => 'documentID',
+            'documentNumber' => 'documentCode',
+            'documentDate' => 'documentDate',
+            'documentNarration' => 'documentNarration',
+            'segment' => 'serviceLineCode',
+            'contract' => 'clientContractID',
+            'supplierCustomer' => 'isCustomer',
+            'confirmedBy' => 'confirmedBy',
+            'confirmedDate' => 'documentConfirmedDate',
+            'approvedBy' => 'approvedBy',
+            'approvedDate' => 'documentFinalApprovedDate',
+            'debitLocal' => 'localDebit',
+            'creditLocal' => 'localCredit',
+            'balanceLocal' => 'localBalanceAmount',
+            'debitRpt' => 'rptDebit',
+            'creditRpt' => 'rptCredit',
+            'balanceRpt' => 'rptBalanceAmount',
+        ];
+        if (!isset($columnMap[$sortKey])) {
+            return 'ORDER BY documentDate ASC, glCode ASC';
+        }
+        $col = $columnMap[$sortKey];
+        return 'ORDER BY (' . $col . ' IS NULL), ' . $col . ' ' . $dir;
     }
 }

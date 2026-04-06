@@ -449,12 +449,21 @@
 
         @if($request->linePdoinvoiceDetails)
             <table class="table table-bordered table-striped table-sm" style="width: 100%;">
+                @php
+                    $showSegmentColumn = isset($request->isPerforma)
+                        && in_array($request->isPerforma, [4, 5])
+                        && isset($request->isSegmentPolicyOn)
+                        && (int) $request->isSegmentPolicyOn === 1;
+                @endphp
                 <thead>
                 <tr class="">
                     <th style="width:1%"></th>
                     <th style="text-align: center">Client Reference</th>
                     <th style="text-align: center">PO Detail ID</th>
                     <th style="text-align: center">Item Description</th>
+                    @if($showSegmentColumn)
+                        <th style="text-align: center">Segment</th>
+                    @endif
                     <th style="text-align: right">Quantity</th>
                     <th style="text-align: right">Unit Price</th>
                     <th style="text-align: right">Total Amount</th>
@@ -472,6 +481,15 @@
                         <td >{{$item->client_referance}}</td>
                         <td>{{$item->po_detail_id}}</td>
                         <td>{{$item->item_description}}</td>
+                        @if($showSegmentColumn)
+                            <td>
+                                @if(isset($item->segment) && $item->segment)
+                                    {{$item->segment->ServiceLineDes ?? ''}}
+                                @else
+                                    {{$item->serviceLineCode ?? ''}}
+                                @endif
+                            </td>
+                        @endif
                         <td style="text-align: right">{{number_format($item->qty,2)}}</td>
                         <td style="text-align: right">{{number_format($item->unit_price,$numberFormatting)}}</td>
                         <td style="text-align: right" class="text-right">{{number_format($item->amount,$numberFormatting)}}</td>

@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\BankMaster;
 use App\Repositories\BaseRepository;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class BankMasterRepository
@@ -33,5 +34,22 @@ class BankMasterRepository extends BaseRepository
     public function model()
     {
         return BankMaster::class;
+    }
+
+
+    public function findExistingBankShortCodes(array $bankShortCodes)
+    {
+        if (empty($bankShortCodes)) {
+            return collect();
+        }
+
+        $normalized = array_values(array_unique(array_map(function ($code) {
+            return strtolower(trim((string) $code));
+        }, $bankShortCodes)));
+
+        $placeholders = implode(',', array_fill(0, count($normalized), '?'));
+
+        return BankMaster::whereRaw('LOWER(bankShortCode) IN (' . $placeholders . ')', $normalized)
+            ->pluck('bankShortCode');
     }
 }

@@ -166,7 +166,7 @@ class TenantEnforce
             'api/v1/postNotPostedSchedule',
             'api/v1/generateAssetDepBulkPDF',
             'api/v1/updateRouteAccess',
-            'api/v1/exportCompanyBudgetPlanningDetailsAll',
+            'api/v1/exportCompanyBudgetPlanningDetailsAll'
         ];
     }
 
@@ -230,6 +230,9 @@ class TenantEnforce
             'api/v1/integrations/warehouses/items/search',
             'api/v1/integrations/segments/search',
             'api/v1/integrations/users/search',
+            'api/v1/integrations/banks/search',
+            'api/v1/integrations/customers/search',
+            'api/v1/integrations/chart-of-accounts/search',
         ];
     }
 

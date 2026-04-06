@@ -124,6 +124,8 @@ class GenerateCompanyBudgetPlanningService
                             'month' => $i,
                             'budjetAmtLocal' => ($chartOfAccount->controlAccountsSystemID == 3 || $chartOfAccount->controlAccountsSystemID == 2) ? (-1 * Helper::formatNumberWithPrecision($companyCurrencyConversion['localAmount']))  : (Helper::formatNumberWithPrecision($companyCurrencyConversion['localAmount'])),
                             'budjetAmtRpt' => ($chartOfAccount->controlAccountsSystemID == 3 || $chartOfAccount->controlAccountsSystemID == 2) ? (-1 * Helper::formatNumberWithPrecision($companyCurrencyConversion['reportingAmount'])) : (Helper::formatNumberWithPrecision($companyCurrencyConversion['reportingAmount'])),
+                            'createdDateTime' => now(),
+                            'timestamp' => now()
                         ];
                     }
                 }

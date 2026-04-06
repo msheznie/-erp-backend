@@ -171,9 +171,13 @@ class CompanyFinanceYearAPIController extends AppBaseController
         $toDate = new Carbon($request->endingDate);
         $input['endingDate'] = $toDate->format('Y-m-d');
 
-        $diffMonth = (int) (Carbon::createFromFormat('Y-m-d',$input['bigginingDate']))->diffInMonths(Carbon::createFromFormat('Y-m-d',$input['endingDate']));
-
-        if($diffMonth != 11){
+        //$diffMonth = (Carbon::createFromFormat('Y-m-d',$input['bigginingDate']))->diffInMonths(Carbon::createFromFormat('Y-m-d',$input['endingDate']));
+       
+        $startDate = Carbon::createFromFormat('Y-m-d',$input['bigginingDate']);
+        $endDate = Carbon::createFromFormat('Y-m-d',$input['endingDate']);
+ 
+        $isOneYear = $startDate->copy()->addYear()->subDay()->isSameDay($endDate);
+        if(!$isOneYear){
             return  $this->sendError(trans('custom.financial_year_must_contain_12_months'));
         }
 

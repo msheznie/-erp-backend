@@ -36,7 +36,7 @@ class BudgetReportService
         $bigginingDate = (new Carbon($companyFinanceYear->bigginingDate))->format('Y-m-d');
         $endingDate = (new Carbon($companyFinanceYear->endingDate))->format('Y-m-d');
 
-        
+        $previousYear = Carbon::parse($bigginingDate)->subYear()->year;
 
         $serviceLineSystemIDs = collect($request->input('selectedServicelines'))->pluck('serviceLineSystemID')->toArray();
         $chartOfAccountIDs = collect($request->input('glCodes'))->pluck('chartOfAccountSystemID')->toArray();
@@ -108,11 +108,10 @@ class BudgetReportService
                 else {
                     $commitments = ProcumentOrder::with(['detail'])->whereIn('serviceLineSystemID',$serviceLineSystemIDs)
                         ->where('poConfirmedYN',1)->where('approved',-1)
-                        ->where('budgetYear','<',Carbon::parse($currentFinanicalYear->startDate)->year)
+                        ->where('budgetYear',$previousYear)
                         ->whereHas('detail', function ($query) use ($chartOfAccountID) {
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
-                        })
-                        ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate]);
+                        });
 
                     $commitments = ($currencyID == 1) ? $commitments->selectRaw('SUM(poTotalLocalCurrency - VATAmountLocal) as amount')->first()->amount : $commitments->selectRaw('SUM(poTotalComRptCurrency - VATAmountRpt) as amount')->first()->amount;
 

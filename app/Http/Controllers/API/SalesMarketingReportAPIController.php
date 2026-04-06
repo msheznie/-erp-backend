@@ -1970,7 +1970,7 @@ class SalesMarketingReportAPIController extends AppBaseController
                 $headerSegment = isset($data['segment']['ServiceLineDes'])?$data['segment']['ServiceLineDes']:'';
                 $headerSegmentID = isset($data['serviceLineSystemID'])?$data['serviceLineSystemID']:null;
                 
-                $useDetailSegments = $isSegmentPolicyOn && isset($data['salesType']) && $data['salesType'] == 2;
+                $useDetailSegments = $isSegmentPolicyOn && $data['isSegmentPolicyOn'] && isset($data['salesType']) && $data['salesType'] == 2;
                 
                 if($useDetailSegments && isset($data['detail']) && count($data['detail'])> 0){
                     $segmentGroups = [];
@@ -2224,9 +2224,9 @@ class SalesMarketingReportAPIController extends AppBaseController
  
             $invoice->rptAmount = $this->selectAmountByType(
                 $currencyType,
-                (float)$invoice->master->bookingAmountTrans,
-                (float)$invoice->master->bookingAmountLocal,
-                (float)$invoice->master->bookingAmountRpt
+                (float)$invoice->master->bookingAmountTrans + (float)$invoice->master->VATAmount,
+                (float)$invoice->master->bookingAmountLocal + (float)$invoice->master->VATAmountLocal,
+                (float)$invoice->master->bookingAmountRpt + (float)$invoice->master->VATAmountRpt
             );
 
  
@@ -2249,9 +2249,9 @@ class SalesMarketingReportAPIController extends AppBaseController
 
     public function getSOtoReceiptChainViaDeliveryOrder($row, $currencyType)
     {
-        $deliveryOrders = DeliveryOrderDetail::selectRaw('sum(companyLocalAmount) as localAmount,
-                                        sum(companyReportingAmount) as rptAmount,
-                                        sum(transactionAmount) as transAmount,
+        $deliveryOrders = DeliveryOrderDetail::selectRaw('(sum(companyLocalAmount) + sum(VATAmountLocal * qtyIssued)) as localAmount,
+                                        (sum(companyReportingAmount) + sum(VATAmountRpt * qtyIssued)) as rptAmount,
+                                        (sum(transactionAmount) + sum(VATAmount * qtyIssued)) as transAmount,
                                         quotationMasterID,deliveryOrderID,deliveryOrderDetailID')
             ->where('quotationMasterID', $row->quotationMasterID)
             ->with(['master' => function ($query) {

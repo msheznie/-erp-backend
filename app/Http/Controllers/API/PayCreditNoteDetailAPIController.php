@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use App\Services\PayCreditNoteDetailsService;
 
 /**
  * Class PayCreditNoteDetailController
@@ -26,10 +27,12 @@ class PayCreditNoteDetailAPIController extends AppBaseController
 {
     /** @var  PayCreditNoteDetailRepository */
     private $payCreditNoteDetailRepository;
+    private $payCreditNoteDetailsService;
 
-    public function __construct(PayCreditNoteDetailRepository $payCreditNoteDetailRepo)
+    public function __construct(PayCreditNoteDetailRepository $payCreditNoteDetailRepo, PayCreditNoteDetailsService $payCreditNoteDetailsService)
     {
         $this->payCreditNoteDetailRepository = $payCreditNoteDetailRepo;
+        $this->payCreditNoteDetailsService = $payCreditNoteDetailsService;
     }
 
     /**
@@ -313,74 +316,12 @@ class PayCreditNoteDetailAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $payMasterAutoId = $input['payMasterAutoId'];
-        $paymentVocher = PaySupplierInvoiceMaster::where('PayMasterAutoId', $payMasterAutoId)->first();
-        if(empty($paymentVocher)) {
-            return $this->sendError(trans('custom.payment_voucher_not_found'));
+        $result = $this->payCreditNoteDetailsService->getCreditNotePaymentDetails($input);
+        if (!$result->isSuccess()) {
+            return $this->sendError($result->getMessage(), $result->getStatusCode());
         }
 
-        $decimalPlaces = Helper::getCurrencyDecimalPlace($paymentVocher->supplierTransCurrencyID);
-        $companySystemID = $paymentVocher->companySystemID;
-        
-        $companySystemIDInt = (int) $companySystemID;
-
-        $creditNoteAmountSubquery = "
-            IFNULL((SELECT SUM(refundAmount)
-                FROM erp_creditnote_receipts
-                WHERE erp_creditnote_receipts.creditNoteAutoID = erp_paycreditnotedetails.creditNoteAutoID
-                  AND erp_creditnote_receipts.companySystemID = ?), 0)
-        ";
-
-        $paymentVoucherAmountSubquery = "
-            IFNULL((SELECT SUM(creditNotePaymentAmount)
-                FROM erp_paycreditnotedetails pcd
-                WHERE pcd.creditNoteAutoID = erp_paycreditnotedetails.creditNoteAutoID
-                  AND pcd.companySystemID = ?), 0)
-        ";
-
-        $receiptMatchingAmountSubquery = "
-            IFNULL((SELECT SUM(mdm.matchingAmount)
-                FROM erp_matchdocumentmaster mdm
-                WHERE mdm.PayMasterAutoId = erp_paycreditnotedetails.creditNoteAutoID
-                  AND mdm.documentSystemID = 19
-                  AND mdm.matchingConfirmedYN = 1
-                  AND mdm.companySystemID = ?), 0)
-        ";
-
-        $receiptVoucherAmountSubquery = "
-            IFNULL((SELECT SUM(ecrd.receiveAmountTrans)
-                FROM erp_custreceivepaymentdet ecrd
-                INNER JOIN erp_customerreceivepayment ecrp
-                    ON ecrd.custReceivePaymentAutoID = ecrp.custReceivePaymentAutoID
-                    AND ecrp.approved = -1
-                WHERE ecrd.addedDocumentSystemID = 19
-                  AND ecrd.bookingInvCodeSystem = erp_paycreditnotedetails.creditNoteAutoID
-                  AND ecrd.matchingDocID = 0
-                  AND ecrd.companySystemID = ?), 0)
-        ";
-
-        $totalPaidAmount = "({$paymentVoucherAmountSubquery} + {$receiptMatchingAmountSubquery} - {$receiptVoucherAmountSubquery})";
-
-        $creditNotePaymentDetails = PayCreditNoteDetail::with(['creditnote'])
-            ->select('erp_paycreditnotedetails.*')
-            ->selectRaw('? as DecimalPlaces', [$decimalPlaces])
-            ->selectRaw("{$creditNoteAmountSubquery} as creditNoteAmount", [$companySystemIDInt])
-            ->selectRaw("{$totalPaidAmount} as totalPaidAmount", array_fill(0, 3, $companySystemIDInt))
-            ->selectRaw("({$creditNoteAmountSubquery} - {$totalPaidAmount}) as paymentBalancedAmount", array_fill(0, 4, $companySystemIDInt))
-            ->where('erp_paycreditnotedetails.PayMasterAutoId', $payMasterAutoId)
-            ->where('erp_paycreditnotedetails.companySystemID', $companySystemID)
-            ->get();
-
-        $creditNoteIds = $creditNotePaymentDetails->pluck('creditNoteAutoID')->toArray();
-
-        $creditNoteReceipts = CreditNoteReceipt::with(['customerReceivePayment.currency', 'creditNote'])->whereIn('creditNoteAutoID', $creditNoteIds)->where('companySystemID', $companySystemID)->get();
-
-        $data = [
-            'creditNotePaymentDetails' => $creditNotePaymentDetails->toArray(),
-            'creditNoteReceipts' => $creditNoteReceipts->toArray()
-        ];
-            
-        return $this->sendResponse($data, 'Credit Note Payment Details retrieved successfully');
+        return $this->sendResponse($result->getData(), $result->getMessage());
     }
 
     public function getCreditNoteForPV(Request $request)
@@ -406,6 +347,7 @@ class PayCreditNoteDetailAPIController extends AppBaseController
             )
             ->selectRaw($decimalPlaces . ' as DecimalPlaces')
             ->selectRaw('IFNULL(erp_creditnote.creditAmountTrans, 0) as creditNoteAmount')
+            ->selectRaw('0 as isChecked')
             ->selectRaw('(IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0) + IFNULL(match_sum.totalMatchedAmount, 0) - IFNULL(rv_sum.totalReceiptVoucherAmount, 0)) as totalPaidAmount')
             ->selectRaw('(IFNULL(erp_creditnote.creditAmountTrans, 0) - (IFNULL(SUM(erp_paycreditnotedetails.creditNotePaymentAmount), 0) + IFNULL(match_sum.totalMatchedAmount, 0) - IFNULL(rv_sum.totalReceiptVoucherAmount, 0))) as paymentBalancedAmount')
             ->selectRaw('GROUP_CONCAT(DISTINCT erp_customerreceivepayment.custPaymentReceiveCode SEPARATOR "|") as receiptVoucherCode')
@@ -480,13 +422,6 @@ class PayCreditNoteDetailAPIController extends AppBaseController
 
         if (empty($payMaster)) {
             return $this->sendError(trans('custom.payment_voucher_not_found'));
-        }
-
-        $selectedCreditNoteIds = [];
-        foreach ($input['detailTable'] as $item) {
-            if (isset($item['isChecked']) && $item['isChecked']) {
-                $selectedCreditNoteIds[] = $item['creditNoteAutoID'];
-            }
         }
 
         DB::beginTransaction();

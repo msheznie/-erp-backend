@@ -48,6 +48,7 @@ use App\Models\BookInvSuppMaster;
 use App\Models\ChartOfAccount;
 use App\Models\ChartOfAccountsAssigned;
 use App\Models\Company;
+use App\Constants\Document;
 use App\Models\CountryMaster;
 use App\Models\CurrencyMaster;
 use App\Models\Employee;
@@ -638,6 +639,13 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingDetailQRY($request);
 
+                    if ($output['data']) {
+                        foreach ($output['data'] as $val) {
+                            $val->advanceUnallocatedAmount = $val->documentSystemID == Document::DEBIT_NOTE ? 0 : $val->unAllocatedAmount;
+                            $val->debitNoteUnallocatedAmount = $val->documentSystemID == Document::DEBIT_NOTE ? $val->unAllocatedAmount : 0;
+                        }
+                    }
+
                     $outputArr = array();
                     $grandTotalArr = array();
                     $lineGrandTotal = 0;
@@ -667,8 +675,12 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                     $unAllocatedAmount = collect($output['data'])->pluck('unAllocatedAmount')->toArray();
                     $unAllocatedAmount = array_sum($unAllocatedAmount);
+                    $advanceUnallocatedAmount = collect($output['data'])->pluck('advanceUnallocatedAmount')->toArray();
+                    $advanceUnallocatedAmount = array_sum($advanceUnallocatedAmount);
+                    $debitNoteUnallocatedAmount = collect($output['data'])->pluck('debitNoteUnallocatedAmount')->toArray();
+                    $debitNoteUnallocatedAmount = array_sum($debitNoteUnallocatedAmount);
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal + $unAllocatedAmount);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal + $unAllocatedAmount, 'advanceUnallocatedAmount' => $advanceUnallocatedAmount, 'debitNoteUnallocatedAmount' => $debitNoteUnallocatedAmount);
                 } else if ($reportTypeID == 'SAS') { //Supplier aging Summary
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
@@ -680,16 +692,22 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                         foreach ($output['data'] as $val) {
                             $unallocatedTotal = 0;
+                            $advanceTotal = 0;
+                            $debitNoteTotal = 0;
                             if ($outputDetail['data']) {
                                 foreach ($outputDetail['data'] as $valDet) {
                                     if (isset($val->supplierCodeSystem) && isset($valDet->supplierCodeSystem) && isset($val->glCode) && isset($valDet->glCode)) {
                                         if($val->supplierCodeSystem == $valDet->supplierCodeSystem && $val->glCode == $valDet->glCode) {
                                             $unallocatedTotal += $valDet->unAllocatedAmount;
+                                            $advanceTotal += $valDet->documentSystemID == Document::DEBIT_NOTE ? 0 : $valDet->unAllocatedAmount;
+                                            $debitNoteTotal += $valDet->documentSystemID == Document::DEBIT_NOTE ? $valDet->unAllocatedAmount : 0;
                                         }
                                     }
                                 }
                             }
                             $val->unAllocatedAmount = $unallocatedTotal;
+                            $val->advanceUnallocatedAmount = $advanceTotal;
+                            $val->debitNoteUnallocatedAmount = $debitNoteTotal;
                         }
                     }
 
@@ -722,8 +740,12 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                     $unAllocatedAmount = collect($output['data'])->pluck('unAllocatedAmount')->toArray();
                     $unAllocatedAmount = array_sum($unAllocatedAmount);
+                    $advanceUnallocatedAmount = collect($output['data'])->pluck('advanceUnallocatedAmount')->toArray();
+                    $advanceUnallocatedAmount = array_sum($advanceUnallocatedAmount);
+                    $debitNoteUnallocatedAmount = collect($output['data'])->pluck('debitNoteUnallocatedAmount')->toArray();
+                    $debitNoteUnallocatedAmount = array_sum($debitNoteUnallocatedAmount);
 
-                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal + $unAllocatedAmount);
+                    return array('reportData' => $outputArr, 'companyName' => $checkIsGroup->CompanyName, 'grandTotal' => $grandTotalArr, 'currencyDecimalPlace' => $decimalPlaces, 'agingRange' => $output['aging'], 'unAllocatedAmount' => $unAllocatedAmount, 'lineGrandTotal' => $lineGrandTotal + $unAllocatedAmount, 'advanceUnallocatedAmount' => $advanceUnallocatedAmount, 'debitNoteUnallocatedAmount' => $debitNoteUnallocatedAmount);
                 } else if ($reportTypeID == 'SADA') { //Supplier aging detail advance
 
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
@@ -1555,6 +1577,12 @@ class AccountsPayableReportAPIController extends AppBaseController
                         }
                         $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                         $output = $this->getSupplierAgingDetailQRY($request);
+                        if ($output['data']) {
+                            foreach ($output['data'] as $val) {
+                                $val->advanceUnallocatedAmount = $val->documentSystemID == Document::DEBIT_NOTE ? 0 : $val->unAllocatedAmount;
+                                $val->debitNoteUnallocatedAmount = $val->documentSystemID == Document::DEBIT_NOTE ? $val->unAllocatedAmount : 0;
+                            }
+                        }
                         $data = $supplierAgingReportService->getSupplierAgingExportToExcelData($output, $typeAging);
                         
                         $data = array_filter($data, function ($row, $index) {
@@ -1577,16 +1605,22 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                             foreach ($output['data'] as $val) {
                                 $unallocatedTotal = 0;
+                                $advanceTotal = 0;
+                                $debitNoteTotal = 0;
                                 if ($outputDetail['data']) {
                                     foreach ($outputDetail['data'] as $valDet) {
                                         if (isset($val->supplierCodeSystem) && isset($valDet->supplierCodeSystem) && isset($val->glCode) && isset($valDet->glCode)) {
                                             if($val->supplierCodeSystem == $valDet->supplierCodeSystem && $val->glCode == $valDet->glCode) {
                                                 $unallocatedTotal += $valDet->unAllocatedAmount;
+                                                $advanceTotal += $valDet->documentSystemID == Document::DEBIT_NOTE ? 0 : $valDet->unAllocatedAmount;
+                                                $debitNoteTotal += $valDet->documentSystemID == Document::DEBIT_NOTE ? $valDet->unAllocatedAmount : 0;
                                             }
                                         }
                                     }
                                 }
                                 $val->unAllocatedAmount = $unallocatedTotal;
+                                $val->advanceUnallocatedAmount = $advanceTotal;
+                                $val->debitNoteUnallocatedAmount = $debitNoteTotal;
                             }
                         }
                         if($typeAging == 1){

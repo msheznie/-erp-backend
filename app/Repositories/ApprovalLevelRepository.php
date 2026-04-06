@@ -38,6 +38,7 @@ class ApprovalLevelRepository extends BaseRepository
         'valueTo',
         'isCategoryWiseApproval',
         'categoryID',
+        'subcategoryID',
         'isActive',
         'timeStamp'
     ];
@@ -70,6 +71,8 @@ class ApprovalLevelRepository extends BaseRepository
                 $query->select('serviceLineSystemID', 'ServiceLineDes');
             }, 'category' => function ($query) use ($search) {
                 $query->select('itemCategoryID', 'categoryDescription');
+            }, 'subcategory' => function ($query) use ($search) {
+                $query->select('itemCategorySubID', 'categoryDescription');
             }])->select('erp_approvallevel.*')->orderBy('approvalLevelID', 'desc');
         
         $approvalLevel->where('is_deleted',0);

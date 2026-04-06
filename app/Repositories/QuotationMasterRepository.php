@@ -95,7 +95,8 @@ class QuotationMasterRepository extends BaseRepository
         'modifiedUserName',
         'timestamp',
         'leadTime',
-        'salesType'
+        'salesType',
+        'isSegmentPolicyOn'
     ];
 
     /**
@@ -148,10 +149,27 @@ class QuotationMasterRepository extends BaseRepository
 
         if (array_key_exists('customerSystemCode', $input)) {
             if ($input['customerSystemCode'] && !is_null($input['customerSystemCode'])) {
-                $customerSystemCode = $request['customerSystemCode'];
-                $customerSystemCode = (array)$customerSystemCode;
-                $customerSystemCode = collect($customerSystemCode)->pluck('id');
-                $quotationMaster->whereIn('customerSystemCode', $customerSystemCode);
+                $rawCustomerSystemCode = $input['customerSystemCode'];
+                if (is_numeric($rawCustomerSystemCode)) {
+                    $customerSystemCode = [(int)$rawCustomerSystemCode];
+                } else {
+                    $customerSystemCode = Helper::getArrayIds((array)$rawCustomerSystemCode);
+                    if (empty($customerSystemCode)) {
+                        $customerSystemCode = collect((array)$rawCustomerSystemCode)
+                            ->filter(function ($value) {
+                                return is_numeric($value);
+                            })
+                            ->map(function ($value) {
+                                return (int)$value;
+                            })
+                            ->values()
+                            ->all();
+                    }
+                }
+
+                if (count($customerSystemCode) > 0) {
+                    $quotationMaster->whereIn('customerSystemCode', $customerSystemCode);
+                }
             }
         }
 
@@ -166,10 +184,27 @@ class QuotationMasterRepository extends BaseRepository
 
         if (array_key_exists('salesPersonID', $input)) {
             if ($input['salesPersonID'] && !is_null($input['salesPersonID'])) {
-                $salesPersonID = $request['salesPersonID'];
-                $salesPersonID= (array)$salesPersonID;
-                $salesPersonID = collect($salesPersonID)->pluck('id');
-                $quotationMaster->whereIn('salesPersonID', $salesPersonID);
+                $rawSalesPersonID = $input['salesPersonID'];
+                if (is_numeric($rawSalesPersonID)) {
+                    $salesPersonID = [(int)$rawSalesPersonID];
+                } else {
+                    $salesPersonID = Helper::getArrayIds((array)$rawSalesPersonID);
+                    if (empty($salesPersonID)) {
+                        $salesPersonID = collect((array)$rawSalesPersonID)
+                            ->filter(function ($value) {
+                                return is_numeric($value);
+                            })
+                            ->map(function ($value) {
+                                return (int)$value;
+                            })
+                            ->values()
+                            ->all();
+                    }
+                }
+
+                if (count($salesPersonID) > 0) {
+                    $quotationMaster->whereIn('salesPersonID', $salesPersonID);
+                }
             }
         }
 

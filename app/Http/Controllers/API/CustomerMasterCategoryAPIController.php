@@ -386,7 +386,7 @@ class CustomerMasterCategoryAPIController extends AppBaseController
         $search = $request->input('search.value');
         if ($search) {
             $customerMasterCategory = $customerMasterCategory->where(function ($query) use ($search) {
-                $query->where('wareHouseDescription', 'LIKE', "%{$search}%");
+                $query->where('categoryDescription', 'LIKE', "%{$search}%");
             });
         }
 

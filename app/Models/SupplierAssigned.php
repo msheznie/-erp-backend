@@ -93,6 +93,7 @@ class SupplierAssigned extends Model
         'creditPeriod',
         'supCategoryMasterID',
         'supCategorySubID',
+        'supplier_category_id',
         'registrationNumber',
         'registrationExprity',
         'supplierImportanceID',
@@ -120,6 +121,7 @@ class SupplierAssigned extends Model
         'vatPercentage',
         'advanceAccountSystemID',
         'AdvanceAccount',
+        'supplierCommunicationYN',
     ];
 
     /**
@@ -153,6 +155,7 @@ class SupplierAssigned extends Model
         'creditPeriod' => 'float',
         'supCategoryMasterID' => 'integer',
         'supCategorySubID' => 'integer',
+        'supplier_category_id' => 'integer',
         'registrationNumber' => 'string',
         'registrationExprity' => 'string',
         'supplierImportanceID' => 'integer',
@@ -178,6 +181,7 @@ class SupplierAssigned extends Model
         'vatNumber' => 'string',
         'vatPercentage' => 'integer',
         'deleted_at' => 'datetime',
+        'supplierCommunicationYN' => 'integer',
     ];
 
     /**

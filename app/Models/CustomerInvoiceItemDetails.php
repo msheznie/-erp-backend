@@ -308,7 +308,8 @@ class CustomerInvoiceItemDetails extends Model
         'vatSubCategoryID',
         'timestamp',
         'part_no',
-        'userQty'
+        'userQty',
+        'serviceLineSystemID'
     ];
 
     /**
@@ -380,7 +381,8 @@ class CustomerInvoiceItemDetails extends Model
         'VATAmountLocal' => 'float',
         'VATAmountRpt' => 'float',
         'VATApplicableOn' => 'integer',
-        'userQty' => 'float'
+        'userQty' => 'float',
+        'serviceLineSystemID' => 'integer'
     ];
 
     /**
@@ -456,5 +458,8 @@ class CustomerInvoiceItemDetails extends Model
 
     public function project(){
         return $this->belongsTo('App\Models\ErpProjectMaster','projectID','id');
+    }
+    public function segment(){
+        return $this->belongsTo('App\Models\SegmentMaster','serviceLineSystemID','serviceLineSystemID');
     }
 }

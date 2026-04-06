@@ -99,7 +99,8 @@ class QuotationMasterVersionRepository extends BaseRepository
         'modifiedDateTime',
         'modifiedUserName',
         'timestamp',
-        'salesType'
+        'salesType',
+        'isSegmentPolicyOn'
     ];
 
     /**

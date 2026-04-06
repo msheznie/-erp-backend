@@ -116,7 +116,9 @@ class CustomerInvoiceDirectRepository extends BaseRepository
         'createdFrom',
         'createdDateTime',
         'timestamp',
-        'isPOS'
+        'isPOS',
+        'salesType',
+        'isSegmentPolicyOn'
     ];
 
     /**

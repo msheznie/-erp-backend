@@ -361,6 +361,11 @@ class QuotationDetailsAPIController extends AppBaseController
     {
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, ['vatMasterCategoryID', 'vatSubCategoryID', 'serviceLineSystemID']);
+
+        if (array_key_exists('segment', $input)) {
+            unset($input['segment']);
+        }
+
         $employee = Helper::getEmployeeInfo();
 
         /** @var QuotationDetails $quotationDetails */
@@ -645,8 +650,11 @@ class QuotationDetailsAPIController extends AppBaseController
         $input = $request->all();
         $quotationMasterID = $input['quotationMasterID'];
 
-        $items = QuotationDetails::leftjoin('units','UnitID','unitOfMeasureID')->where('quotationMasterID', $quotationMasterID)
-              ->skip($input['skip'])->take($input['limit'])->get();
+        $items = QuotationDetails::with('segment')
+              ->leftjoin('units','UnitID','unitOfMeasureID')
+              ->where('quotationMasterID', $quotationMasterID)
+              ->skip($input['skip'])->take($input['limit'])
+              ->get();
 
         $index = $input['skip'] + 1;
         foreach($items as $item) {
@@ -725,14 +733,16 @@ class QuotationDetailsAPIController extends AppBaseController
 
         $detail = DB::select('SELECT
 	quotationdetails.*,
-	erp_quotationmaster.serviceLineSystemID,
+	COALESCE(NULLIF(quotationdetails.serviceLineSystemID, 0), erp_quotationmaster.serviceLineSystemID) AS serviceLineSystemID,
 	erp_quotationmaster.salesType,
 	"" AS isChecked,
 	"" AS noQty,
-	IFNULL(dodetails.invTakenQty,0) as invTakenQty 
+	IFNULL(dodetails.invTakenQty,0) as invTakenQty,
+	sl.ServiceLineDes as segmentDescription
 FROM
 	erp_quotationdetails quotationdetails
 	INNER JOIN erp_quotationmaster ON quotationdetails.quotationMasterID = erp_quotationmaster.quotationMasterID
+	LEFT JOIN serviceline sl ON sl.serviceLineSystemID = COALESCE(NULLIF(quotationdetails.serviceLineSystemID, 0), erp_quotationmaster.serviceLineSystemID)
 	LEFT JOIN ( 
 		SELECT 
 			erp_customerinvoiceitemdetails.customerItemDetailID,
@@ -1067,7 +1077,6 @@ WHERE
                             unset($new['userRequestedQty']);
                             unset($new['requestedUnitQty']);
                             unset($new['unitQty']);
-                            unset($new['serviceLineSystemID']);
                             $new['soQuotationDetailID'] = $new['quotationDetailsID'];
                             
                             $new['createdPCID'] = gethostname();
