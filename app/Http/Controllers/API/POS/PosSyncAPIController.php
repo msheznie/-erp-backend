@@ -3,19 +3,15 @@
 namespace App\Http\Controllers\API\POS;
 
 use App\Http\Controllers\AppBaseController;
-use App\Http\Requests\POS\PosShiftSyncRequest;
 use App\Jobs\POS\POSSyncJob;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use App\Models\Company;
 
 class PosSyncAPIController extends AppBaseController
 {
-    /**
-     * Accept a POS shift payload and dispatch the async sync job.
-     * Returns immediately — the result is delivered via webhook callback
-     * using the external_reference as the correlation ID.
-     */
-    public function syncShift(PosShiftSyncRequest $request): JsonResponse
+  
+    public function syncShift(Request $request): JsonResponse
     {
         $externalReference = $request->get('external_reference');
         $tenantUuid = $request->get('tenant_uuid') ?? env('TENANT_UUID', 'local');
@@ -25,9 +21,10 @@ class PosSyncAPIController extends AppBaseController
             return $this->sendError(trans('custom.the_company_system_ID_not_matching_with_system', ['companySystemID' => $companySystemID]), 422);
         }
 
-
-        POSSyncJob::dispatch(
-            $request->validated(),
+  
+        
+        POSSyncJob::dispatchSync(
+            $request->all(),
             $request->input('db', ''),
             (string) $request->get('api_external_key', ''),
             (string) $request->get('api_external_url', ''),

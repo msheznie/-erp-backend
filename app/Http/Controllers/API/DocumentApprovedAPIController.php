@@ -537,6 +537,7 @@ class DocumentApprovedAPIController extends AppBaseController
 				AND erp_debitnote.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 				AND erp_debitnote.confirmedYN = 1 
 				AND erp_debitnote.approved = -1
+				AND (erp_debitnote.cancelYN = 0 OR erp_debitnote.cancelYN IS NULL)
 				LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_debitnote.supplierID
 				LEFT JOIN currencymaster ON currencymaster.currencyID = erp_debitnote.supplierTransactionCurrencyID 
 			WHERE
@@ -2100,6 +2101,7 @@ class DocumentApprovedAPIController extends AppBaseController
 				AND erp_debitnote.RollLevForApp_curr = erp_documentapproved.rollLevelOrder 
 				AND erp_debitnote.confirmedYN = 1 
 				AND erp_debitnote.approved = 0
+				AND (erp_debitnote.cancelYN = 0 OR erp_debitnote.cancelYN IS NULL)
 				LEFT JOIN suppliermaster ON suppliermaster.supplierCodeSystem = erp_debitnote.supplierID
 				LEFT JOIN currencymaster ON currencymaster.currencyID = erp_debitnote.supplierTransactionCurrencyID 
 			WHERE
@@ -3723,7 +3725,7 @@ class DocumentApprovedAPIController extends AppBaseController
 			AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 			AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID
 			AND employeesdepartments.employeeGroupID=erp_documentapproved.approvalGroupID	
-			INNER JOIN erp_debitnote ON erp_debitnote.companySystemID=erp_documentapproved.companySystemID AND erp_debitnote.documentSystemID=erp_documentapproved.documentSystemID  AND erp_debitnote.debitNoteAutoID=erp_documentapproved.documentSystemCode AND erp_debitnote.RollLevForApp_curr=erp_documentapproved.rollLevelOrder AND erp_debitnote.confirmedYN=1 AND erp_debitnote.approved=0
+			INNER JOIN erp_debitnote ON erp_debitnote.companySystemID=erp_documentapproved.companySystemID AND erp_debitnote.documentSystemID=erp_documentapproved.documentSystemID  AND erp_debitnote.debitNoteAutoID=erp_documentapproved.documentSystemCode AND erp_debitnote.RollLevForApp_curr=erp_documentapproved.rollLevelOrder AND erp_debitnote.confirmedYN=1 AND erp_debitnote.approved=0 AND (erp_debitnote.cancelYN=0 OR erp_debitnote.cancelYN IS NULL)
 		WHERE
 			erp_documentapproved.approvedYN = 0 
 			AND erp_documentapproved.rejectedYN = 0 

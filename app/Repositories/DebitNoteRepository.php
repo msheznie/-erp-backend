@@ -74,7 +74,8 @@ class DebitNoteRepository extends BaseRepository
         'modifiedUser',
         'modifiedPc',
         'createdDateTime',
-        'timestamp'
+        'timestamp',
+        'cancelYN',
     ];
 
     /**

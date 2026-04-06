@@ -27,21 +27,54 @@ use App\Models\SourceCustomerTypeMaster;
 
 class POSSourceWriterService
 {
-  
-    public static function write(array $data, int $logId): void
+ 
+    public static function validateBusinessRules(array $data): array
+    {
+        $errors = [];
+
+        if (! isset($data['company_id'], $data['shift']) || ! is_array($data['shift'])) {
+            return $errors;
+        }
+
+        $companyId = (int) $data['company_id'];
+        $posType = self::resolvePosType($data);
+        $shift = $data['shift'];
+        $shiftID = (int) ($shift['shiftID'] ?? 0);
+
+        if ($shiftID <= 0) {
+            return $errors;
+        }
+
+        $exists = POSSOURCEShiftDetails::query()
+            ->where('shiftID', $shiftID)
+            ->where('pos_type', $posType)
+            ->where('companyID', $companyId)
+            ->exists();
+
+        if ($exists) {
+            $errors[] = [
+                'field' => 'shift.shiftID',
+                'message' => ['Shift ID already exists for this POS type and company.'],
+            ];
+        }
+
+        return $errors;
+    }
+
+    public static function write(array $data, int|string $logId): void
     {
         $posType = self::resolvePosType($data);
         $companyId = $data['company_id'] ;
 
         self::writeShift($data['shift'], $posType, $logId,$companyId);
         //self::writeTaxLedger($data['tax_ledger'] ?? [], $posType, $companyId, $logId);
+        self::writeCustomers($data['customer_details'] ?? [], $posType, $companyId, $logId);
+        self::writeTaxes($data['tax_details'] ?? [], $posType, $companyId, $logId);
 
 
         if ($posType === 1) {
-            self::writeCustomers($data['customer_details'] ?? [], $posType, $companyId, $logId);
             self::writeInvoices($data['invoices'] ?? [], $posType, $companyId, $logId);
             self::writeSalesReturns($data['return'] ?? [], $posType, $companyId, $logId);
-            self::writeTaxes($data['tax_details'] ?? [], $posType, $companyId, $logId);
             self::writePayments($data['payment_config'] ?? [], $posType, $companyId, $logId);
         }
 
@@ -77,7 +110,7 @@ class POSSourceWriterService
     // Shift
     // -------------------------------------------------------------------------
 
-    private static function writeShift(array $shift, int $posType, int $logId, int $companyId): void
+    private static function writeShift(array $shift, int $posType, int|string $logId, int $companyId): void
     {
         $shiftID = (int) ($shift['shiftID'] ?? 0);
         if ($shiftID <= 0) {
@@ -159,7 +192,7 @@ class POSSourceWriterService
     // Reference tables (shared by both POS types)
     // -------------------------------------------------------------------------
 
-    private static function writeTaxes(array $taxes, int $posType, int $companyId, int $logId): void
+    private static function writeTaxes(array $taxes, int $posType, int $companyId, int|string $logId): void
     {
         foreach (array_chunk($taxes, 500) as $chunk) {
             $rows = array_map(fn($t) => array_merge($t, [
@@ -172,7 +205,7 @@ class POSSourceWriterService
         }
     }
 
-    private static function writePayments(array $payments, int $posType, int $companyId, int $logId): void
+    private static function writePayments(array $payments, int $posType, int $companyId, int|string $logId): void
     {
         foreach (array_chunk($payments, 500) as $chunk) {
             $masters = [];
@@ -183,7 +216,6 @@ class POSSourceWriterService
                 unset($payment['details']);
                 $masters[] = array_merge($payment, [
                     'pos_type'           => $posType,
-                    'companyID'          => $companyId,
                     'transaction_log_id' => $logId
                 ]);
                 foreach ($paymentDetails as $detail) {
@@ -208,7 +240,7 @@ class POSSourceWriterService
     // GPOS — Customers
     // -------------------------------------------------------------------------
 
-    private static function writeCustomers(array $customers, int $posType, int $companyId, int $logId): void
+    private static function writeCustomers(array $customers, int $posType, int $companyId, int|string $logId): void
     {
         foreach (array_chunk($customers, 500) as $chunk) {
             $rows = array_map(fn($c) => array_merge($c, [
@@ -228,7 +260,7 @@ class POSSourceWriterService
     // GPOS — Invoices
     // -------------------------------------------------------------------------
 
-    private static function writeInvoices(array $invoices, int $posType, int $companyId, int $logId): void
+    private static function writeInvoices(array $invoices, int $posType, int $companyId, int|string $logId): void
     {
         foreach ($invoices as $inv) {
             $lines           = $inv['details'] ?? [];
@@ -241,14 +273,9 @@ class POSSourceWriterService
                 'transaction_log_id' => $logId,
                 'createdDateTime' => $inv['createdDateTime'] ?? now()
             ]);
-            // Legacy PK column is no longer AUTO_INCREMENT; set business ID manually.
-            $invoiceId = (int) ($inv['invoiceID'] ?? 0);
-            if ($invoiceId <= 0) {
-                continue;
-            }
-
-            // Same (invoiceID, pos_type, companyID) may arrive on re-sync; update instead of failing on PRIMARY.
-            POSInvoiceSource::withoutTimestamps(function () use ($header, $invoiceId, $posType) {
+       
+            $invoiceId = $inv['invoiceID'];
+            POSInvoiceSource::withoutTimestamps(function () use ($header, $invoiceId, $posType, $companyId) {
                 POSInvoiceSource::updateOrInsert(
                     [
                         'invoiceID' => $invoiceId,
@@ -277,6 +304,23 @@ class POSSourceWriterService
                     'createdDateTime' => $inv['createdDateTime'] ?? now()
                 ]);
             }
+            $details = self::dedupeInvoiceDetailRows($details);
+
+        
+            $detailIds = [];
+            foreach ($details as $row) {
+                if (array_key_exists('invoiceDetailsID', $row) && $row['invoiceDetailsID'] !== null && $row['invoiceDetailsID'] !== '') {
+                    $detailIds[] = (int) $row['invoiceDetailsID'];
+                }
+            }
+            $detailIds = array_values(array_unique($detailIds));
+            if ($detailIds !== []) {
+                POSInvoiceSourceDetail::where('pos_type', $posType)
+                    ->where('companyID', $companyID)
+                    ->whereIn('invoiceDetailsID', $detailIds)
+                    ->delete();
+            }
+
             if ($details) {
                 foreach (array_chunk($details, 500) as $detailChunk) {
                     POSInvoiceSourceDetail::withoutTimestamps(function () use ($detailChunk) {
@@ -299,6 +343,20 @@ class POSSourceWriterService
                     'createdDateTime' => $inv['createdDateTime'] ?? now()
                 ]);
             }
+            $payments = self::dedupeInvoicePaymentRows($payments);
+
+         
+            $paymentIds = [];
+            foreach ($payments as $row) {
+                if (array_key_exists('PaymentID', $row) && $row['PaymentID'] !== null && $row['PaymentID'] !== '') {
+                    $paymentIds[] = (int) $row['PaymentID'];
+                }
+            }
+            $paymentIds = array_values(array_unique($paymentIds));
+            if ($paymentIds !== []) {
+                POSSourceInvoicePayment::whereIn('PaymentID', $paymentIds)->delete();
+            }
+
             if ($payments) {
                 foreach (array_chunk($payments, 500) as $paymentChunk) {
                     POSSourceInvoicePayment::withoutTimestamps(function () use ($paymentChunk) {
@@ -309,27 +367,48 @@ class POSSourceWriterService
         }
     }
 
-    /**
-     * Generate next numeric business id for legacy PK columns.
-     */
-    private static function nextBusinessId(string $modelClass, string $column): int
+
+    private static function dedupeInvoiceDetailRows(array $rows): array
     {
-        $max = $modelClass::query()->max($column);
-        return ((int) $max) + 1;
+        $withoutId = [];
+        $byDetailId = [];
+        foreach ($rows as $row) {
+            if (! array_key_exists('invoiceDetailsID', $row) || $row['invoiceDetailsID'] === null || $row['invoiceDetailsID'] === '') {
+                $withoutId[] = $row;
+                continue;
+            }
+            $byDetailId[(int) $row['invoiceDetailsID']] = $row;
+        }
+
+        return array_merge($withoutId, array_values($byDetailId));
     }
 
-    // -------------------------------------------------------------------------
-    // GPOS — Sales Returns
-    // -------------------------------------------------------------------------
 
-    private static function writeSalesReturns(array $returns, int $posType, int $companyId, int $logId): void
+    private static function dedupeInvoicePaymentRows(array $rows): array
     {
-        $returns = self::enrichShiftWithCompanyMaster($returns,$companyId);
+        $withoutId = [];
+        $byPaymentId = [];
+        foreach ($rows as $row) {
+            if (! array_key_exists('PaymentID', $row) || $row['PaymentID'] === null || $row['PaymentID'] === '') {
+                $withoutId[] = $row;
+                continue;
+            }
+            $byPaymentId[(int) $row['PaymentID']] = $row;
+        }
 
+        return array_merge($withoutId, array_values($byPaymentId));
+    }
+
+
+    private static function writeSalesReturns(array $returns, int $posType, int $companyId, int|string $logId): void
+    {
         foreach ($returns as $ret) {
+            if (! is_array($ret)) {
+                continue;
+            }
             $lines = $ret['details'] ?? [];
-            $lines = self::enrichShiftWithCompanyMaster($lines,$companyId);
             unset($ret['details']);
+            $ret = self::enrichShiftWithCompanyMaster($ret, $companyId);
 
             $header = array_merge($ret, [
                 'pos_type'           => $posType,
@@ -344,7 +423,7 @@ class POSSourceWriterService
             $header['salesReturnID'] = $salesReturnId;
 
             // If already exists, update. If not, insert. No duplicate error.
-            POSSourceSalesReturn::withoutTimestamps(function () use ($header, $salesReturnId, $posType) {
+            POSSourceSalesReturn::withoutTimestamps(function () use ($header, $salesReturnId, $posType,$companyId) {
                 POSSourceSalesReturn::updateOrInsert(
                     [
                         'salesReturnID' => $salesReturnId,
@@ -361,6 +440,10 @@ class POSSourceWriterService
 
             $details = [];
             foreach ($lines as $line) {
+                if (! is_array($line)) {
+                    continue;
+                }
+                $line = self::enrichShiftWithCompanyMaster($line, $companyId);
                 $details[] = array_merge($line, [
                     'salesReturnID'       => $salesReturnId,
                     'pos_type'            => $posType,
@@ -384,7 +467,7 @@ class POSSourceWriterService
     // RPOS — Menu Sales
     // -------------------------------------------------------------------------
 
-    private static function writeMenuSales(array $menuSales, int $posType, int $companyId, int $logId): void
+    private static function writeMenuSales(array $menuSales, int $posType, int $companyId, int|string $logId): void
     {
         // Payload may send a single menuSales object instead of an array of objects.
         // In that case, JSON decodes to an associative array and `foreach ($chunk as $sale)`
@@ -557,7 +640,7 @@ class POSSourceWriterService
         }
     }
 
-    private static function writeMenuSalesCustomerTypes(array $customerTypes, int $companyId, int $logId): void
+    private static function writeMenuSalesCustomerTypes(array $customerTypes, int $companyId, int|string $logId): void
     {
         foreach (array_chunk($customerTypes, 500) as $chunk) {
             $rows = array_map(fn($row) => array_merge($row, [
@@ -571,7 +654,7 @@ class POSSourceWriterService
         }
     }
 
-    private static function writeMenuSalesMenuMasters(array $menuMasters, int $companyId, int $logId): void
+    private static function writeMenuSalesMenuMasters(array $menuMasters, int $companyId, int|string $logId): void
     {
         foreach (array_chunk($menuMasters, 500) as $chunk) {
             $rows = array_map(fn($row) => array_merge($row, [
@@ -585,7 +668,7 @@ class POSSourceWriterService
         }
     }
 
-    private static function writeMenuSalesMenuCategories(array $menuCategories, int $companyId, int $logId): void
+    private static function writeMenuSalesMenuCategories(array $menuCategories, int $companyId, int|string $logId): void
     {
         foreach (array_chunk($menuCategories, 500) as $chunk) {
             $rows = array_map(fn($row) => array_merge($row, [
@@ -599,7 +682,7 @@ class POSSourceWriterService
         }
     }
 
-    private static function writeTaxLedger(array $taxLedger, int $posType, int $companyId, int $logId): void
+    private static function writeTaxLedger(array $taxLedger, int $posType, int $companyId, int|string $logId): void
     {
         foreach (array_chunk($taxLedger, 500) as $chunk) {
             $rows = array_map(fn($t) => array_merge($t, [

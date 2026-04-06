@@ -3,14 +3,16 @@
 namespace App\Jobs;
 
 use App\helper\CommonJobService;
+use App\Jobs\Concerns\UsesDepreciationQueueConnection;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
+use App\Models\FixedAssetMaster;
 use App\Models\FixedAssetDepreciationMaster;
 use App\Models\FixedAssetDepreciationPeriod;
-use App\Repositories\FixedAssetDepreciationMasterRepository;
 use App\Services\JobErrorLogService;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Throwable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -22,33 +24,27 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 class ProcessDepreciation implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+    use UsesDepreciationQueueConnection;
+
     public $dispatch_db;
     public $outputChunkData;
-    public $outputData;
+    public $faIds;
     public $depMasterAutoID;
     public $depDate;
     public $chunkDataSizeCounts;
     public $faCounts;
+    private $tag = "asset-depreciation";
 
     /**
      * Create a new job instance.
      *
      * @return void
      */
-    public function __construct($dispatch_db, $outputData, $depMasterAutoID, $depDate, $faCounts, $chunkDataSizeCounts)
+    public function __construct($dispatch_db, $faIds, $depMasterAutoID, $depDate, $faCounts, $chunkDataSizeCounts)
     {
-        if(env('QUEUE_DRIVER_CHANGE','database') == 'database'){
-            if(env('IS_MULTI_TENANCY',false)){
-                self::onConnection('database_main');
-            }else{
-                self::onConnection('database');
-            }
-        }else{
-            self::onConnection(env('QUEUE_DRIVER_CHANGE','database'));
-        }
-
+        $this->configureQueueConnection();
         $this->dispatch_db = $dispatch_db;
-        $this->outputData = $outputData;
+        $this->faIds = $faIds;
         $this->depMasterAutoID = $depMasterAutoID;
         $this->depDate = $depDate;
         $this->faCounts = $faCounts;
@@ -65,18 +61,26 @@ class ProcessDepreciation implements ShouldQueue
         ini_set('max_execution_time', 21600);
         ini_set('memory_limit', -1);
         $db = $this->dispatch_db;
-        DB::beginTransaction();
         try {
-           
             CommonJobService::db_switch($db);
-      
-            $output = $this->outputData;
+
             $depMasterAutoID = $this->depMasterAutoID;
             $depDate = $this->depDate;
             $faCounts = $this->faCounts;
             $chunkDataSizeCounts = $this->chunkDataSizeCounts;
-
             $depMaster = FixedAssetDepreciationMaster::find($depMasterAutoID);
+            if (!$depMaster) {
+                return;
+            }
+            $faIds = $this->faIds;
+            $output = [];
+            if (count($faIds) > 0) {
+                $output = FixedAssetMaster::depreciationJobBaseQuery($depMaster->companySystemID, $depDate)
+                    ->whereIn('faID', $faIds)
+                    ->orderBy('faID', 'desc')
+                    ->get()
+                    ->toArray();
+            }
             $finalData = [];
 
             foreach ($output as $val) {
@@ -200,35 +204,76 @@ class ProcessDepreciation implements ShouldQueue
             }
 
             if (count($finalData) > 0) {
-                foreach (array_chunk($finalData, 100) as $t) {
-                    FixedAssetDepreciationPeriod::insert($t);
-                }
+                DB::transaction(function () use ($finalData, $depMasterAutoID) {
+                    foreach (array_chunk($finalData, 100) as $t) {
+                        FixedAssetDepreciationPeriod::insert($t);
+                    }
+
+                    $depMaster = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->lockForUpdate()->first();
+                    if (!$depMaster) {
+                        return;
+                    }
+
+                    $depMaster->counter = $depMaster->counter + 1;
+                    $depMaster->save();
+
+                    $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
+                    if ($depDetail) {
+                        $depMaster->depAmountLocal = $depDetail->depAmountLocal;
+                        $depMaster->depAmountRpt = $depDetail->depAmountRpt;
+                        if ($depMaster->counter == $depMaster->totalChunks) {
+                            $depMaster->isDepProcessingYN = 1;
+                        }
+                        $depMaster->save();
+                    }
+                });
+            } else {
+                DB::transaction(function () use ($depMasterAutoID) {
+                    $depMaster = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->lockForUpdate()->first();
+                    if (!$depMaster) {
+                        return;
+                    }
+
+                    $depMaster->counter = $depMaster->counter + 1;
+                    $depMaster->save();
+
+                    $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
+                    if ($depDetail) {
+                        $depMaster->depAmountLocal = $depDetail->depAmountLocal;
+                        $depMaster->depAmountRpt = $depDetail->depAmountRpt;
+                    }
+                    if ($depMaster->counter == $depMaster->totalChunks) {
+                        $depMaster->isDepProcessingYN = 1;
+                    }
+                    $depMaster->save();
+                });
             }
-
-            $depMaster->counter = $depMaster->counter + 1;
-
-            $depMaster->save();
-
-            $newCounterValue = $depMaster->counter;
-            $totalChunks = $depMaster->totalChunks;
-
-            $depDetail = FixedAssetDepreciationPeriod::selectRaw('SUM(depAmountLocal) as depAmountLocal, SUM(depAmountRpt) as depAmountRpt')->OfDepreciation($depMasterAutoID)->first();
-            if ($depDetail) {
-                if ($newCounterValue == $totalChunks) {
-                    $fixedAssetDepreciationMasters = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt, 'isDepProcessingYN' => 1]);
-                } else {
-                    $fixedAssetDepreciationMasters = FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['depAmountLocal' => $depDetail->depAmountLocal, 'depAmountRpt' => $depDetail->depAmountRpt]);
-                }
+        } catch (Throwable $e) {
+            Log::channel('depreciation_jobs')->error($e->getMessage(), ['exception' => $e, 'depMasterAutoID' => $this->depMasterAutoID]);
+            $depMasterAutoID = $this->depMasterAutoID;
+            $depMaster = FixedAssetDepreciationMaster::find($depMasterAutoID);
+            if ($depMaster) {
+                DB::transaction(function () use ($depMaster, $depMasterAutoID, $e) {
+                    JobErrorLogService::storeError($this->dispatch_db, $depMaster->documentSystemID, $depMasterAutoID, $this->tag, 2, $this->formatException($e), "-****----Line No----:".$e->getLine()."-****----File Name----:".$e->getFile());
+                    FixedAssetDepreciationMaster::where('depMasterAutoID', $depMasterAutoID)->update(['isDepProcessingYN' => 1]);
+                });
             }
-            DB::commit();
         }
-        catch (\Exception $e){
-            DB::rollback();
-            Log::channel('depreciation_jobs')->error($this->failed($e));
-        }
-
     }
-    public function failed($exception)
+
+    public function failed(Throwable $exception): void
+    {
+        Log::channel('depreciation_jobs')->error($exception->getMessage(), ['exception' => $exception, 'depMasterAutoID' => $this->depMasterAutoID]);
+        $depMaster = FixedAssetDepreciationMaster::find($this->depMasterAutoID);
+        if ($depMaster) {
+            DB::transaction(function () use ($depMaster, $exception) {
+                JobErrorLogService::storeError($this->dispatch_db, $depMaster->documentSystemID, $this->depMasterAutoID, $this->tag, 2, $this->formatException($exception), "-****----Line No----:".$exception->getLine()."-****----File Name----:".$exception->getFile());
+                FixedAssetDepreciationMaster::where('depMasterAutoID', $this->depMasterAutoID)->update(['isDepProcessingYN' => 1]);
+            });
+        }
+    }
+
+    private function formatException(Throwable $exception): string
     {
         return $exception->getMessage();
     }

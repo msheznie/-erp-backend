@@ -113,6 +113,10 @@ return [
     'budget_template_variable_has_been_updated' => 'قالب الميزانية {variable} تم تحديثه',
     'budget_template_variable_has_been_deleted' => 'قالب الميزانية {variable} تم حذفه',
     'department_budget_planning_variable_has_been_created' => 'تخطيط ميزانية القسم {variable} تم إنشاؤه',
+    'department_budget_planning_variable_has_been_deleted' => 'تخطيط ميزانية القسم {variable} تم حذفه',
+    'company_budget_planning_variable_has_been_created' => 'تخطيط ميزانية الشركة {variable} تم إنشاؤه',
+    'company_budget_planning_variable_has_been_updated' => 'تخطيط ميزانية الشركة {variable} تم تحديثه',
+    'company_budget_planning_variable_has_been_deleted' => 'تخطيط ميزانية الشركة {variable} تم حذفه',
     'attribute_variable_has_created' => 'السمة {variable} تم إنشاؤها',
     'company_assign_variable_has_been_updated' => 'تعيين الشركة {variable} تم تحديثه',
     'company_assign_variable_has_been_created' => 'تعيين الشركة {variable} تم إنشاؤه',
@@ -128,5 +132,10 @@ return [
     // Employee Navigation Assign Audit Log Narrations
     'employee_has_been_assigned_to_user_group' => 'تم تعيين الموظف {variable} إلى مجموعة المستخدمين',
     'employee_has_been_unassigned_from_user_group' => 'تم إلغاء تعيين الموظف {variable} من مجموعة المستخدمين',
+
+    // Document Communication (messages/comments)
+    'document_communication_comment_added' => 'تمت إضافة تعليق مراسلات المستندات',
+    'document_communication_comment_edited' => 'تم تعديل تعليق مراسلات المستندات',
+    'document_communication_comment_deleted' => 'تم حذف تعليق مراسلات المستندات',
 ];
 

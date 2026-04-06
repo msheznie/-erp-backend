@@ -7,6 +7,8 @@ use App\Http\Controllers\AppBaseController;
 use App\Models\DepartmentBudgetPlanningDetail;
 use App\Models\DepartmentBudgetPlanning;
 use App\Models\BudgetDelegateAccessRecord;
+use App\Models\CompanyDepartmentEmployee;
+use App\Traits\AuditLogsTrait;
 use App\Models\DepartmentBudgetPlanningsDelegateAccess;
 use App\Services\BudgetDelegateService;
 use Carbon\Carbon;
@@ -18,6 +20,8 @@ use Illuminate\Support\Facades\Auth;
 
 class BudgetDelegateAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
+
     protected $budgetDelegateService;
 
     public function __construct(BudgetDelegateService $budgetDelegateService)
@@ -59,9 +63,38 @@ class BudgetDelegateAPIController extends AppBaseController
         if(!isset($input['type']) && isset($input['id']))
         {
             $input = $this->convertArrayToValue($input);
-            $updateWorkStatus = BudgetDelegateAccessRecord::find($input['id']);
+            $updateWorkStatus = BudgetDelegateAccessRecord::with(['budgetPlanningDetail.departmentBudgetPlanning', 'delegatee'])->find($input['id']);
+            if (!$updateWorkStatus) {
+                return $this->sendError('Delegate record not found');
+            }
+            $deptPlanning = $updateWorkStatus->budgetPlanningDetail->departmentBudgetPlanning ?? null;
+            $empSysId = $updateWorkStatus->delegatee->employeeSystemID ?? '';
+            $oldSynthetic = [
+                'delegate_work_status' => $updateWorkStatus->work_status,
+                'budget_planning_detail_id' => $updateWorkStatus->budget_planning_detail_id,
+                'delegatee_employee_system_id' => $empSysId,
+            ];
             $updateWorkStatus->work_status = $input['work_status'];
             $updateWorkStatus->save();
+            if ($deptPlanning) {
+                $uuid = $request->get('tenant_uuid', 'local');
+                $db = $request->get('db', '');
+                $this->auditLog(
+                    $db,
+                    $deptPlanning->id,
+                    $uuid,
+                    'department_budget_plannings',
+                    $deptPlanning->planningCode,
+                    'U',
+                    [
+                        'delegate_work_status' => $input['work_status'],
+                        'budget_planning_detail_id' => $updateWorkStatus->budget_planning_detail_id,
+                        'delegatee_employee_system_id' => $empSysId,
+                    ],
+                    $oldSynthetic,
+                    2
+                );
+            }
             return $this->sendResponse($updateWorkStatus ,"Workstatus update successfully!");
         }
         
@@ -78,6 +111,33 @@ class BudgetDelegateAPIController extends AppBaseController
                 $result = $this->budgetDelegateService->createOrUpdateDelegateAccess($request->all());
 
                 if ($result['success']) {
+                    $detail = DepartmentBudgetPlanningDetail::with('departmentBudgetPlanning')->find($request->budget_planning_detail_id);
+                    if ($detail && $detail->departmentBudgetPlanning) {
+                        $dp = $detail->departmentBudgetPlanning;
+                        $delegatee = CompanyDepartmentEmployee::find($request->delegatee_id);
+                        $empSysId = $delegatee ? $delegatee->employeeSystemID : '';
+                        $uuid = $request->get('tenant_uuid', 'local');
+                        $db = $request->get('db', '');
+                        $this->auditLog(
+                            $db,
+                            $dp->id,
+                            $uuid,
+                            'department_budget_plannings',
+                            $dp->planningCode,
+                            'U',
+                            [
+                                'delegate_work_status' => '1',
+                                'budget_planning_detail_id' => $request->budget_planning_detail_id,
+                                'delegatee_employee_system_id' => $empSysId,
+                            ],
+                            [
+                                'delegate_work_status' => '',
+                                'budget_planning_detail_id' => '',
+                                'delegatee_employee_system_id' => '',
+                            ],
+                            2
+                        );
+                    }
                     return $this->sendResponse($result['data'], $result['message']);
                 } else {
                     return $this->sendError($result['message']);
@@ -140,6 +200,27 @@ class BudgetDelegateAPIController extends AppBaseController
                 );
 
                 if ($data['success']) {
+                    $uuid = $request->get('tenant_uuid', 'local');
+                    $db = $request->get('db', '');
+                    $this->auditLog(
+                        $db,
+                        $departmentBudgetPlanning->id,
+                        $uuid,
+                        'department_budget_plannings',
+                        $departmentBudgetPlanning->planningCode,
+                        'U',
+                        [
+                            'delegate_work_status' => 'batch_assigned',
+                            'budget_planning_detail_id' => '',
+                            'delegatee_employee_system_id' => implode(',', $delegateeIds),
+                        ],
+                        [
+                            'delegate_work_status' => '',
+                            'budget_planning_detail_id' => '',
+                            'delegatee_employee_system_id' => '',
+                        ],
+                        2
+                    );
                     return $this->sendResponse(null, trans('custom.all_delegations_processed_successfully'));
                 }
                 else {
@@ -237,10 +318,37 @@ class BudgetDelegateAPIController extends AppBaseController
                 'record_id' => 'required|integer|exists:dep_budget_pl_delegate_details,id'
             ]);
 
+            $record = BudgetDelegateAccessRecord::with(['budgetPlanningDetail.departmentBudgetPlanning', 'delegatee'])->find($request->record_id);
+            $deptPlanning = $record && $record->budgetPlanningDetail ? $record->budgetPlanningDetail->departmentBudgetPlanning : null;
+            $empSysId = $record && $record->delegatee ? $record->delegatee->employeeSystemID : '';
+
             $result = $this->budgetDelegateService->removeDelegateAccess($request->record_id);
 
 
             if ($result['success']) {
+                if ($record && $deptPlanning) {
+                    $uuid = $request->get('tenant_uuid', 'local');
+                    $db = $request->get('db', '');
+                    $this->auditLog(
+                        $db,
+                        $deptPlanning->id,
+                        $uuid,
+                        'department_budget_plannings',
+                        $deptPlanning->planningCode,
+                        'U',
+                        [
+                            'delegate_work_status' => '',
+                            'budget_planning_detail_id' => '',
+                            'delegatee_employee_system_id' => '',
+                        ],
+                        [
+                            'delegate_work_status' => (string) $record->work_status,
+                            'budget_planning_detail_id' => (string) $record->budget_planning_detail_id,
+                            'delegatee_employee_system_id' => (string) $empSysId,
+                        ],
+                        2
+                    );
+                }
                 return $this->sendResponse(null, $result['message']);
             } else {
                 return $this->sendError($result['message']);
@@ -394,7 +502,7 @@ class BudgetDelegateAPIController extends AppBaseController
             return $this->sendError("Data not found!",500);
         }
 
-        $budgetDelegateAccessRecord = BudgetDelegateAccessRecord::with(['budgetPlanningDetail','delegatee'])->find($input['id']);
+        $budgetDelegateAccessRecord = BudgetDelegateAccessRecord::with(['budgetPlanningDetail.departmentBudgetPlanning','delegatee'])->find($input['id']);
 
         $access = DepartmentBudgetPlanningsDelegateAccess::where('budgetPlanningID',$budgetDelegateAccessRecord->budgetPlanningDetail->department_planning_id)
                     ->where('empID',$budgetDelegateAccessRecord->delegatee->employeeSystemID)
@@ -402,6 +510,31 @@ class BudgetDelegateAPIController extends AppBaseController
 
         if($budgetDelegateAccessRecord)
         {
+            $deptPlanning = $budgetDelegateAccessRecord->budgetPlanningDetail->departmentBudgetPlanning ?? null;
+            $empSysId = $budgetDelegateAccessRecord->delegatee->employeeSystemID ?? '';
+            if ($deptPlanning) {
+                $uuid = $request->get('tenant_uuid', 'local');
+                $db = $request->get('db', '');
+                $this->auditLog(
+                    $db,
+                    $deptPlanning->id,
+                    $uuid,
+                    'department_budget_plannings',
+                    $deptPlanning->planningCode,
+                    'U',
+                    [
+                        'delegate_work_status' => '',
+                        'budget_planning_detail_id' => '',
+                        'delegatee_employee_system_id' => '',
+                    ],
+                    [
+                        'delegate_work_status' => (string) $budgetDelegateAccessRecord->work_status,
+                        'budget_planning_detail_id' => (string) $budgetDelegateAccessRecord->budget_planning_detail_id,
+                        'delegatee_employee_system_id' => (string) $empSysId,
+                    ],
+                    2
+                );
+            }
             if($access)
             {
                 $access->delete();
