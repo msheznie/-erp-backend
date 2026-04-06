@@ -1332,7 +1332,7 @@ class CustomerInvoiceAPIService extends AppBaseController
             if ($customerInvoiceDirect->confirmedYN == 0) {
 
                 $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
-                if ($checkErChange && ($isPerforma == 0 || $isPerforma == 2 || $isPerforma == 3)) {
+                if ($checkErChange && ($isPerforma == 0 || $isPerforma == 2)) {
                     // Get company currency information
                     $company = Company::find($input['companySystemID']);
                     $companyLocalCurrencyID = $company ? $company->localCurrencyID : null;

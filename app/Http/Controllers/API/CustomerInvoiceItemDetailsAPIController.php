@@ -605,41 +605,6 @@ WHERE
 
 
         $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first(); 
-        if (empty($customerInvoioce)) {
-            return $this->sendError(trans('custom.customer_invoice_not_found'), 500);
-        }
-
-        $selectedDetails = collect($input['detailTable'])->filter(function ($detail) {
-            return !empty($detail['isChecked']) && (float) $detail['noQty'] > 0;
-        })->values();
-
-        $hasExistingInvoiceLines = CustomerInvoiceItemDetails::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->exists();
-        $documentRates = [
-            'sellingCurrencyER' => (float) $customerInvoioce->custTransactionCurrencyER,
-            'localCurrencyER' => (float) $customerInvoioce->localCurrencyER,
-            'reportingCurrencyER' => (float) $customerInvoioce->companyReportingER,
-            'sellingCurrencyID' => $customerInvoioce->custTransactionCurrencyID,
-            'localCurrencyID' => $customerInvoioce->localCurrencyID,
-            'reportingCurrencyID' => $customerInvoioce->companyReportingCurrencyID,
-        ];
-
-        if (!$hasExistingInvoiceLines && $selectedDetails->isNotEmpty()) {
-            $firstDeliveryOrder = DeliveryOrder::find($selectedDetails->first()['deliveryOrderID']);
-            if (empty($firstDeliveryOrder)) {
-                return $this->sendError(trans('custom.delivery_order_not_found'), 500);
-            }
-
-            $documentRates = [
-                'sellingCurrencyER' => (float) $firstDeliveryOrder->transactionCurrencyER,
-                'localCurrencyER' => (float) $firstDeliveryOrder->companyLocalCurrencyER,
-                'reportingCurrencyER' => (float) $firstDeliveryOrder->companyReportingCurrencyER,
-                'sellingCurrencyID' => $firstDeliveryOrder->transactionCurrencyID,
-                'localCurrencyID' => $firstDeliveryOrder->companyLocalCurrencyID,
-                'reportingCurrencyID' => $firstDeliveryOrder->companyReportingCurrencyID,
-            ];
-
-        }
-
         $is_pref = $customerInvoioce->isPerforma;
 
        
@@ -701,14 +666,6 @@ WHERE
 
         DB::beginTransaction();
         try {
-            if (!$hasExistingInvoiceLines && $selectedDetails->isNotEmpty()) {
-                CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->update([
-                    'custTransactionCurrencyER' => $documentRates['sellingCurrencyER'],
-                    'localCurrencyER' => $documentRates['localCurrencyER'],
-                    'companyReportingER' => $documentRates['reportingCurrencyER'],
-                ]);
-                $customerInvoioce = CustomerInvoiceDirect::where('custInvoiceDirectAutoID', $custInvoiceDirectAutoID)->first();
-            }
 
             foreach ($input['detailTable'] as $new) {
 
@@ -813,12 +770,12 @@ WHERE
                             }*/
 
 
-                            $invDetail_arr['sellingCurrencyID'] = $documentRates['sellingCurrencyID'];
-                            $invDetail_arr['sellingCurrencyER'] = $documentRates['sellingCurrencyER'];
-                            $invDetail_arr['localCurrencyID'] = $documentRates['localCurrencyID'];
-                            $invDetail_arr['localCurrencyER'] = $documentRates['localCurrencyER'];
-                            $invDetail_arr['reportingCurrencyID'] = $documentRates['reportingCurrencyID'];
-                            $invDetail_arr['reportingCurrencyER'] = $documentRates['reportingCurrencyER'];
+                            $invDetail_arr['sellingCurrencyID'] = $deliveryOrder->transactionCurrencyID;
+                            $invDetail_arr['sellingCurrencyER'] = $deliveryOrder->transactionCurrencyER;
+                            $invDetail_arr['localCurrencyID'] = $deliveryOrder->companyLocalCurrencyID;
+                            $invDetail_arr['localCurrencyER'] = $deliveryOrder->companyLocalCurrencyER;
+                            $invDetail_arr['reportingCurrencyID'] = $deliveryOrder->companyReportingCurrencyID;
+                            $invDetail_arr['reportingCurrencyER'] = $deliveryOrder->companyReportingCurrencyER;
 
                             $invDetail_arr['itemUnitOfMeasure'] = $new['itemUnitOfMeasure'];
                             $invDetail_arr['unitOfMeasureIssued'] = $new['unitOfMeasureIssued'];
@@ -836,18 +793,6 @@ WHERE
                             $costs = CustomerInvoiceAPIService::updateCostBySellingCost($invDetail_arr,$customerInvoioce);
                             $invDetail_arr['sellingCostAfterMarginLocal'] = $costs['sellingCostAfterMarginLocal'];
                             $invDetail_arr['sellingCostAfterMarginRpt'] = $costs['sellingCostAfterMarginRpt'];
-                            $invDetail_arr['sellingCostAfterMarginLocal'] = Helper::conversionCurrencyByER(
-                                $invDetail_arr['sellingCurrencyID'],
-                                $invDetail_arr['localCurrencyID'],
-                                $invDetail_arr['sellingCostAfterMargin'],
-                                $invDetail_arr['localCurrencyER']
-                            );
-                            $invDetail_arr['sellingCostAfterMarginRpt'] = Helper::conversionCurrencyByER(
-                                $invDetail_arr['sellingCurrencyID'],
-                                $invDetail_arr['reportingCurrencyID'],
-                                $invDetail_arr['sellingCostAfterMargin'],
-                                $invDetail_arr['reportingCurrencyER']
-                            );
 
                             $invDetail_arr['issueCostLocalTotal'] = $invDetail_arr['issueCostLocal'] * $invDetail_arr['qtyIssuedDefaultMeasure'];
                             $invDetail_arr['issueCostRptTotal'] = $invDetail_arr['issueCostRpt'] * $invDetail_arr['qtyIssuedDefaultMeasure'];
