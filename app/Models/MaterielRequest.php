@@ -423,8 +423,10 @@ class MaterielRequest extends Model
                     $sumQntyRequested += $materielDetail->quantityRequested;
                 }
 
+                $epsilon = 5e-11;
+
                 if($sumQntyRequested != 0 && $sumQntyIssued != 0 ) {
-                    if(($sumQntyRequested >  $sumQntyIssued)) {
+                    if(($sumQntyRequested - $sumQntyIssued) > $epsilon) {
                         return "partially_issued";
                     }else {
                         return "fully_issued";
