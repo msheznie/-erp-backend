@@ -190,14 +190,10 @@ class GRVMaster extends Model
         'postedDate',
         'deliveryAppoinmentID',
         'isDelegation',
-<<<<<<< HEAD
         'isBulkItemJobRun',
         'upload_job_status',
         'successDetailsCount',
         'excelRowCount'
-=======
-        'isBulkItemJobRun'
->>>>>>> GCP-21887
     ];
 
     /**
