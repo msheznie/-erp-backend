@@ -7,6 +7,7 @@ use App\helper\Helper;
 use App\Models\BookInvSuppMaster;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -30,6 +31,11 @@ class InvoiceService
         $deliveryAppoinmentID = $request->input('extra.deliveryAppoinmentID') ?? null;
         $query = $this->buildInvoiceQuery($supplierID, $search, $filters, $deliveryAppoinmentID);
         return DataTables::eloquent($query)
+            ->editColumn('commentStatus', function ($row) {
+                $value = $row->commentStatus ?? '';
+                return html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            })
+            ->rawColumns(['commentStatus'])
             ->addColumn('Actions', 'Actions', "Actions")
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
@@ -227,7 +233,8 @@ class InvoiceService
             'confirmedYN',
             'documentType',
             'approved',
-            'deliveryAppoinmentID'
+            'deliveryAppoinmentID',
+            DB::raw("COALESCE(cancelComment, '-') as commentStatus")
         ])
             ->with([
                 'created_by:employeeSystemID,empID,empName,empFullName',

@@ -4,6 +4,7 @@ namespace App\Repositories;
 use App\Models\Company;
 use App\Models\DocumentMaster;
 use App\Models\DocumentModifyRequest;
+use App\Models\SrmTenderMasterEditLog;
 use App\Models\TenderMaster;
 use Carbon\Carbon;
 use Illuminate\Contracts\Foundation\Application;
@@ -28,7 +29,9 @@ use App\Repositories\TenderBudgetItemEditLogRepository;
 use App\Repositories\TenderDepartmentEditLogRepository;
 use App\Repositories\TenderSupplierAssigneeEditLogRepository;
 use App\Services\SrmDocumentModifyService;
+use App\Services\SrmNotificationService;
 use App\Services\SrmTenderEditAmendService;
+use App\Services\TenderAwardingMemberService;
 use Illuminate\Http\Request;
 use App\helper\Helper;
 use App\helper\Workflow\DocumentApprove;
@@ -87,6 +90,8 @@ class DocumentModifyRequestRepository extends BaseRepository
     protected $tenderSupplierAssigneeEditLogRepository;
     protected $pricingScheduleMasterEditLogRepository;
     protected $srmTenderEditAmendService;
+    protected $tenderAwardingMemberService;
+    protected $srmNotificationService;
     public function __construct(
         SrmTenderMasterEditLogRepository $srmTenderMasterEditLogRepository,
         Application $app,
@@ -108,7 +113,9 @@ class DocumentModifyRequestRepository extends BaseRepository
         SrmDocumentModifyService $documentModifyService,
         TenderSupplierAssigneeEditLogRepository $tenderSupplierAssigneeEditLogRepo,
         PricingScheduleMasterEditLogRepository $pricingScheduleMasterEditLogRepo,
-        SrmTenderEditAmendService $srmTenderEditAmendService
+        SrmTenderEditAmendService $srmTenderEditAmendService,
+        TenderAwardingMemberService $tenderAwardingMemberService,
+        SrmNotificationService $srmNotificationService
     ){
         parent::__construct($app);
         $this->srmTenderMasterEditLogRepository = $srmTenderMasterEditLogRepository;
@@ -131,6 +138,8 @@ class DocumentModifyRequestRepository extends BaseRepository
         $this->tenderSupplierAssigneeEditLogRepository = $tenderSupplierAssigneeEditLogRepo;
         $this->pricingScheduleMasterEditLogRepository = $pricingScheduleMasterEditLogRepo;
         $this->srmTenderEditAmendService = $srmTenderEditAmendService;
+        $this->tenderAwardingMemberService = $tenderAwardingMemberService;
+        $this->srmNotificationService = $srmNotificationService;
     }
 
     /**
@@ -166,6 +175,7 @@ class DocumentModifyRequestRepository extends BaseRepository
                 $this->pricingScheduleMasterEditLogRepository->saveTenderPricingScheduleMasters($tenderMaster['id']);
                 $this->tenderCircularsEditLogRepository->saveTenderCircularForAmd($tenderMaster['id']);
                 $this->evaluationCriteriaDetailsEditLogRepository->saveEvacuationCriteriaDetails($tenderMaster['id']);
+                $this->tenderAwardingMemberService->saveTenderAwardingMemberHistory($tenderMaster['id']);
             }
             $this->srmTenderMasterEditLogRepository->saveTenderMasterHistory($tenderMaster, $version_id);
             $this->tenderBidEmployeeDetailsEditLogRepository->saveTenderBidEmployeeDetailHistory($tenderMaster['id'], $version_id);
@@ -181,6 +191,7 @@ class DocumentModifyRequestRepository extends BaseRepository
             $this->pricingScheduleMasterEditLogRepository->saveTenderPricingScheduleMasters($tenderMaster['id'], $version_id);
             $this->tenderCircularsEditLogRepository->saveTenderCircularForAmd($tenderMaster['id'], $version_id);
             $this->evaluationCriteriaDetailsEditLogRepository->saveEvacuationCriteriaDetails($tenderMaster['id'], $version_id);
+            $this->tenderAwardingMemberService->saveTenderAwardingMemberHistory($tenderMaster['id'], $version_id);
 
             return ['success' => true, 'message' => trans('srm_tender_rfx.success')];
         } catch (\Exception $exception){
@@ -258,7 +269,18 @@ class DocumentModifyRequestRepository extends BaseRepository
                 }
 
                 if ($input['document_system_id'] == 118 && $approve['data'] && $approve['data']['numberOfLevels'] == $approve['data']['currentLevel']) {
+                    $hasDateChanges = $this->hasTenderDateFieldChanges((int)$input['id']);
                     $this->srmDocumentModifyService->cloneHistoryToMasterTable($input['id'], $input['reference_document_id']);
+                    if ($hasDateChanges) {
+                        $this->srmNotificationService->sendTenderDateChangedNotification(
+                            $tenderMaster->title,
+                            $tenderMaster->company_id,
+                            $tenderMaster->id,
+                            $tenderMaster->tender_type_id,
+                            $tenderMaster->document_type,
+                            $tenderMaster->document_system_id
+                        );
+                    }
                 }
                 return ['success' => true, 'message' => $approve["message"]];
             });
@@ -332,5 +354,58 @@ class DocumentModifyRequestRepository extends BaseRepository
             return ['success' => false, 'message' => implode(', ', $validator->errors()->all())];
         }
         return ['success' => true, 'message' => 'Validation check success'];
+    }
+
+    private function hasTenderDateFieldChanges(int $tenderId): bool
+    {
+        $dateColumns = [
+            'document_sales_start_date',
+            'document_sales_end_date',
+            'pre_bid_clarification_start_date',
+            'pre_bid_clarification_end_date',
+            'site_visit_date',
+            'site_visit_end_date',
+            'bid_submission_opening_date',
+            'bid_submission_closing_date',
+            'bid_opening_date',
+            'bid_opening_end_date',
+            'technical_bid_opening_date',
+            'technical_bid_closing_date',
+            'commerical_bid_opening_date',
+            'commerical_bid_closing_date',
+        ];
+
+        $logs = SrmTenderMasterEditLog::where('id', $tenderId)
+            ->orderBy('level_no', 'desc')
+            ->limit(2)
+            ->get(array_merge(['level_no'], $dateColumns));
+
+        if ($logs->count() < 2) {
+            return false;
+        }
+
+        $current = $logs->first();
+        $previous = $logs->last();
+
+        foreach ($dateColumns as $column) {
+            if ($this->normalizeDateValue($current->{$column}) !== $this->normalizeDateValue($previous->{$column})) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function normalizeDateValue($value): ?string
+    {
+        if (empty($value)) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {
+            return (string)$value;
+        }
     }
 }

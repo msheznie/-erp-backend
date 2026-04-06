@@ -110,6 +110,26 @@ class TenderNegotiation extends Model
         return $tenderBidNegotiations->get();
     }
 
+
+    public static function bidSubmissionMasterIdsForScheduleAward(int $tenderId, int $isNegotiation): array
+    {
+        if ($isNegotiation !== 1) {
+            return self::tenderBidNegotiationList($tenderId, 0)
+                ->pluck('bid_submission_master_id_new')
+                ->toArray();
+        }
+
+        $latestNegotiation = self::getTenderLatestNegotiations($tenderId);
+        if (empty($latestNegotiation)) {
+            return [];
+        }
+
+        return TenderBidNegotiation::where('tender_id', $tenderId)
+            ->where('tender_negotiation_id', $latestNegotiation->id)
+            ->pluck('bid_submission_master_id_new')
+            ->toArray();
+    }
+
     public static function getCurrentTenderNegotiationsId($tenderMasterId, $version){
         return TenderNegotiation::select('id', 'version')
             ->where('srm_tender_master_id',$tenderMasterId)

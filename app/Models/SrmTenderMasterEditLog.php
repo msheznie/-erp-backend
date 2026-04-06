@@ -910,6 +910,10 @@ class SrmTenderMasterEditLog extends Model
         'RollLevForApp_curr',
         'approved_by_emp_name',
         'published_yn',
+        'cancelled_yn',
+        'cancelled_by',
+        'cancelled_by_emp_name',
+        'cancelled_date',
         'closed_yn',
         'stage',
         'no_of_alternative_solutions',
@@ -946,6 +950,8 @@ class SrmTenderMasterEditLog extends Model
         'final_tender_awarded',
         'final_tender_award_email',
         'award_commite_mem_status',
+        'show_award_detail',
+        'award_visibility_type',
         'final_tender_comment_status',
         'tender_edit_version_id',
         'is_negotiation_started',
@@ -966,7 +972,8 @@ class SrmTenderMasterEditLog extends Model
         'contract_id',
         'is_deleted',
         'is_clone',
-        'clone_master_id'
+        'clone_master_id',
+        'min_approval_awarding'
     ];
 
     /**
@@ -1018,6 +1025,10 @@ class SrmTenderMasterEditLog extends Model
         'RollLevForApp_curr' => 'integer',
         'approved_by_emp_name' => 'string',
         'published_yn' => 'integer',
+        'cancelled_yn' => 'integer',
+        'cancelled_by' => 'integer',
+        'cancelled_by_emp_name' => 'string',
+        'cancelled_date' => 'datetime',
         'closed_yn' => 'integer',
         'stage' => 'integer',
         'no_of_alternative_solutions' => 'integer',
@@ -1048,6 +1059,8 @@ class SrmTenderMasterEditLog extends Model
         'final_tender_awarded' => 'boolean',
         'final_tender_award_email' => 'boolean',
         'award_commite_mem_status' => 'boolean',
+        'show_award_detail' => 'boolean',
+        'award_visibility_type' => 'integer',
         'final_tender_comment_status' => 'boolean',
         'tender_edit_version_id' => 'integer',
         'is_negotiation_started' => 'integer',
@@ -1068,7 +1081,8 @@ class SrmTenderMasterEditLog extends Model
         'contract_id' => 'integer',
         'is_deleted' => 'integer',
         'is_clone' => 'integer',
-        'clone_master_id' => 'integer'
+        'clone_master_id' => 'integer',
+        'min_approval_awarding' => 'integer'
     ];
 
     /**
