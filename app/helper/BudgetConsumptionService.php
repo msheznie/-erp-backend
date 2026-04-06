@@ -184,10 +184,13 @@ class BudgetConsumptionService
 					$isNotDefinedBehaviour = false;
 					if($checkBudgetBasedOnGLPolicy)
 					{
-						foreach ($budgetData['validateArray'] as $key => $value) 
+						foreach (($budgetData['validateArray'] ?? []) as $key => $value) 
 						{
 							$code = explode(' - ', $value)[0];  
 							$chartOfAccuntInfo = ChartOfAccount::where('AccountCode', $code)->first();
+							if (!$chartOfAccuntInfo) {
+								continue;
+							}
 							$budgetChartOfAccountSystemId = $chartOfAccuntInfo->chartOfAccountSystemID;
 						
 							if (in_array($budgetChartOfAccountSystemId, $existingIds)) {
@@ -213,7 +216,7 @@ class BudgetConsumptionService
 						return ['status' => true, 'message' =>'','warning' => $isDefinedBehaviour];
 
 					}
-					
+					return ['status' => true, 'message' => ""];
 				} else {
 					return ['status' => true, 'message' => ""];
 				}
