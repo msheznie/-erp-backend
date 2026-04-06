@@ -96,7 +96,6 @@ class WebPushNotificationService
             $params['uuid'] = $currentUserID;
             $response = $client->request('POST', $url, ['json' => $params]);
 
-
             if ($response) {
                 $notificationData = collect(json_decode($response->getBody(), true))->take(7);
 
@@ -114,11 +113,11 @@ class WebPushNotificationService
 
                 return ['notifications' => $notificationDataRes, 'newNotificationCount' => collect(json_decode($response->getBody(), true))->where('read', 0)->count()];
             } else {
-                return ['notifications' => [], 'newNotificationCount' => 0];
+                return ['notifications' => [], 'newNotificationCount' => 1];
             }
         } catch (\Exception $exception) {
             Log::error('Error getting user notifications: ' . $exception->getMessage());
-            return ['notifications' => [], 'newNotificationCount' => 0];
+            return ['notifications' => [], 'newNotificationCount' => 2];
         }
     }
 

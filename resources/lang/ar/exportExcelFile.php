@@ -66,5 +66,8 @@ return [
     'items_by_warehouse' => 'قائمة_العناصر_بالمخزن',
     'stock-count' => 'عدد_الأسهم',
     'spent_analysis_by_supplier_report' => 'تقرير_تحليل_المصروفات_بالمورد',
-    'spent_analysis_drilldown_report' => 'تقرير_تفاصيل_تحليل_المصروفات'
+    'spent_analysis_drilldown_report' => 'تقرير_تفاصيل_تحليل_المصروفات',
+
+    //Sourcing Management
+    'supplier_registration_kyc' => 'تسجيل المورد - اعرف عميلك (KYC)'
 ];

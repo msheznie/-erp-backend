@@ -423,4 +423,10 @@ class Company extends Model
 
         return $company ? $company->localCurrencyID : "";
     }
+
+    public static function getCompanyData($companySystemID){
+        return Company::select('companySystemID', 'CompanyID', 'CompanyName')
+            ->where('companySystemID', $companySystemID)
+            ->first();
+    }
 }

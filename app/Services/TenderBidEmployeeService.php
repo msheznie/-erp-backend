@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Http\Controllers\API\TenderBidEmployeeDetails;
+use App\Models\SrmTenderAwardingMember;
 use App\Models\SrmTenderBidEmployeeDetails;
 use App\Models\SrmTenderBidEmployeeDetailsEditLog;
 use App\Models\SRMTenderUserAccess;
@@ -231,5 +232,8 @@ class TenderBidEmployeeService
             return ['success' => false, 'message' => trans('srm_tender_rfx.unexpected_error', ['message' => $exception->getMessage()])];
         }
 
+    }
+    public function getTenderAwardingMemberApprovals($tenderId){
+        return SrmTenderAwardingMember::getApprovedAwardingMembers($tenderId);
     }
 }

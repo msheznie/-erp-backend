@@ -280,6 +280,10 @@ class TenderMaster extends Model
         'RollLevForApp_curr',
         'approved_by_emp_name',
         'published_yn',
+        'cancelled_yn',
+        'cancelled_by',
+        'cancelled_by_emp_name',
+        'cancelled_date',
         'stage',
         'no_of_alternative_solutions',
         'commercial_weightage',
@@ -288,6 +292,7 @@ class TenderMaster extends Model
         'commercial_passing_weightage',
         'technical_passing_weightage',
         'min_approval_bid_opening',
+        'min_approval_awarding',
         'bid_opening_date',
         'bid_opening_end_date',
         'technical_bid_opening_date',
@@ -315,6 +320,8 @@ class TenderMaster extends Model
         'final_tender_awarded',
         'final_tender_award_email',
         'award_commite_mem_status',
+        'show_award_detail',
+        'award_visibility_type',
         'final_tender_comment_status',
         'tender_edit_version_id',
         'is_negotiation_started',
@@ -334,7 +341,9 @@ class TenderMaster extends Model
         'isDelegation',
         'uuid',
         'is_clone',
-        'clone_master_id'
+        'clone_master_id',
+        'awarded_date',
+        'awarded_by'
     ];
     /**
      * The attributes that should be casted to native types.
@@ -381,6 +390,10 @@ class TenderMaster extends Model
         'RollLevForApp_curr' => 'integer',
         'approved_by_emp_name' => 'string',
         'published_yn' => 'integer',
+        'cancelled_yn' => 'integer',
+        'cancelled_by' => 'integer',
+        'cancelled_by_emp_name' => 'string',
+        'cancelled_date' => 'datetime',
         'stage' => 'integer',
         'no_of_alternative_solutions' => 'integer',
         'commercial_weightage' => 'integer',
@@ -406,7 +419,9 @@ class TenderMaster extends Model
         'negotiation_doc_verify_status'  => 'integer',
         'uuid'  => 'string',
         'is_clone' => 'integer',
-        'clone_master_id' => 'integer'
+        'clone_master_id' => 'integer',
+        'show_award_detail' => 'boolean',
+        'award_visibility_type' => 'integer',
     ];
 
     /**
@@ -458,6 +473,21 @@ class TenderMaster extends Model
     public function tenderSupplierAssignee()
     {
         return $this->hasMany('App\Models\TenderSupplierAssignee', 'tender_master_id', 'id');
+    }
+
+    public function itemWiseAwardings()
+    {
+        return $this->hasMany(SrmItemWiseTenderAwarding::class, 'tender_id', 'id');
+    }
+
+    public function tenderCancellation()
+    {
+        return $this->hasMany(TenderCancellation::class, 'tender_id', 'id');
+    }
+
+    public function tenderCancellationLatest()
+    {
+        return $this->hasOne(TenderCancellation::class, 'tender_id', 'id')->latest('id');
     }
 
     public function srm_bid_submission_master()
@@ -658,6 +688,13 @@ class TenderMaster extends Model
         return $this->hasOne('App\Models\TenderFinalBids', 'tender_id', 'id')->where('award', 1);
     }
 
+    
+    public function itemWiseAwardingForSupplier()
+    {
+        return $this->hasOne(SrmItemWiseTenderAwarding::class, 'tender_id', 'id')
+            ->orderByRaw('is_negotiation DESC, id DESC');
+    }
+
     public function srmTenderMasterSuppliers()
     {
         return $this->hasOne('App\Models\TenderMasterSupplier', 'tender_master_id', 'id');
@@ -676,6 +713,12 @@ class TenderMaster extends Model
     {
         return $this->hasMany('App\Models\SrmTenderBidEmployeeDetails', 'tender_id', 'id');
     }
+
+    public function tenderAwardingMembers()
+    {
+        return $this->hasMany('App\Models\SrmTenderAwardingMember', 'tender_id', 'id');
+    }
+
     public static function getTenderDidOpeningDates($tenderId, $companyId)
     {
         return TenderMaster::select('id','stage', 'bid_opening_date',
@@ -700,9 +743,9 @@ class TenderMaster extends Model
             ->first();
     }
 
-    public static function getTenderPOData($tenderId, $companyId)
+    public static function getTenderPOData($tenderId, $companyId, $supplierId = null)
     {
-        $tender = TenderMaster::select('id', 'title', 'tender_code', 'currency_id')
+        $tender = TenderMaster::select('id', 'title', 'tender_code', 'currency_id', 'evaluation_type_id')
             ->with(['ranking_supplier' => function ($q) {
                 $q->select('id', 'supplier_id', 'tender_id')->where('award', 1)
                     ->with(['supplier' => function ($q) {
@@ -715,6 +758,32 @@ class TenderMaster extends Model
 
         if (!$tender) {
             return null;
+        }
+
+        if ($supplierId !== null && (int) $tender->evaluation_type_id === 1) {
+            $supplierLink = SupplierRegistrationLink::with('supplier')
+                ->where('id', $supplierId)
+                ->where('company_id', $companyId)
+                ->first();
+
+            $rankingSupplier = null;
+            if ($supplierLink) {
+                $rankingSupplier = [
+                    'id' => null,
+                    'supplier_id' => $supplierLink->id,
+                    'supplier' => $supplierLink->supplier ? [
+                        'id' => $supplierLink->supplier->supplierCodeSystem,
+                        'supplier_master_id' => $supplierLink->supplier->supplierCodeSystem,
+                    ] : null,
+                ];
+            }
+
+            return [
+                'title' => $tender->title,
+                'tender_code' => $tender->tender_code,
+                'currency_id' => $tender->currency_id,
+                'ranking_supplier' => $rankingSupplier,
+            ];
         }
 
         return [
@@ -760,29 +829,78 @@ class TenderMaster extends Model
             'confirmed_by' => function ($q) {
                 $q->select('employeeSystemID', 'empName');
             },
+            'tenderCancellationLatest' => function ($q) {
+                $q->select('id', 'tender_id', 'confirmed_yn', 'approved', 'refferedBackYN');
+            },
             'approvedRejectStatus' => function($q) use ($company_id , $isTender){
                 $q->select('documentSystemCode','status')
                     ->where('companySystemID', $company_id)
                     ->where('documentSystemID', $isTender ? 108 : 113);
-                }
-             ])->where('id', $tender_id)->first();
+            }
+        ])->where('id', $tender_id)->first();
     }
     public static function getTenderMasterData($tenderID){
         return self::where('id', $tenderID)->first();
     }
-    public static function getTenderList($companyID, $scenarioID){
-        $endDates = $scenarioID == 45 ?  'technical_bid_closing_date' : 'commerical_bid_closing_date';
+    public static function getTenderList($companyID, $scenarioID, $time, $beforeAfterType = null, $frequency = null) {
+        $openingDateFields = [
+            45 => [
+                1 => 'bid_opening_date',
+                2 => 'technical_bid_opening_date',
+            ],
+            46 => [
+                1 => 'bid_opening_date',
+                2 => 'commerical_bid_opening_date',
+            ],
+        ];
 
-        return TenderMaster::select(
-            'id', 'title', 'description', 'stage', 'bid_opening_date', 'bid_opening_end_date',
-            'technical_bid_opening_date', 'technical_bid_closing_date', 'commerical_bid_opening_date',
-            'commerical_bid_closing_date', 'tender_code', 'company_id'
-        )
-            ->where('company_id', $companyID)
-            ->where(function ($query) use ($endDates) {
-                $query->whereDate($endDates, '>=', Carbon::now())
-                    ->orWhere('bid_opening_date', '>=', Carbon::now());
-            })
+        $timeDifference = ($beforeAfterType != 0 && $frequency !== null)
+            ? self::getTimeDifferenceForFrequency($frequency)
+            : null;
+
+        $dateFrom = $time->copy()->subMonth();
+        $dateTo   = $time->copy()->addMonth();
+
+        $query = TenderMaster::select('id', 'title', 'description', 'stage', 'bid_opening_date',
+            'bid_opening_end_date', 'technical_bid_opening_date', 'technical_bid_closing_date',
+            'commerical_bid_opening_date', 'commerical_bid_closing_date', 'tender_code', 'company_id'
+        )->where('company_id', $companyID);
+
+        if (isset($openingDateFields[$scenarioID])) {
+            $query->where(function ($q) use ($openingDateFields, $scenarioID, $beforeAfterType, $frequency,
+                $time, $timeDifference, $dateFrom, $dateTo) {
+                foreach ($openingDateFields[$scenarioID] as $dateField) {
+                    $q->orWhere(function ($subQ) use ($dateField, $beforeAfterType, $frequency, $time,
+                        $timeDifference, $dateFrom, $dateTo) {
+                        $subQ->whereNotNull($dateField);
+
+                        if ($beforeAfterType == 0 && $frequency === null) {
+                            $subQ->whereDate($dateField, $time->toDateString());
+                            return;
+                        }
+
+                        if ($timeDifference) {
+                            $targetTenderDate = clone $time;
+
+                            if ($beforeAfterType == 1) {
+                                $addMethod = str_replace('sub', 'add', $timeDifference['method']);
+                                $targetTenderDate->{$addMethod}($timeDifference['value']);
+                            } elseif ($beforeAfterType == 2) {
+                                $targetTenderDate->{$timeDifference['method']}($timeDifference['value']);
+                            }
+
+                            $subQ->whereDate($dateField, $targetTenderDate->toDateString())
+                                ->whereRaw('HOUR(' . $dateField . ') = ?', [$targetTenderDate->hour])
+                                ->whereRaw('MINUTE(' . $dateField . ') = ?', [$targetTenderDate->minute]);
+                            return;
+                        }
+                        $subQ->whereBetween($dateField, [$dateFrom, $dateTo]);
+                    });
+                }
+            });
+        }
+
+        return $query
             ->with([
                 'tenderBidMinimumApproval' => function ($q) {
                     $q->select('id', 'emp_id', 'tender_id')
@@ -791,10 +909,45 @@ class TenderMaster extends Model
                                 $q->select('employeeSystemID', 'empName', 'empEmail');
                             }
                         ]);
+                }, 'tenderUserAccess' => function ($q) use ($scenarioID){
+                    $q->select('id', 'user_id', 'tender_id', 'module_id')
+                        ->with([
+                            'employee' => function ($q) {
+                                $q->select('employeeSystemID', 'empName', 'empEmail');
+                            }
+                        ])->when($scenarioID == 45, function ($q) {
+                            $q->where('module_id', 1);
+                        })->when($scenarioID == 46, function ($q) {
+                            $q->where('module_id', 2);
+                        });
                 }
+
             ])
             ->get();
     }
+
+    private static function getTimeDifferenceForFrequency($frequency)
+    {
+        switch ($frequency) {
+            case 1:
+                return ['method' => 'subHours', 'value' => 1];
+            case 2:
+                return ['method' => 'subHours', 'value' => 3];
+            case 3:
+                return ['method' => 'subDays', 'value' => 1];
+            case 4:
+                return ['method' => 'subDays', 'value' => 3];
+            case 5:
+                return ['method' => 'subWeeks', 'value' => 1];
+            case 6:
+                return ['method' => 'subWeeks', 'value' => 2];
+            case 7:
+                return ['method' => 'subMonths', 'value' => 1];
+            default:
+                return null;
+        }
+    }
+
 
     public function all_approvals()
     {
@@ -856,8 +1009,11 @@ class TenderMaster extends Model
         }
 
         return $query->select('id', 'tender_code', 'document_system_id', 'published_at',
-                'bid_submission_opening_date', 'technical_bid_opening_date',
-                'commerical_bid_opening_date', 'contract_id', 'created_at')
+            'bid_submission_opening_date', 'technical_bid_opening_date',
+            'commerical_bid_opening_date', 'contract_id', 'created_at')
+            ->with(['tenderAwardedDetails' => function ($q) {
+                $q->select('tender_id','action_at');
+            }])
             ->orderBy('created_at', 'desc');
     }
 
@@ -878,17 +1034,20 @@ class TenderMaster extends Model
 
         // Load tender basic info
         $tenders = DB::table('srm_tender_master')
-            ->whereIn('id', $tenderIds)
-            ->select('id', 'tender_code', 'published_at', 'bid_submission_opening_date', 
-                'technical_bid_opening_date', 'commerical_bid_opening_date', 'contract_id', 'document_system_id')
+            ->whereIn('srm_tender_master.id', $tenderIds)
+            ->where ('tcd.module', 9)
+            ->select('srm_tender_master.id', 'tender_code', 'published_at', 'bid_submission_opening_date',
+                'technical_bid_opening_date', 'commerical_bid_opening_date', 'contract_id', 'document_system_id','tcd.action_at')
+            ->leftJoin('srm_tender_confirmation_details as tcd', 'tcd.tender_id', '=', 'srm_tender_master.id')
             ->get()
+
             ->keyBy('id');
 
         // Load approvals
         $approvals = DB::table('erp_documentapproved as da')
             ->join('srm_tender_master as tm', function($join) {
                 $join->on('da.documentSystemCode', '=', 'tm.id')
-                     ->on('da.documentSystemID', '=', 'tm.document_system_id');
+                    ->on('da.documentSystemID', '=', 'tm.document_system_id');
             })
             ->leftJoin('employees as e', 'da.employeeSystemID', '=', 'e.employeeSystemID')
             ->whereIn('tm.id', $tenderIds)
@@ -945,5 +1104,101 @@ class TenderMaster extends Model
             ->where('document_system_id', $documentSystemID)
             ->orderBy('id', 'desc')
             ->first();
+    }
+
+    public static function updateCombinedRankingStatus(int $tenderId, int $isNegotiation, string $comment = ''): void
+    {
+        if ($isNegotiation === 1) {
+            self::where('id', $tenderId)->update([
+                'negotiation_combined_ranking_status' => true,
+                'negotiation_award_comment' => $comment,
+                'negotiation_is_awarded' => true,
+            ]);
+        } else {
+            self::where('id', $tenderId)->update([
+                'combined_ranking_status' => true,
+                'award_comment' => $comment,
+                'is_awarded' => true,
+            ]);
+        }
+    }
+
+    public function tenderAwardedDetails()
+    {
+        return $this->hasOne(
+            \App\Models\TenderConfirmationDetail::class,
+            'tender_id',
+            'id'
+        )->where('module', 9);
+    }
+
+    public static function getByIdAndCompany(int $tenderId, int $companyId): ?self
+    {
+        return self::where('id', $tenderId)
+            ->where('company_id', $companyId)
+            ->first();
+    }
+
+    public function markAsCancelled(int $employeeSystemID, string $employeeName): bool
+    {
+        return $this->update([
+            'cancelled_yn' => 1,
+            'cancelled_by' => $employeeSystemID,
+            'cancelled_by_emp_name' => $employeeName,
+            'cancelled_date' => now(),
+        ]);
+    }
+    public static function getPendingCancellationApprovalListQuery(int $companyId, int $empId, bool $rfx = false)
+    {
+        return DB::table('erp_documentapproved')->select(
+            'srm_tender_master.id',
+            'srm_tender_master.tender_code',
+            'erp_documentapproved.documentSystemID as document_system_id',
+            'srm_tender_master.title',
+            'srm_tender_master.description',
+            'srm_tender_master.estimated_value',
+            'srm_tender_master.bid_submission_opening_date',
+            'srm_tender_master.bid_submission_closing_date',
+            'srm_tender_master.created_at',
+            'srm_tender_master.confirmed_date',
+            'erp_documentapproved.approvedComments',
+            'erp_documentapproved.documentApprovedID',
+            'erp_documentapproved.rollLevelOrder',
+            'currencymaster.CurrencyCode',
+            'approvalLevelID',
+            'documentSystemCode',
+            'employees.empName As created_user',
+            DB::raw('1 as is_cancellation'),
+            'srm_tender_cancellation.internal_comment',
+            'srm_tender_cancellation.external_comment'
+        )->join('employeesdepartments', function ($query) use ($companyId, $empId) {
+            $query->on('erp_documentapproved.approvalGroupID', '=', 'employeesdepartments.employeeGroupID')
+                ->on('erp_documentapproved.documentSystemID', '=', 'employeesdepartments.documentSystemID')
+                ->on('erp_documentapproved.companySystemID', '=', 'employeesdepartments.companySystemID')
+                ->where('employeesdepartments.documentSystemID', 134)
+                ->where('employeesdepartments.companySystemID', $companyId)
+                ->where('employeesdepartments.employeeSystemID', $empId)
+                ->where('employeesdepartments.isActive', 1)
+                ->where('employeesdepartments.removedYN', 0);
+        })->join('srm_tender_cancellation', function ($query) use ($companyId) {
+            $query->on('erp_documentapproved.documentSystemCode', '=', 'srm_tender_cancellation.id')
+                ->where('srm_tender_cancellation.company_id', $companyId)
+                ->on('erp_documentapproved.rollLevelOrder', '=', 'srm_tender_cancellation.RollLevForApp_curr')
+                ->where('srm_tender_cancellation.approved', 0)
+                ->where('srm_tender_cancellation.confirmed_yn', 1);
+        })->join('srm_tender_master', function ($query) use ($companyId, $rfx) {
+            $query->on('srm_tender_cancellation.tender_id', '=', 'srm_tender_master.id')
+                ->where('srm_tender_master.company_id', $companyId);
+            if ($rfx) {
+                $query->where('srm_tender_master.document_type', '!=', 0);
+            } else {
+                $query->where('srm_tender_master.document_type', 0);
+            }
+        })->join('currencymaster', 'srm_tender_master.currency_id', '=', 'currencyID')
+            ->join('employees', 'srm_tender_master.created_by', '=', 'employees.employeeSystemID')
+            ->where('erp_documentapproved.approvedYN', 0)
+            ->where('erp_documentapproved.rejectedYN', 0)
+            ->where('erp_documentapproved.documentSystemID', 134)
+            ->where('erp_documentapproved.companySystemID', $companyId);
     }
 }
