@@ -1870,15 +1870,71 @@ class FixedAssetMasterAPIController extends AppBaseController
      public function assetCostingForPrint(Request $request)
     {
         $input = $request->all();
-        
-        $fixedAssetMaster = $this->fixedAssetMasterRepository->with(['confirmed_by', 'group_to', 'posttogl_by', 'disposal_by','supplier','department', 'departmentmaster', 'category_by', 'sub_category_by', 'sub_category_by2', 'sub_category_by3', 'location', 'assettypemaster', 'finance_category'])->findWithoutFail($input['id']);
+
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->with([
+            'confirmed_by',
+            'group_to', 'posttogl_by', 'disposal_by', 'supplier', 'department', 'departmentmaster',
+            'category_by', 'sub_category_by', 'sub_category_by2','approved_by', 'sub_category_by3',
+            'location', 'assettypemaster', 'finance_category',
+        ])->findWithoutFail($input['id']);
         if (empty($fixedAssetMaster)) {
             return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }
 
-        $output = ['fixedAssetMaster' => $fixedAssetMaster];
+        $fixedAssetPayload = $fixedAssetMaster->toArray();
+
+        $output = ['fixedAssetMaster' => $fixedAssetPayload, 
+    ];
 
         return $this->sendResponse($output, trans('custom.fixed_asset_master_retrieved_successfully'));
+    }
+
+    
+    public function printAssetCosting(Request $request)
+    {
+        $id = $request->input('id');
+
+        $fixedAssetMaster = $this->fixedAssetMasterRepository->with([
+            'confirmed_by',
+            'group_to', 'posttogl_by', 'disposal_by', 'supplier','approved_by','company_by', 'department', 'departmentmaster',
+            'category_by', 'sub_category_by', 'sub_category_by2', 'sub_category_by3', 'location',
+            'assettypemaster', 'finance_category',
+        ])->findWithoutFail($id);
+
+        if (empty($fixedAssetMaster)) {
+            return $this->sendError(trans('custom.fixed_asset_master_not_found'));
+        }
+
+        $data = [
+            'fixedAssetMaster' => $fixedAssetMaster
+        ];
+
+        $lang = app()->getLocale();
+        $time = strtotime('now');
+        $fileName = 'asset_costing_' . $id . '_' . $time . '.pdf';
+        $html = view('print.asset_costing', $data);
+
+        $mpdfConfig = Helper::getMpdfConfig([
+            'tempDir' => public_path('tmp'),
+            'mode' => 'utf-8',
+            'format' => 'A4',
+            'orientation' => 'P',
+            'margin_left' => 15,
+            'margin_right' => 15,
+            'margin_top' => 16,
+            'margin_bottom' => 16,
+            'margin_header' => 9,
+            'margin_footer' => 9,
+        ], $lang);
+        if ($lang === 'ar') {
+            $mpdfConfig['direction'] = 'rtl';
+        }
+
+        $mpdf = new \Mpdf\Mpdf($mpdfConfig);
+
+        $mpdf->WriteHTML($html);
+
+        return $mpdf->Output($fileName, 'I');
     }
 
     function assetCostingReopen(Request $request)
