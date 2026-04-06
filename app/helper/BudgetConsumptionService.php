@@ -5923,7 +5923,8 @@ class BudgetConsumptionService
 	
 	    $consumedAmountOfPO = BudgetConsumedData::with(['purchase_order' => function ($query) use($detail){
 
-												$query->with(['grv_details'=>function($query){
+												$query->where('manuallyClosed', 0)
+													->with(['grv_details'=>function($query){
 													$query->select('grvDetailsID','grvAutoID','purchaseOrderMastertID','purchaseOrderDetailsID','financeGLcodePLSystemID','netAmount')->with(['grv_master'=>function($query){
 														$query->with('details')->select('grvAutoID','grvPrimaryCode','approved','grvConfirmedYN','grvTotalComRptCurrency');
 													}]);
@@ -5945,6 +5946,7 @@ class BudgetConsumptionService
                                             ->where('documentSystemID', 2)
 											->when($detail->controlAccountsSystemID != 3,function($query){
 												$query->whereHas('purchase_order', function ($query) {
+													$query->where('manuallyClosed', 0);
 													//$query->where('grvRecieved', '!=', 2);
 												});
 											})
