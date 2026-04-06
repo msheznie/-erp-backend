@@ -550,18 +550,18 @@ class DepartmentBudgetPlanningAPIController extends AppBaseController
             }
 
             if (($input['workStatus'] == 3) && ($departmentBudgetPlanning->workStatus == 1)) {
-                return $this->sendError('Status cannot be changed to Submitted',500);
+                return $this->sendError('Status cannot be changed to Submitted to Finance',500);
             }
 
             if (($input['workStatus'] != 3) && ($departmentBudgetPlanning->workStatus == 3)) {
-                return $this->sendError('Status cannot be changed from submitted',500);
+                return $this->sendError('Status cannot be changed from Submitted to Finance',500);
             }
 
         }
 
 
         if (($input['workStatus'] != 3) && ($departmentBudgetPlanning->workStatus == 3)) {
-            return $this->sendError('Status cannot be changed from submitted',500);
+            return $this->sendError('Status cannot be changed from Submitted to Finance',500);
         }
 
         try {
