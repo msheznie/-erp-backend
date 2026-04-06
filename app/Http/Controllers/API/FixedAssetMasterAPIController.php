@@ -1881,10 +1881,8 @@ class FixedAssetMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.fixed_asset_master_not_found'));
         }
 
-        $fixedAssetPayload = $fixedAssetMaster->toArray();
-
-        $output = ['fixedAssetMaster' => $fixedAssetPayload, 
-    ];
+        $output = ['fixedAssetMaster' => $fixedAssetMaster];
+    
 
         return $this->sendResponse($output, trans('custom.fixed_asset_master_retrieved_successfully'));
     }
