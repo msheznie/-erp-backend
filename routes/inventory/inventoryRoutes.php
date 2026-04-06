@@ -83,6 +83,8 @@ Route::group([], function () {
     Route::post('getGoodReceiptVoucherReopen', 'GRVMasterAPIController@getGoodReceiptVoucherReopen')->name("Get Good Receipt Voucher Reopen");
     Route::post('storeGRVDetailsDirect', 'GRVDetailsAPIController@storeGRVDetailsDirect')->name("Store GRV Details Direct");
     Route::post('updateGRVDetailsDirect', 'GRVDetailsAPIController@updateGRVDetailsDirect')->name("Update GRV Details Direct");
+    Route::post('GRVDetailsValidateItem', 'GRVDetailsAPIController@GRVDetailsValidateItem')->name("GRV Details Validate Item");
+    Route::post('GRVDetailsAddAllItems', 'GRVDetailsAPIController@GRVDetailsAddAllItems')->name("GRV Details Add All Items");
     Route::post('getGoodReceiptVoucherAmend', 'GRVMasterAPIController@getGoodReceiptVoucherAmend')->name("Get Good Receipt Voucher Amend");
     Route::post('grvMarkupUpdate', 'GRVDetailsAPIController@grvMarkupUpdate')->name("Grv Markup Update");
     Route::post('grvMarkupfinalyze', 'GRVMasterAPIController@grvMarkupfinalyze')->name("Grv Markup finalyze");

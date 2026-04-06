@@ -1820,7 +1820,6 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             if (isset($input['addAllItems']) && $input['addAllItems']) {
                 $db = isset($input['db']) ? $input['db'] : "";
 
-
                 $deliveryOrder = DeliveryOrder::where('deliveryOrderID', $input['deliveryOrderID'])
                     ->first();
 

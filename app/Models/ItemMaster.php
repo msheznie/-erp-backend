@@ -273,6 +273,11 @@ class ItemMaster extends Model
         return $this->belongsTo('App\Models\PurchaseOrderDetails', 'itemCodeSystem', 'itemCode');
     }
 
+    public function grv_details()
+    {
+        return $this->hasMany(GRVDetails::class, 'itemCode', 'itemCodeSystem');
+    }
+
     public function material_request_details()
     {
         return $this->belongsTo('App\Models\MaterielRequestDetails', 'itemCodeSystem', 'itemCode');

@@ -342,7 +342,8 @@ class GRVMasterAPIController extends AppBaseController
     public function show($id)
     {
         /** @var GRVMaster $gRVMaster */
-        $gRVMaster = $this->gRVMasterRepository->with(['created_by', 'confirmed_by', 'segment_by', 'location_by', 'financeperiod_by' => function ($query) {
+        $gRVMaster = $this->gRVMasterRepository->with(['created_by', 'confirmed_by', 'segment_by', 'location_by', 
+        'financeperiod_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(dateFrom,'%d/%m/%Y'),' | ',DATE_FORMAT(dateTo,'%d/%m/%Y')) as financePeriod,companyFinancePeriodID");
         }, 'financeyear_by' => function ($query) {
             $query->selectRaw("CONCAT(DATE_FORMAT(bigginingDate,'%d/%m/%Y'),' | ',DATE_FORMAT(endingDate,'%d/%m/%Y')) as financeYear,companyFinanceYearID");
@@ -1335,7 +1336,6 @@ class GRVMasterAPIController extends AppBaseController
             $grvTypes = GRVTypes::all();
         }
 
-
         $financialYears = array(array('value' => intval(date("Y")), 'label' => date("Y")),
             array('value' => intval(date("Y", strtotime("-1 year"))), 'label' => date("Y", strtotime("-1 year"))));
 
@@ -1346,6 +1346,10 @@ class GRVMasterAPIController extends AppBaseController
             $companyFinanceYear = $companyFinanceYear->where('isCurrent', -1);
         }
         $companyFinanceYear = $companyFinanceYear->get();
+
+        $allowFinanceCategory = CompanyPolicyMaster::where('companyPolicyCategoryID', 20)
+            ->where('companySystemID', $companyId)
+            ->first();
 
         $allowPartialGRVPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 23)
             ->where('companySystemID', $companyId)
@@ -1425,6 +1429,7 @@ class GRVMasterAPIController extends AppBaseController
             'suppliers' => $supplier,
             'grvTypes' => $grvTypes,
             'companyFinanceYear' => $companyFinanceYear,
+            'allowFinanceCategory' => $allowFinanceCategory,
             'companyPolicy' => $allowPartialGRVPolicy,
             'assetAllocatePolicy' => $assetAllocatePolicy ? true : false,
             'warehouseBinLocationPolicy' => $warehouseBinLocationPolicy,
