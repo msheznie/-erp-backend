@@ -102,7 +102,7 @@ class DepartmentBudgetTemplateService
 
         $checkBudgetExistsOnTemplate = DepartmentBudgetPlanningDetail::where('budget_template_id', $departmentBudgetTemplate->budgetTemplateID)->exists();
         if ($checkBudgetExistsOnTemplate) {
-            return [null, "Budget template is not assigned to any department budget planning", null];
+            return [null, "This Budget Template is in use and cannot be deleted because a Budget has already been initiated.", null];
         }
         $previousValue = $departmentBudgetTemplate->toArray();
         DepBudgetTemplateGl::where('departmentBudgetTemplateID', $id)->delete();
