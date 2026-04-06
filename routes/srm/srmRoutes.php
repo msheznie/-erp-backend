@@ -122,6 +122,7 @@ Route::post('getSupplierAssignedList', 'TenderMasterAPIController@getSupplierAss
 Route::post('deleteSupplierAssign', 'TenderSupplierAssigneeAPIController@deleteSupplierAssign')->name("Delete supplier assign");
 Route::post('supplierAssignCRUD', 'TenderSupplierAssigneeAPIController@supplierAssignCRUD')->name("Supplier assign CRUD");
 Route::post('sendSupplierInvitation', 'TenderSupplierAssigneeAPIController@sendSupplierInvitation')->name("Send supplier invitation");
+Route::post('getInvitationEmailData', 'TenderSupplierAssigneeAPIController@getInvitationEmailData')->name("Get invitation email data");
 Route::post('reSendInvitaitonLink', 'TenderSupplierAssigneeAPIController@reSendInvitaitonLink')->name("Resend invitation link");
 Route::post('deleteAllSupplierAssign', 'TenderSupplierAssigneeAPIController@deleteAllSupplierAssign')->name("Delete all supplier assign");
 Route::post('deleteSelectedSuppliers', 'TenderSupplierAssigneeAPIController@deleteSelectedSuppliers')->name("Delete selected suppliers");
