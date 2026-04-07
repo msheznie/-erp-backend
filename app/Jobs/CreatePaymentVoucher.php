@@ -15,6 +15,7 @@ use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
 use App\Models\CreditNote;
 use App\Models\CurrencyMaster;
+use App\Models\CustomerReceivePayment;
 use App\Models\Employee;
 use App\Models\ErpProjectMaster;
 use App\Models\PayCreditNoteDetail;
@@ -42,6 +43,7 @@ use App\Models\CustomerAssigned;
 use Illuminate\Support\Arr;
 use App\helper\Workflow\DocumentApprove;
 use App\Services\UserTypeService;
+use App\Models\PayAdvanceReceiptDetail;
 
 class CreatePaymentVoucher implements ShouldQueue
 {
@@ -133,7 +135,7 @@ class CreatePaymentVoucher implements ShouldQueue
                     $detailIndex++;
                 }
             }
-            else if ($details != null && $paymentVoucher['payment_type'] == 8) {
+            else if ($details != null && $paymentVoucher['payment_type'] == 8 && $paymentVoucher['refund_type'] == 3) {
                 foreach ($details as $detail) {
                     $datasetDetails = self::validateRefundPVDetailsData($paymentVoucher,$detail);
                   
@@ -152,7 +154,25 @@ class CreatePaymentVoucher implements ShouldQueue
 
                 }
             }
+            else if ($details != null && $paymentVoucher['payment_type'] == 8 && $paymentVoucher['refund_type'] == 1) {
+                foreach ($details as $detail) {
+                    $datasetDetails = self::validateRefundPVAdvanceDetailsData($paymentVoucher,$detail);
+                  
+                    if ($datasetDetails['status']) {
+                        $detailsDataSets[$masterIndex][] = $datasetDetails['data'];
+                    }
+                    else {
+                        $detailData['errors'][] = [
+                            'index' => $detailIndex + 1,
+                            'error' => $datasetDetails['data']
+                        ];
+                        unset($detailsDataSets[$masterIndex]);
+                    }
 
+                     $detailIndex++;
+                }
+            }
+        
        
             $pdcChequeDetailIndex = 0;
             $pdcChequeDetails = $paymentVoucher['pdc_cheque_details'] ?? null;
@@ -214,7 +234,7 @@ class CreatePaymentVoucher implements ShouldQueue
 
             $masterIndex++;
         }
-     
+      
         if(!empty($masterDatasets)) {
             DB::beginTransaction();
 
@@ -240,7 +260,8 @@ class CreatePaymentVoucher implements ShouldQueue
                     if($masterInsert['status']) {
                         $pvMasterAutoId = $masterInsert['data']['PayMasterAutoId'];
 
-                        $isRefundCreditNotePV = ((int) ($masterDataset['invoiceType'] ?? 0) === 8) && ((int) ($masterDataset['refundType'] ?? 0) === 3);
+                        $isRefundAdvancePV = ( ($masterDataset['invoiceType']) == 8) && (($masterDataset['refundType']) == 1);
+                        $isRefundCreditNotePV = (($masterDataset['invoiceType']) == 8) && (($masterDataset['refundType']) == 3);
                         if ($isRefundCreditNotePV) {
                             foreach ($detailsData as $creditNoteDetail) {
                                 $creditNoteAutoID = (int) ($creditNoteDetail['creditNoteAutoID'] ?? 0);
@@ -257,7 +278,24 @@ class CreatePaymentVoucher implements ShouldQueue
                                     'creditNotePaymentAmountRpt' => $transAmount['reportingAmount'] ?? 0,
                                 ]);
                             }
-                        } else {
+                        } else if ($isRefundAdvancePV) {
+                            foreach ($detailsData as $advanceDetail) {
+                                $advanceAutoID = (int) ($advanceDetail['advanceReceiptAutoID'] ?? 0);
+                                $amount = (float) ($advanceDetail['advanceReceiptPaymentAmount'] ?? 0);
+
+                                $transAmount = Helper::convertAmountToLocalRpt(203, $pvMasterAutoId, $amount);
+
+                                PayAdvanceReceiptDetail::create([
+                                    'PayMasterAutoId' => $pvMasterAutoId,
+                                    'advanceReceiptAutoID' => $advanceAutoID,
+                                    'companySystemID' => $masterDataset['companySystemID'],
+                                    'advanceReceiptAmount' => $amount,
+                                    'advanceReceiptAmountLocal' => $transAmount['localAmount'] ?? 0,
+                                    'advanceReceiptAmountRpt' => $transAmount['reportingAmount'] ?? 0,
+                                ]);
+                            }
+                        }
+                        else {
                             foreach ($detailsData as $pvDetail) {
                                 $pvDetail['directPaymentAutoID'] = $pvMasterAutoId;
 
@@ -456,7 +494,6 @@ class CreatePaymentVoucher implements ShouldQueue
                 'data' => $successDocuments,
             ];
         }
-
         // Dispatch webhook job
         $webhookPayload = ['data' => $returnData, 'externalReference' => $this->externalReference];
         InitiateWebhook::dispatch(
@@ -513,21 +550,30 @@ class CreatePaymentVoucher implements ShouldQueue
                 else if ($request['payment_type'] == 8) {
                     $paymentType = 8;
 
-                    if (is_int($request['refund_type'])) {
-                        if ($request['refund_type'] == 3) {
-                            $refundType = 3;
-                        }
+                    if (isset($request['refund_type'])) {
+
+                        if (is_int($request['refund_type'])) {
+                            if ($request['refund_type'] == 3 || $request['refund_type'] == 1) {
+                                    $refundType = $request['refund_type'];
+                                }
+                                else {
+                                    $errorData[] = [
+                                        'field' => "refund_type",
+                                        'message' => ["Invalid refund type selected. Please select a valid refund type. (3 or 1)"]
+                                    ];
+                                }
+                            }
                         else {
                             $errorData[] = [
                                 'field' => "refund_type",
-                                'message' => ["refund_type is invalid."]
+                                'message' => ["Refund type must be an integer."]
                             ];
                         }
                     }
                     else {
                         $errorData[] = [
                             'field' => "refund_type",
-                            'message' => ["refund_type must be an integer."]
+                            'message' => ["Refund type is mandatory when payment voucher type is Refund."]
                         ];
                     }
                 }
@@ -1998,5 +2044,223 @@ class CreatePaymentVoucher implements ShouldQueue
         }
 
         return $returnData;
+    }
+
+    private static function validateRefundPVAdvanceDetailsData(array $masterData, array $request): array
+    {
+        $errorData = [];
+        $companyId = (int) ($masterData['company_id'] ?? 0);
+        $paymentAmount = null;
+
+        if (! isset($request['advance_voucher_code']) || ! is_string($request['advance_voucher_code']) || trim($request['advance_voucher_code']) === '') {
+            $errorData[] = [
+                'field' => 'advance_voucher_code',
+                'message' => ['Advance voucher code should be mandatory.'],
+            ];
+        } else {
+            $advanceCode = trim($request['advance_voucher_code']);
+
+            $advance = CustomerReceivePayment::where('custPaymentReceiveCode', $advanceCode)
+                ->where('companySystemID', $companyId)
+                ->first();
+
+            if (! $advance) {
+                $errorData[] = [
+                    'field' => 'advance_voucher_code',
+                    'message' => ['The advance voucher code is not matching with the system.'],
+                ];
+            } else {
+                if ((int) $advance->approved !== -1) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['The advance voucher is not fully approved.'],
+                    ];
+                }
+
+                if ((int) $advance->documentType !== 15) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['The selected document is not a valid advance receipt.'],
+                    ];
+                }
+
+                if ((int) $advance->matchInvoice === 2) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['This advance voucher cannot be used for this payment.Its matched to a payment voucher.'],
+                    ];
+                }
+
+                $pvCurrencyId = null;
+                if (isset($masterData['currency']) && is_string($masterData['currency'])) {
+                    $currency = CurrencyMaster::where('CurrencyCode', $masterData['currency'])->first();
+                    $pvCurrencyId = $currency ? (int) $currency->currencyID : null;
+                }
+                if ($pvCurrencyId !== null &&  $advance->custTransactionCurrencyID !== $pvCurrencyId) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['The advance voucher currency does not match with payment voucher currency.'],
+                    ];
+                }
+
+                if (isset($masterData['customer']) && is_string($masterData['customer'])) {
+                    $customer = CustomerMaster::where('CutomerCode', $masterData['customer'])->first();
+                    if ($customer && $advance->customerID !== $customer->customerCodeSystem) {
+                        $errorData[] = [
+                            'field' => 'advance_voucher_code',
+                            'message' => ['The advance voucher does not match with the selected customer.'],
+                        ];
+                    }
+                }
+
+                $balance = self::computeAdvanceReceiptBalanceRemaining($advance, $companyId);
+
+                if ($balance <= 0) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['Selected advance already fully paid.'],
+                    ];
+                }
+
+                if (self::advanceLinkedToNonApprovedPaymentVoucher($advance->custReceivePaymentAutoID, $companyId)) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['This advance voucher is already linked to a payment voucher in Draft or Pending Approval status and cannot be selected.'],
+                    ];
+                }
+
+                if (self::advanceInDraftReceiptMatching($advance->custReceivePaymentAutoID, $companyId)) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['This advance is currently used in a draft receipt matching transaction and cannot be added.'],
+                    ];
+                }
+
+                $pvDocDate = $masterData['pay_invoice_date'] ?? null;
+                if ($pvDocDate) {
+                        $pvCarbon = Carbon::parse($pvDocDate)->startOfDay();
+                        $advCarbon = Carbon::parse($advance->custPaymentReceiveDate)->startOfDay();
+                        if ($advCarbon->greaterThanOrEqualTo($pvCarbon)) {
+                            $errorData[] = [
+                                'field' => 'advance_voucher_code',
+                                'message' => ['The advance date should be less than payment voucher document date.'],
+                            ];
+                        }
+                }
+
+                if (! array_key_exists('payment_amount', $request) || $request['payment_amount'] === null || $request['payment_amount'] === '') {
+                    $errorData[] = [
+                        'field' => 'payment_amount',
+                        'message' => ['Payment amount should be mandatory.'],
+                    ];
+                } elseif (! is_numeric($request['payment_amount'])) {
+                    $errorData[] = [
+                        'field' => 'payment_amount',
+                        'message' => ['The value should be positive numbers only.'],
+                    ];
+                } else {
+                    $paymentAmount = (float) $request['payment_amount'];
+                    if ($paymentAmount <= 0) {
+                        $errorData[] = [
+                            'field' => 'payment_amount',
+                            'message' => ['The value should be positive numbers only.'],
+                        ];
+                    }
+                }
+
+                if ($paymentAmount !== null && $balance > 0 && $paymentAmount > $balance) {
+                    $errorData[] = [
+                        'field' => 'payment_amount',
+                        'message' => ['Payment amount cannot be greater than balance amount.'],
+                    ];
+                }
+            }
+        }
+       
+        if (empty($errorData)) {
+         
+            $advanceCode = trim((string) $request['advance_voucher_code']);
+            $advance = CustomerReceivePayment::query()
+                ->where('custPaymentReceiveCode', $advanceCode)
+                ->where('companySystemID', $companyId)
+                ->first();
+
+            $balance = $advance ? self::computeAdvanceReceiptBalanceRemaining($advance, $companyId) : 0.0;
+            $amt = (float) ($paymentAmount ?? ($request['payment_amount'] ?? 0));
+
+            $returnData = [
+                'status' => true,
+                'data' => [
+                    'advanceReceiptAutoID' => (int) ($advance->custReceivePaymentAutoID ?? 0),
+                    'advanceReceiptPaymentAmount' => $amt,
+                    'advanceVoucherBalanceAmount' => $balance,
+                    'advanceVoucherDate' => $advance->custPaymentReceiveDate ?? null,
+                    'advanceAmount' => abs((float) ($advance->receivedAmount ?? 0)),
+                ],
+            ];
+        }
+        else {
+            $returnData = [
+                "status" => false,
+                "data" => $errorData
+            ];
+        }
+        return $returnData;
+    }
+
+  
+    private static function computeAdvanceReceiptBalanceRemaining(CustomerReceivePayment $advance, int $companySystemID): float
+    {
+        $id = (int) $advance->custReceivePaymentAutoID;
+        $advanceTransAbs = abs((float) ($advance->receivedAmount ?? 0));
+
+        $paidPv = (float) DB::table('erp_pay_advance_receipt_details')
+            ->where('advanceReceiptAutoID', $id)
+            ->where('companySystemID', $companySystemID)
+            ->selectRaw('COALESCE(SUM(ABS(advanceReceiptAmount)), 0) as s')
+            ->value('s');
+
+        $matched = (float) DB::table('erp_matchdocumentmaster')
+            ->where('PayMasterAutoId', $id)
+            ->where('documentSystemID', 21)
+            ->where('matchingConfirmedYN', 1)
+            ->where('companySystemID', $companySystemID)
+            ->selectRaw('COALESCE(SUM(ABS(matchingAmount)), 0) as s')
+            ->value('s');
+
+        $rv = (float) DB::table('erp_custreceivepaymentdet')
+            ->join('erp_customerreceivepayment', function ($join) {
+                $join->on('erp_custreceivepaymentdet.custReceivePaymentAutoID', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID')
+                    ->where('erp_customerreceivepayment.approved', -1);
+            })
+            ->where('erp_custreceivepaymentdet.addedDocumentSystemID', 21)
+            ->where('erp_custreceivepaymentdet.bookingInvCodeSystem', $id)
+            ->where('erp_custreceivepaymentdet.matchingDocID', 0)
+            ->where('erp_custreceivepaymentdet.companySystemID', $companySystemID)
+            ->sum('erp_custreceivepaymentdet.receiveAmountTrans');
+
+        $totalUsed = $paidPv + $matched - $rv;
+
+        return $advanceTransAbs - $totalUsed;
+    }
+
+    private static function advanceLinkedToNonApprovedPaymentVoucher($advanceReceiptAutoId, $companySystemID): bool
+    {
+        return DB::table('erp_pay_advance_receipt_details as pard')
+            ->join('erp_paysupplierinvoicemaster as pvm', 'pard.PayMasterAutoId', '=', 'pvm.PayMasterAutoId')
+            ->where('pard.advanceReceiptAutoID', $advanceReceiptAutoId)
+            ->where('pard.companySystemID', $companySystemID)
+            ->where('pvm.approved', '!=', -1)
+            ->exists();
+    }
+
+    private static function advanceInDraftReceiptMatching(int $advanceReceiptAutoId, int $companySystemID): bool
+    {
+        return DB::table('erp_matchdocumentmaster')
+            ->where('PayMasterAutoId', $advanceReceiptAutoId)
+            ->where('companySystemID', $companySystemID)
+            ->where('documentSystemID', 21)
+            ->where('matchingConfirmedYN', 0)
+            ->exists();
     }
 }
