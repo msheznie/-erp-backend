@@ -18,6 +18,8 @@ class DecimalPrecisionService
     /** Default decimal places for amount when currency is missing */
     const DEFAULT_AMOUNT_PRECISION = 2;
 
+    const MAX_QUANTITY_INPUT_PRECISION = 10;
+
     /**
      * Round quantity to Unit Master decimalPrecision.
      *
@@ -99,6 +101,19 @@ class DecimalPrecisionService
     }
 
     /**
+     * Get allowed input precision for a unit, capped at MAX_QUANTITY_INPUT_PRECISION.
+     *
+     * @param int|object|null $unitID
+     * @return int
+     */
+    public function getUnitInputPrecision($unitID): int
+    {
+        $p = $this->getUnitDecimalPrecision($unitID);
+        $p = $p < 0 ? self::DEFAULT_QUANTITY_PRECISION : $p;
+        return min($p, self::MAX_QUANTITY_INPUT_PRECISION);
+    }
+
+    /**
      * Get display round-off for a unit (for display only). Falls back to decimalPrecision then default.
      *
      * @param int|object|null $unitID
@@ -128,5 +143,49 @@ class DecimalPrecisionService
             return (int) $unit->decimalPrecision;
         }
         return self::DEFAULT_QUANTITY_PRECISION;
+    }
+
+    /**
+     * Validate that a numeric value has <= allowedDecimals fractional digits.
+     * Accepts string/float/int inputs. Scientific notation is normalised.
+     *
+     * @param mixed $value
+     * @param int $allowedDecimals
+     * @return bool
+     */
+    public function hasValidScale($value, int $allowedDecimals): bool
+    {
+        if ($allowedDecimals < 0) {
+            return false;
+        }
+        if (!is_numeric($value)) {
+            return false;
+        }
+
+        $s = is_string($value) ? trim($value) : (string) $value;
+        if (stripos($s, 'e') !== false) {
+            $s = rtrim(rtrim(sprintf('%.14F', (float) $value), '0'), '.');
+        }
+
+        $pos = strpos($s, '.');
+        if ($pos === false) {
+            return true;
+        }
+
+        $fraction = substr($s, $pos + 1);
+        return strlen($fraction) <= $allowedDecimals;
+    }
+
+    /**
+     * Round a quantity for UI/print display using unit displayRoundOff.
+     *
+     * @param float $qty
+     * @param int|object|null $unitID
+     * @return float
+     */
+    public function roundQuantityForDisplay(float $qty, $unitID): float
+    {
+        $precision = $this->getUnitDisplayRoundOff($unitID);
+        return round($qty, $precision);
     }
 }

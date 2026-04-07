@@ -27,6 +27,7 @@ use function foo\func;
 
 class MaterialIssueService
 {
+    const QUANTITY_EPSILON = 1e-6;
 
     public static  function validateRequestWithQty($input): array {
         $materielRequest = MaterielRequest::where('RequestID',$input['reqDocID'])->first();
@@ -37,7 +38,7 @@ class MaterialIssueService
             $totalIssuedQty += $mi->details->sum('qtyIssued');
         }
 
-        if($totalQuantityRequested != 0 && ($totalQuantityRequested == $totalIssuedQty)) {
+        if ($totalQuantityRequested != 0 && abs($totalQuantityRequested - $totalIssuedQty) < self::QUANTITY_EPSILON) {
             return ['message' => trans('custom.items_fully_issued_for_request')];
         }
         return [];
@@ -73,7 +74,7 @@ class MaterialIssueService
             if($confirmYn == 1) {
                 array_push($data,$mr->only(['RequestCode','RequestID']));
             }else {
-                if($totalQuantityRequested != 0 && ($totalQuantityRequested != $totalIssuedQty)) {
+                if ($totalQuantityRequested != 0 && abs($totalQuantityRequested - $totalIssuedQty) >= self::QUANTITY_EPSILON) {
                     array_push($data,$mr->only(['RequestCode','RequestID']));
                 }
             }
@@ -94,11 +95,11 @@ class MaterialIssueService
             if($input['issueType'] == 2) {
                 foreach($materielIssue as $mi) {
                     $item = $mi->details()->where('itemCodeSystem',$input['itemCodeSystem'])->first();
-                    $issuedQty += isset($item->qtyIssued) ? (int) $item->qtyIssued : 0;
+                    $issuedQty += isset($item->qtyIssued) ? (float) $item->qtyIssued : 0;
                 }
 
                 $input['issuedQty'] = $issuedQty;
-                $input['qtyAvailableToIssue'] = (int) ($issuedQty == 0) ? $input['qtyRequested']: ($input['qtyRequested'] - $issuedQty);
+                $input['qtyAvailableToIssue'] = ($issuedQty == 0) ? (float) $input['qtyRequested'] : ((float) $input['qtyRequested'] - $issuedQty);
                 $input['qtyIssued'] = $input['qtyAvailableToIssue'];
                 $input['qtyIssuedDefaultMeasure'] = $input['qtyAvailableToIssue'];
                 return $input;
@@ -121,11 +122,11 @@ class MaterialIssueService
                 $materielIssue = ItemIssueMaster::with(['details'])->where('reqDocID',$materielRequest->RequestID)->whereNotIn('itemIssueAutoID',[$input['itemIssueAutoID']])->get();
                 foreach($materielIssue as $mi) {
                     $item = $mi->details()->where('itemCodeSystem',$input['itemCodeSystem'])->first();
-                    $issuedQty += isset($item->qtyIssued) ? (int) $item->qtyIssued : 0;
+                    $issuedQty += isset($item->qtyIssued) ? (float) $item->qtyIssued : 0;
                 }
             }
 
-            $input['qtyAvailableToIssue'] = (int) ($issuedQty == 0) ? $input['qtyRequested']: ($input['qtyRequested'] - $issuedQty);
+            $input['qtyAvailableToIssue'] = ($issuedQty == 0) ? (float) $input['qtyRequested'] : ((float) $input['qtyRequested'] - $issuedQty);
             return $input;
 
         }else {

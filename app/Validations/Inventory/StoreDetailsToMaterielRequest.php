@@ -19,6 +19,7 @@ use App\Models\PurchaseReturn;
 use App\Models\StockTransfer;
 use App\Models\WarehouseMaster;
 use App\Services\Inventory\MaterialIssueService;
+use App\Services\DecimalPrecisionService;
 use Illuminate\Http\Request;
 use App\helper\inventory as Inventory;
 
@@ -71,7 +72,13 @@ class StoreDetailsToMaterielRequest extends AppBaseController
         if(!isset($detail['qtyIssued'])  || $detail['qtyIssued'] == '')
             return $this->sendError(trans('custom.issuing_quantity_cannot_be_empty'));
 
-        if (!is_numeric($detail['qtyIssued']) || fmod($detail['qtyIssued'], 1) !== 0.0 || $detail['qtyIssued'] > 999999999) {
+        $decimalPrecisionService = app(DecimalPrecisionService::class);
+        $unitIDForInputPrecision = $item->unitOfMeasureIssued ?? $item->unitOfMeasure ?? null;
+        $allowedDecimals = $decimalPrecisionService->getUnitInputPrecision($unitIDForInputPrecision);
+
+        if (!is_numeric($detail['qtyIssued']) ||
+            !$decimalPrecisionService->hasValidScale($detail['qtyIssued'], $allowedDecimals) ||
+            $detail['qtyIssued'] > 999999999) {
             return $this->sendError(trans('custom.invalid_qtyissued'));
         }
 
@@ -272,12 +279,12 @@ class StoreDetailsToMaterielRequest extends AppBaseController
         $qntyDetails = MaterialIssueService::getItemDetailsForMaterialIssue($detail);
 
 
-        if((int)$detail['qtyIssued'] > $qntyDetails['qtyAvailableToIssue']) {
+        if ((float) $detail['qtyIssued'] > (float) $qntyDetails['qtyAvailableToIssue']) {
             return $this->sendError(trans('custom.quantity_issuing_greater_than_available'), 500);
         }
 
 
-        if((int)$detail['qtyIssued'] >  $detail['currentWareHouseStockQty']) {
+        if ((float) $detail['qtyIssued'] > (float) $detail['currentWareHouseStockQty']) {
             $qtyError = array('type' => 'qty','status' => 'warehouse');
             return $this->sendError(trans('custom.current_warehouse_stock_qty_message', ['qty' => $detail['currentWareHouseStockQty']]), 500, $qtyError);
         }
