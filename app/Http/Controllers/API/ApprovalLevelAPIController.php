@@ -38,6 +38,7 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Facades\Log;
 use App\helper\Helper;
+use App\Models\PvApprovalTypeSetup;
 
 /**
  * Class ApprovalLevelController
@@ -87,16 +88,20 @@ class ApprovalLevelAPIController extends AppBaseController
         $approvalLevel = "";
         $input = $this->convertArrayToValue($input);
 
-        $grvSubcategoryCheck = $this->approvalLevelService->validateGrvSubcategoryRequired(
-            (int) ($input['companySystemID'] ?? 0),
-            (int) ($input['documentSystemID'] ?? 0),
-            $input
-        );
-        if (!$grvSubcategoryCheck['valid']) {
-            return $this->sendError($grvSubcategoryCheck['message'], 422);
+        if (isset($input['documentSystemID']) && ($input['documentSystemID'] == 3)) {
+            $grvSubcategoryCheck = $this->approvalLevelService->validateGrvSubcategoryRequired(
+                (int) ($input['companySystemID'] ?? 0),
+                (int) ($input['documentSystemID'] ?? 0),
+                $input
+            );
+
+            if (!$grvSubcategoryCheck['valid']) {
+                return $this->sendError($grvSubcategoryCheck['message'], 422);
+            }
         }
 
-        if(isset($input['documentSystemID']) && ($input['documentSystemID'] != 1)){
+        $validationExcludedDocuments = [1, 4];
+        if(isset($input['documentSystemID']) && !in_array($input['documentSystemID'], $validationExcludedDocuments)){
             $approvalLevelValidation = $this->approvalLevelValidation($input);
 
             if (!$approvalLevelValidation['status']) {
@@ -118,7 +123,6 @@ class ApprovalLevelAPIController extends AppBaseController
         }
 
         if (isset($request->tenderTypeId)) {
-
             $tenderType = TenderType::getTenderTypeData($input['tenderTypeId']);
             $input["tenderTypeCode"] =  $input['tenderTypeId'] == -1 ? 'General' : $tenderType->name;
         }
@@ -129,6 +133,16 @@ class ApprovalLevelAPIController extends AppBaseController
 
         if (isset($input['documentSystemID']) && (int) $input['documentSystemID'] === 3 && empty($input['subcategoryID'])) {
             $input['subcategoryID'] = null;
+        }
+
+        if (isset($input['documentSystemID']) && $input['documentSystemID'] == 4) {
+            $input['serviceLineWise'] = 0;
+            $input['serviceLineSystemID'] = null;
+            $input['serviceLineCode'] = null;
+            
+            $input['isCategoryWiseApproval'] = 0;
+            $input['isDelegation'] = 0;
+            $input['prTypeWise'] = 0;
         }
 
         if (isset($request->approvalLevelID)) {
@@ -162,6 +176,12 @@ class ApprovalLevelAPIController extends AppBaseController
 
         if (empty($approvalLevel)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.approval_levels')]));
+        }
+
+        if (!empty($approvalLevel) && ($approvalLevel->documentSystemID == 4) && ($approvalLevel->pvTypeWise == 1)) {
+            $pvApprovalTypes = PvApprovalTypeSetup::where('company_system_id', $approvalLevel->companySystemID)->get();
+
+            $approvalLevel->pvTypeBaseApprovals = $pvApprovalTypes;
         }
 
         return $this->sendResponse($approvalLevel->toArray(), trans('custom.retrieve', ['attribute' => trans('custom.approval_levels')]));
@@ -433,9 +453,10 @@ class ApprovalLevelAPIController extends AppBaseController
                 $isCategoryWiseApproval = isset($input['isCategoryWiseApproval']) && ($input['isCategoryWiseApproval'] || $input['isCategoryWiseApproval'] == -1) ? -1 : 0;
                 $serviceLineWise = isset($input['serviceLineWise']) && ($input['serviceLineWise'] || $input['serviceLineWise'] == 1) ? -1 : 0;
                 $valueWise = isset($input['valueWise']) && ($input['valueWise'] || $input['valueWise'] == 1) ? -1 : 0;
+                $prTypeWise = isset($input['prTypeWise']) && ($input['prTypeWise'] || $input['prTypeWise'] == 1) ? -1 : 0;
                 $docSubcategoryApproval = \App\Services\CompanyDocumentAttachmentService::isApprovalEnabled($documentConf->isSubcategoryApproval ?? 0);
 
-                if (($isCategoryWiseApproval != $documentConf->isCategoryApproval) || ($serviceLineWise != $documentConf->isServiceLineApproval) || ($valueWise != $documentConf->isAmountApproval)) {
+                if (($isCategoryWiseApproval != $documentConf->isCategoryApproval) || ($serviceLineWise != $documentConf->isServiceLineApproval) || ($valueWise != $documentConf->isAmountApproval) || ($prTypeWise != $documentConf->isPRTypeApproval)) {
                     return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
                 }
                 if ($input['documentSystemID'] == 3 && $docSubcategoryApproval && empty($input['subcategoryID'])) {
@@ -470,10 +491,20 @@ class ApprovalLevelAPIController extends AppBaseController
             }
         }
 
-        $approvalLevelValidation = $this->approvalLevelValidation($approvalLevel->toArray(), true);
+        if ($approvalLevel->documentSystemID == 4) {
+            if ($request->isActive) {
+                $pvActivationValidation = $this->approvalLevelService->validatePaymentVoucherActivation($approvalLevel, $request);
+                if (!$pvActivationValidation['status']) {
+                    return $this->sendError($pvActivationValidation['message'], 500);
+                }
+            }
+        } 
+        else {
+            $approvalLevelValidation = $this->approvalLevelValidation($approvalLevel->toArray(), true);
 
-        if (!$approvalLevelValidation['status']) {
-            return $this->sendError($approvalLevelValidation['message'], 500);
+            if (!$approvalLevelValidation['status']) {
+                return $this->sendError($approvalLevelValidation['message'], 500);
+            }
         }
 
         if ($request->isActive) {

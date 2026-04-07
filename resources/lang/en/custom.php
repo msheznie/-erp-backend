@@ -10066,6 +10066,10 @@ return
     'subcategory_approval_disabled_enable_before_activate' => 'Subcategory Approval is currently disabled in Document Configuration. Please enable Subcategory Approval before activating a Subcategory-level approval setup.',
     'payment_voucher_interbank_transfer' => 'Payment Voucher - Interbank Transfer',
     'materiel_issue_pending_approval' => 'There is a Materiel Issue (:issueCode) pending approval for the material you are trying to add. Please check again.',
+    'pv_approval_type_setup_not_found' => 'PV approval type setup not found.',
+    'description_cannot_be_duplicated' => 'Description cannot be Duplicated',
+    'pv_approval_type_setup_deleted_successfully' => 'PV approval type setup deleted successfully',
+    'pv_type_setup_active_conflict' => 'Existing ":description" setup is already active. Cannot activate same type more than one.',
     'employee_cannot_be_removed_because_budget_planning_is_in_progress' => 'Employee cannot be removed because budget planning is in progress',
 
     // Document Communication Messages
@@ -10097,6 +10101,7 @@ return
     'company_field_must_be_an_integer' => 'Company field must be an integer',
     'document_system_id_is_required' => 'Document system ID is required',
     'document_system_id_must_be_an_integer' => 'Document system ID must be an integer',
+    'pv_approval_type_setup_has_approval_levels' => 'Approvel type setup is assigned to approval levels, cannot be deleted',
     'supplier_communication_requires_active_supplier' => 'To enable Supplier Communication Option, the supplier must be active. Please activate the supplier first.',
     'tender_awarded_date' => 'Tender/RFX Awarded Date',
     'is_linked' => 'Is Linked',
@@ -10118,4 +10123,6 @@ return
     'per_page_cannot_exceed_500' => 'Per page cannot exceed 500',
     'company_id_is_required' => 'Company ID is required',
     'company_id_must_be_an_integer' => 'Company ID must be an integer',
+    'no_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'No active Type-based approval setup found for this Payment Voucher Type',
+    'multiple_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'Multiple active Type-based approval setups found for this Payment Voucher Type. Please contact system administrator.',
 ];

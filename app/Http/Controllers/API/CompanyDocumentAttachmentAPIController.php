@@ -28,6 +28,7 @@ use App\Services\CompanyDocumentAttachmentService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
+use App\Models\PvApprovalTypeSetup;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
@@ -129,11 +130,13 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_document_attachments')]));
         }
 
-        $result = $this->companyDocumentAttachmentService->validateAndNormalizeGrvApprovalUpdate($companyDocumentAttachment, $input);
-        if (!$result['valid']) {
-            return $this->sendAPIError($result['message'], $result['status'], $result['errors']);
+        if ($companyDocumentAttachment->documentSystemID == 3) {
+            $result = $this->companyDocumentAttachmentService->validateAndNormalizeGrvApprovalUpdate($companyDocumentAttachment, $input);
+            if (!$result['valid']) {
+                return $this->sendAPIError($result['message'], $result['status'], $result['errors']);
+            }
+            $input = $result['input'];
         }
-        $input = $result['input'];
 
         $approvalResult = $this->companyDocumentAttachmentService->validateApprovalConfigChange($companyDocumentAttachment, $input);
         if (!$approvalResult['allowed']) {
@@ -255,6 +258,15 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
 
         if(empty($result)){
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.policy')]));
+        }
+
+        if ($documentSystemID == 4) {
+            $pvTypeBasedSetups = PvApprovalTypeSetup::where('document_attachment_id', $result->companyDocumentAttachmentID)
+                ->where('company_system_id', $companySystemID)
+                ->where('is_active', 1)
+                ->get();
+
+            $result->pvTypeBasedSetups = $pvTypeBasedSetups;
         }
 
         return $this->sendResponse($result, trans('custom.retrieve', ['attribute' => trans('custom.record')]));

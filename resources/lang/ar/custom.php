@@ -9943,9 +9943,11 @@ return
     'grv_multiple_subcategories' => 'لا يمكن أن يحتوي إشعار استلام البضاعة على عناصر من فئات فرعية متعددة تحت نفس الفئة الرئيسية. يرجى اختيار عناصر من فئة فرعية واحدة.',
     'subcategory_approval_disabled_enable_before_activate' => 'الموافقة حسب الفئة الفرعية معطلة حالياً في إعدادات المستند. يرجى تفعيل الموافقة حسب الفئة الفرعية قبل تفعيل إعداد موافقة حسب الفئة الفرعية.',
     'payment_voucher_interbank_transfer' => 'سند صرف - تحويل بين البنوك',
+    'pv_approval_type_setup_not_found' => 'لم يتم العثور على إعداد اعتماد نوع سند الصرف.',
+    'description_cannot_be_duplicated' => 'لا يمكن تكرار الوصف',
+    'pv_approval_type_setup_deleted_successfully' => 'تم حذف إعداد اعتماد نوع سند الصرف بنجاح',
+    'pv_type_setup_active_conflict' => 'الإعداد ":description" نشط بالفعل. لا يمكن تفعيل نفس النوع لأكثر من واحد.',
     'employee_cannot_be_removed_because_budget_planning_is_in_progress' => 'لا يمكن حذف الموظف لأن تخطيط الميزانية قيد التنفيذ',
-
-    // Document Communication Messages
     'comment_added_successfully' => 'تم إضافة التعليق بنجاح',
     'reply_added_successfully' => 'تم إضافة الرد بنجاح',
     'comment_updated_successfully' => 'تم تحديث التعليق بنجاح',
@@ -9974,6 +9976,7 @@ return
     'company_field_must_be_an_integer' => 'معرف الشركة يجب أن يكون رقمًا صحيحًا',
     'document_system_id_is_required' => 'معرف النظام المستندي مطلوب',
     'document_system_id_must_be_an_integer' => 'معرف النظام المستندي يجب أن يكون رقمًا صحيحًا',
+    'pv_approval_type_setup_has_approval_levels' => 'إعداد اعتماد نوع سند الصرف مخصص لموافقات، لا يمكن حذفه',
     'supplier_communication_requires_active_supplier' => 'لتفعيل خيار التواصل مع المورد، يجب أن يكون المورد نشطًا.<br>يرجى تفعيل المورد أولاً.',
     'tender_awarded_date' => 'تاريخ ترسية المناقصة / طلب العرض (RFX)',
     'is_linked' => 'مرتبط',
@@ -9995,4 +9998,6 @@ return
     'per_page_cannot_exceed_500' => 'معامل العدد لكل صفحة لا يمكن أن يتجاوز 500',
     'company_id_is_required' => 'معرف الشركة مطلوب',
     'company_id_must_be_an_integer' => 'معرف الشركة يجب أن يكون رقمًا صحيحًا',
+    'no_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'لم يتم العثور على إعداد موافقة نشط قائم على النوع لهذا النوع من سندات الصرف',
+    'multiple_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'تم العثور على أكثر من إعداد موافقة نشط قائم على النوع لهذا النوع من سندات الصرف. يرجى الاتصال بمدير النظام.',
 ];
