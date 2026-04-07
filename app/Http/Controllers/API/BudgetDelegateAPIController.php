@@ -535,11 +535,16 @@ class BudgetDelegateAPIController extends AppBaseController
                     2
                 );
             }
-            if($access)
-            {
-                $access->delete();
-            }
+           
             $budgetDelegateAccessRecord->delete();
+
+            if($budgetDelegateAccessRecord->count() == 0)
+            {
+                if($access)
+                {
+                    $access->delete();
+                }
+            }
             return $this->sendResponse([], 'Delegate deleted successfully');
         }else {
             return $this->sendError("Data not found!",500);
