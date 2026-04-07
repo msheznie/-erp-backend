@@ -77,7 +77,6 @@ class BudgetReportService
             ->whereHas('budget_master', function ($query) use ($currentFinanicalYear) {
                 $query->where('companyFinanceYearID', $currentFinanicalYear->companyFinanceYearID);
             })
-            ->whereBetween('createdDateTime', [$fromDate, $toDate])
             ->where('budjetAmtLocal', '!=', 0)
             ->groupBy('chartOfAccountID')
             ->pluck('chartOfAccountID')
@@ -95,7 +94,7 @@ class BudgetReportService
                     $query->where('chartOfAccountSystemID',$chartOfAccountID);
                 })->whereHas('budget_master',function ($query) use ($currentFinanicalYear) {
                     $query->where('companyFinanceYearID',$currentFinanicalYear->companyFinanceYearID);
-                })->whereBetween('erp_budjetdetails.createdDateTime', [$fromDate, $toDate]);
+                });
 
                 $currentBudgetAmount = ($currencyID == 1) ? $currentBudgetAmount->sum('budjetAmtLocal') : $currentBudgetAmount->sum('budjetAmtRpt');
 
@@ -122,8 +121,7 @@ class BudgetReportService
                         ->where('budgetYear',Carbon::parse($currentFinanicalYear->startDate)->year)
                         ->whereHas('detail', function ($query) use ($chartOfAccountID) {
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
-                        })
-                        ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate]);
+                        });
                     $currentOpenPOs = ($currencyID == 1) ? $currentOpenPOs->selectRaw('SUM(poTotalLocalCurrency - VATAmountLocal) as amount')->first()->amount : $currentOpenPOs->selectRaw('SUM(poTotalComRptCurrency - VATAmountRpt) as amount')->first()->amount;
 
                     $prvOpenPOs = ProcumentOrder::with(['detail'])->whereIn('serviceLineSystemID',$serviceLineSystemIDs)
@@ -132,8 +130,7 @@ class BudgetReportService
                         ->where('budgetYear','<',Carbon::parse($currentFinanicalYear->startDate)->year)
                         ->whereHas('detail', function ($query) use ($chartOfAccountID) {
                             $query->where('financeGLcodebBSSystemID',$chartOfAccountID)->orWhere('financeGLcodePLSystemID',$chartOfAccountID);
-                        })
-                        ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate]);
+                        });
 
                     $prvOpenPOs = ($currencyID == 1) ? $prvOpenPOs->selectRaw('SUM(poTotalLocalCurrency - VATAmountLocal) as amount')->first()->amount : $prvOpenPOs->selectRaw('SUM(poTotalComRptCurrency - VATAmountRpt) as amount')->first()->amount;
 
@@ -151,7 +148,6 @@ class BudgetReportService
                                 ? 'SUM(erp_grvmaster.grvTotalLocalCurrency) as total'
                                 : 'SUM(erp_grvmaster.grvTotalComRptCurrency) as total'
                         )
-                        ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate])
                         ->first();
 
                     $grvTotalAmountCurrYear = ProcumentOrder::with(['detail'])->whereIn('erp_purchaseordermaster.serviceLineSystemID',$serviceLineSystemIDs)->where('poConfirmedYN', 1)
@@ -169,7 +165,6 @@ class BudgetReportService
                                 ? 'SUM(erp_grvmaster.grvTotalLocalCurrency) as total1'
                                 : 'SUM(erp_grvmaster.grvTotalComRptCurrency) as total1'
                         )
-                        ->whereBetween('erp_purchaseordermaster.createdDateTime', [$fromDate, $toDate])
                         ->first();
 
                     $budgetCommitmentsDetailsReport = new BudgetCommitmentsDetailsReport();
