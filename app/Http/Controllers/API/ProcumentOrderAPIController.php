@@ -1423,6 +1423,7 @@ class ProcumentOrderAPIController extends AppBaseController
                                 "consumedLocalAmount" => $value->GRVcostPerUnitLocalCur,
                                 "consumedRptCurrencyID" => $value->companyReportingCurrencyID,
                                 "consumedRptAmount" => $value->GRVcostPerUnitComRptCur,
+                                "companyFinanceYearID" =>  CompanyFinanceYear::financeYearID($value->budgetYear, $value->companySystemID),
                                 "timestamp" => date('d/m/Y H:i:s A')
                             );
                         }
@@ -1450,6 +1451,7 @@ class ProcumentOrderAPIController extends AppBaseController
                                     "consumedLocalAmount" => $value->GRVcostPerUnitLocalCur,
                                     "consumedRptCurrencyID" => $value->companyReportingCurrencyID,
                                     "consumedRptAmount" => $value->GRVcostPerUnitComRptCur,
+                                    "companyFinanceYearID" =>  CompanyFinanceYear::financeYearID($value->budgetYear, $value->companySystemID),
                                     "timestamp" => date('d/m/Y H:i:s A')
                                 );
                             }
