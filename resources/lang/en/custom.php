@@ -10098,4 +10098,8 @@ return
     'document_system_id_is_required' => 'Document system ID is required',
     'document_system_id_must_be_an_integer' => 'Document system ID must be an integer',
     'supplier_communication_requires_active_supplier' => 'To enable Supplier Communication Option, the supplier must be active. Please activate the supplier first.',
+    'tender_awarded_date' => 'Tender/RFX Awarded Date',
+    'is_linked' => 'Is Linked',
+    'linked_supplier_code' => 'Linked Supplier Code',
+    'linked_supplier_name' => 'Linked Supplier Name'
 ];

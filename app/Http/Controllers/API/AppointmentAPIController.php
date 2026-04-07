@@ -21,6 +21,8 @@ use App\Models\AppointmentDetails;
 use App\helper\Helper;
 use App\helper\Workflow\DocumentApprove;
 use App\helper\Workflow\DocumentReject;
+use App\Models\SupplierRegistrationLink;
+use App\Services\SrmNotificationService;
 
 /**
  * Class AppointmentController
@@ -31,10 +33,12 @@ class AppointmentAPIController extends AppBaseController
 {
     /** @var  AppointmentRepository */
     private $appointmentRepository;
+    private $srmNotificationService;
 
-    public function __construct(AppointmentRepository $appointmentRepo)
+    public function __construct(AppointmentRepository $appointmentRepo, SrmNotificationService $srmNotificationService)
     {
         $this->appointmentRepository = $appointmentRepo;
+        $this->srmNotificationService = $srmNotificationService;
     }
 
     /**
@@ -422,6 +426,8 @@ class AppointmentAPIController extends AppBaseController
     public function approveCalanderDelAppointment(Request $request)
     {
         $input = $request->all();
+        $appointmentId = $input['id'] ?? null;
+
         $params = array(
             'documentApprovedID' => $input['document_approved']['documentApprovedID'],
             'documentSystemCode' => $input['id'],
@@ -433,9 +439,26 @@ class AppointmentAPIController extends AppBaseController
 
 
         $approve = DocumentApprove::approveDocument($params);
+        
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
+            if ($appointmentId && $approve['data'] && $approve['data']['numberOfLevels'] == $approve['data']['currentLevel']) {
+                $appointment = Appointment::getDeliveryAppointmentNotificationData((int) $appointmentId);
+
+                $supplierRegistrationLinkId = $appointment
+                    ? SupplierRegistrationLink::getSupplierRegistrationLinkId($appointment->supplier_id)
+                    : null;
+
+                if ($appointment) {
+                    $this->srmNotificationService->sendDeliveryAppointmentStatusNotification(
+                        (string) $appointment->primary_code,
+                        true,
+                        $supplierRegistrationLinkId
+                    );
+                }
+            }
+
             return $this->sendResponse(array(), $approve["message"]);
         }
     }
@@ -443,6 +466,7 @@ class AppointmentAPIController extends AppBaseController
     public function rejectCalanderDelAppointment(Request $request)
     {
         $input = $request->all();
+        $appointmentId = $input['id'] ?? null;
 
         $params = array(
             'documentApprovedID' => $input['document_approved']['documentApprovedID'],
@@ -457,6 +481,22 @@ class AppointmentAPIController extends AppBaseController
         if (!$approve["success"]) {
             return $this->sendError($approve["message"]);
         } else {
+            if ($appointmentId) {
+                $appointment = Appointment::getDeliveryAppointmentNotificationData((int) $appointmentId);
+
+                $supplierRegistrationLinkId = $appointment
+                    ? SupplierRegistrationLink::getSupplierRegistrationLinkId($appointment->supplier_id)
+                    : null;
+
+                if ($appointment) {
+                    $this->srmNotificationService->sendDeliveryAppointmentStatusNotification(
+                        (string) $appointment->primary_code,
+                        false,
+                        $supplierRegistrationLinkId
+                    );
+                }
+            }
+
             return $this->sendResponse(array(), $approve["message"]);
         }
     }

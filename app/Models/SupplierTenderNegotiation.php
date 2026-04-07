@@ -128,4 +128,10 @@ class SupplierTenderNegotiation extends Model
             ];
         });
     }
+    public static function getSupplierPickedForNegotiation(int $tenderNegotiationId)
+    {
+        return self::where('tender_negotiation_id', $tenderNegotiationId)
+        ->pluck('suppliermaster_id')
+        ->toArray();
+    }
 }

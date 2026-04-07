@@ -211,4 +211,64 @@ class PricingScheduleMaster extends Model
                 return null;
         }
     }
+    public static function getPricingItemsWithRelations($bidMasterId, $tenderId)
+    {
+        $bidMasterIds = self::normalizeBidMasterIds($bidMasterId);
+
+        if (!empty($bidMasterIds)) {
+            BidMainWork::deleteIncompleteBidMainWorkRecords($tenderId, $bidMasterIds);
+        }
+
+        return self::with([
+            'tender_bid_format_master',
+            'pricing_shedule_details' => function ($q) use ($bidMasterIds) {
+
+                $q->whereNotIn('field_type', [4])
+                    ->with([
+
+                        'bid_main_works' => function ($q) use ($bidMasterIds) {
+                            $q->whereIn('bid_master_id', $bidMasterIds);
+                        },
+
+                        'bid_format_detail' => function ($q) use ($bidMasterIds) {
+                            $q->where(function ($query) use ($bidMasterIds) {
+                                $query->whereIn('bid_master_id', $bidMasterIds)
+                                    ->orWhereNull('bid_master_id');
+                            });
+                        },
+
+                        'tender_boq_items' => function ($q) use ($bidMasterIds) {
+                            $q->with([
+                                'bid_boqs' => function ($q2) use ($bidMasterIds) {
+                                    $q2->whereIn('bid_master_id', $bidMasterIds);
+                                },
+                                'ranking_items'
+                            ]);
+                        },
+
+                        'ranking_items'
+                    ]);
+            }
+        ])
+            ->where('tender_id', $tenderId)
+            ->get();
+    }
+    private static function normalizeBidMasterIds($bidMasterId)
+    {
+        if (empty($bidMasterId)) {
+            return [];
+        }
+
+        if (is_array($bidMasterId)) {
+            return $bidMasterId;
+        }
+
+        if (method_exists($bidMasterId, 'toArray')) {
+            return $bidMasterId->toArray();
+        }
+
+        return [];
+    }
+
+
 }

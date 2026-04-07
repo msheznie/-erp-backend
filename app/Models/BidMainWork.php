@@ -197,4 +197,15 @@ class BidMainWork extends Model
         }
     }
 
+    public static function getBidsByTenderAndDetailIds(int $tenderId, array $mainDetailIds)
+    {
+        if (empty($mainDetailIds)) {
+            return collect();
+        }
+        return self::where('tender_id', $tenderId)
+            ->whereIn('bid_format_detail_id', $mainDetailIds)
+            ->select('bid_master_id', 'bid_format_detail_id', 'supplier_registration_id')
+            ->get();
+    }
+
 }

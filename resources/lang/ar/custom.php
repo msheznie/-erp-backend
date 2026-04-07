@@ -9975,4 +9975,8 @@ return
     'document_system_id_is_required' => 'معرف النظام المستندي مطلوب',
     'document_system_id_must_be_an_integer' => 'معرف النظام المستندي يجب أن يكون رقمًا صحيحًا',
     'supplier_communication_requires_active_supplier' => 'لتفعيل خيار التواصل مع المورد، يجب أن يكون المورد نشطًا.<br>يرجى تفعيل المورد أولاً.',
+    'tender_awarded_date' => 'تاريخ ترسية المناقصة / طلب العرض (RFX)',
+    'is_linked' => 'مرتبط',
+    'linked_supplier_code' => 'رمز المورد المرتبط',
+    'linked_supplier_name' => 'اسم المورد المرتبط'
 ];

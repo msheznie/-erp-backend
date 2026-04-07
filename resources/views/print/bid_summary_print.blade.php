@@ -186,7 +186,7 @@
                 @if (empty($bidData[0]['commerical_bid_opening_date']))
                    -
                 @endif
-                   
+
                 </td>
         @endif
     </tr>
@@ -219,23 +219,23 @@
                 <td>{{$item->bidSubmissionCode}}</td>
                 <td>{{$item->SupplierRegistrationLink->name}}</td>
                 <td>{{\Carbon\Carbon::parse($item->bidSubmittedDatetime)->format('d/m/Y')}}</td>
-                @foreach ($attachments[$loop->index] as $doc2)
+                @foreach ($bidData[0]['DocumentAttachments'] as $doc)
                     <td style="text-align: center;">
-                    @switch($doc2->bid_verify->status)
-                        @case(1)
-                            Yes
-                        @break
-                        @case(2)
-                            Yes
-                        @break
-                        @case(3)
-                            No
-                        @break
-                    @endswitch
-                    </td>
-                @endforeach 
+                        @php
+                            $status = $bidStatus[$item->id] ?? '-';
+                        @endphp
 
-                    
+                        @if($status == 3)
+                            No
+                        @elseif($status === 'Yes')
+                            Yes
+                        @else
+                            -
+                        @endif
+                    </td>
+                @endforeach
+
+
                         @if (($documentType != 0 && $count != 0) || $documentType == 0)
                         <td>
                             @if ($item->doc_verifiy_status == 1)
@@ -245,17 +245,17 @@
                             @else
                                 -
                             @endif
-                        </td> 
+                        </td>
                         @else
                         <td style="text-align: center;"> - </td>
                         @endif
-                
+
 
                     @if (!empty($item->doc_verifiy_comment))
                     <td colspan="1">{{$item->doc_verifiy_comment}} </td>
                     @else
                     <td style="text-align: center;"> - </td>
-                    @endif 
+                    @endif
             </tr>
         @endforeach
     </tbody>

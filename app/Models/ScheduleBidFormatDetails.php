@@ -121,4 +121,12 @@ class ScheduleBidFormatDetails extends Model
         return self::where('schedule_id', $scheduleID)->get();
     }
 
+    public static function getCombinedRanTot($val)
+    {
+        return self::select('value')
+            ->where('bid_master_id',$val)
+            ->whereNotNull('bid_format_detail_id')
+            ->first();
+    }
+
 }

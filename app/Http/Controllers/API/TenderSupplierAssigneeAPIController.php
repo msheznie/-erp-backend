@@ -24,6 +24,7 @@ use App\Models\SupplierRegistrationLink;
 use App\Models\TenderMaster;
 use App\Repositories\SupplierRegistrationLinkRepository;
 use App\helper\email as Email;
+use App\Services\SrmNotificationService;
 /**
  * Class TenderSupplierAssigneeController
  * @package App\Http\Controllers\API
@@ -34,10 +35,16 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
     /** @var  TenderSupplierAssigneeRepository */
     private $tenderSupplierAssigneeRepository;
     private $registrationLinkRepository;
-    public function __construct(TenderSupplierAssigneeRepository $tenderSupplierAssigneeRepo, SupplierRegistrationLinkRepository $registrationLinkRepository)
+    private $srmNotificationService;
+    public function __construct(
+        TenderSupplierAssigneeRepository $tenderSupplierAssigneeRepo,
+        SupplierRegistrationLinkRepository $registrationLinkRepository,
+        SrmNotificationService $srmNotificationService
+    )
     {
         $this->tenderSupplierAssigneeRepository = $tenderSupplierAssigneeRepo;
         $this->registrationLinkRepository = $registrationLinkRepository;
+        $this->srmNotificationService = $srmNotificationService;
     }
 
     /**
@@ -355,6 +362,11 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             ->where('company_id', $companyId)
             ->where('mail_sent', 0)
             ->get();
+
+        $tenderMaster = TenderMaster::getByIdAndCompany($tenderId, $companyId);
+        $tenderTitle = $tenderMaster->title ?? 'Tender';
+        $documentSystemID = $tenderMaster->document_system_id ?? 108;
+        $urlString = implode('//', $urlArray) . '/';
         DB::beginTransaction();
         try{
             if (count($getSupplierAssignedData) > 0) {
@@ -364,7 +376,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                     $email = data_get($val, 'supplierAssigned.supEmail') ?? $val['supplier_email'];
                     $regNo = data_get($val, 'supplierAssigned.registrationNumber') ?? $val['registration_number'];
                     $isBidTender = data_get($val, 'supplierAssigned.registrationNumber') !== null ? 0 : 1;
-
+                    
                     $isExist = SupplierRegistrationLink::select('id', 'STATUS', 'token')
                         ->where('email', $email)
                         ->where('registration_number', $regNo)
@@ -375,10 +387,14 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                         $update['sub_domain'] = $subDomain;
                         SupplierRegistrationLink::where('id', $isExist['id'])->update($update);
                         if($isExist['STATUS'] === 1){
-                            $urlString = implode('//', $urlArray) . '/';
                             TenderSupplierAssignee::find($val['id'])
                                 ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
                             $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companyId, 1, $rfx);
+                            $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
+                                $tenderTitle,
+                                $isExist['id'],
+                                $documentSystemID
+                            );
                         } else if ($isExist['STATUS'] === 0){
                             $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
                             $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(96);
@@ -387,6 +403,11 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                                 $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companyId, 1, $rfx);
                                 TenderSupplierAssignee::find($val['id'])
                                     ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
+                                $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
+                                    $tenderTitle,
+                                    $isExist['id'],
+                                    $documentSystemID
+                                );
                             }
                         }
                         DB::commit();
@@ -400,6 +421,11 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                             $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companyId, 2, $rfx);
                             TenderSupplierAssignee::find($val['id'])
                                 ->update(['mail_sent' => 1, 'registration_link_id' => $isCreated['id']]);
+                            $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
+                                $tenderTitle,
+                                $isCreated['id'],
+                                $documentSystemID
+                            );
                         }
                         DB::commit();
                     }
@@ -442,6 +468,11 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
             ->where('company_id', $companySystemId)
             ->first();
 
+        $tenderMaster = TenderMaster::getByIdAndCompany($tenderId, $companySystemId);
+        $tenderTitle = $tenderMaster->title ?? 'Tender';
+        $documentSystemID = $tenderMaster->document_system_id ?? 108;
+        $urlString = implode('//', $urlArray) . '/';
+
         DB::beginTransaction();
         try {
             $token = md5(Carbon::now()->format('YmdHisu'));
@@ -466,10 +497,14 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                 $update['sub_domain'] = $subDomain;
                 SupplierRegistrationLink::where('id', $isExist['id'])->update($update);
                 if($isExist['STATUS'] === 1){
-                    $urlString = implode('//', $urlArray) . '/';
                     $this->sendSupplierEmailInvitation($email, $companyName, $urlString, $tenderId, $companySystemId, 1, $rfx);
                     TenderSupplierAssignee::find($getSupplierAssignedData['id'])
                         ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
+                    $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
+                        $tenderTitle,
+                        $isExist['id'],
+                        $documentSystemID
+                    );
                 } elseif ($isExist['STATUS'] === 0) {
                     $loginUrl = env('SRM_LINK') . $isExist['token'] . '/' . $apiKey;
                     $updateRec['token_expiry_date_time'] = Carbon::now()->addHours(96);
@@ -478,6 +513,11 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                         $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, 1, $rfx);
                         TenderSupplierAssignee::find($getSupplierAssignedData['id'])
                             ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
+                                $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
+                                    $tenderTitle,
+                                    $isExist['id'],
+                                    $documentSystemID
+                                );
                     }
                 }
                 DB::commit();
@@ -491,6 +531,11 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                     $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, 2, $rfx);
                     TenderSupplierAssignee::find($getSupplierAssignedData['id'])
                         ->update(['mail_sent' => 1, 'registration_link_id' => $isCreated['id']]);
+                    $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
+                        $tenderTitle,
+                        $isCreated['id'],
+                        $documentSystemID
+                    );
                     DB::commit();
                 }
             }
@@ -536,7 +581,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                 $alertMessage = "Invitation for ".$defaultDocType." ";
                 $body = "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
-            Please find the link below to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>";
+            Please find the link below to login to the supplier portal. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br />";
             }else{
                 $alertMessage = "Invitation for ".$docType." ";
                 $body = "Dear Supplier," . "<br /><br />" . "
@@ -553,9 +598,9 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
         } else {
             $body = "Dear Supplier," . "<br /><br />" . "
             You are invited to participate in a new ".$docType.", " . $tenderMaster['title'] . ".
-            Please find the below link to register at " . $companyName . " supplier portal. It will expire in 96 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br /><br /><b>";
+            Please find the below link to register at " . $companyName . " supplier portal. It will expire in 96 hours. " . "<br /><br />" . "Click Here: " . "</b><a href='" . $loginUrl . "'>" . $loginUrl . "</a><br /><br />" . " Thank You" . "<br />";
         }
-
+        $body .= Helper::getSupplierEmailFooter($companySystemId);
 
         $dataEmail['companySystemID'] = $companySystemId;
         $dataEmail['alertMessage'] = $alertMessage;
