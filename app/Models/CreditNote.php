@@ -346,7 +346,13 @@ class CreditNote extends Model
         'netAmountLocal',
         'netAmountRpt',
         'isDelegation',
-        'type'
+        'type',
+        'canceledYN',
+        'canceledComments',
+        'canceledDateTime',
+        'canceledByEmpSystemID',
+        'canceledByEmpID',
+        'canceledByEmpName',
     ];
 
     /**
@@ -415,7 +421,12 @@ class CreditNote extends Model
         'netAmount' => 'float',
         'netAmountLocal' => 'float',
         'netAmountRpt' => 'float',
-        'type' => 'integer'
+        'type' => 'integer',
+        'canceledYN' => 'integer',
+        'canceledByEmpSystemID' => 'integer',
+        'canceledComments' => 'string',
+        'canceledByEmpID' => 'string',
+        'canceledByEmpName' => 'string',
     ];
 
     /**

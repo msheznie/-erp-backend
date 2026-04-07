@@ -1005,6 +1005,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                         ->where('isApproved', 1)
                                         // ->where('isActive', 1)
                                         ->where('catogaryBLorPL', 'PL')
+                                        ->where('is_retained_earnings', 1)
                                         ->count();
       
         return $this->sendResponse($chartofaccount, trans('custom.gl_validated_successfully'));
@@ -1029,6 +1030,7 @@ class ReportTemplateDetailsAPIController extends AppBaseController
                                         ->where('isApproved', 1)
                                         // ->where('isActive', 1)
                                         ->where('catogaryBLorPL', 'PL')
+                                        ->where('is_retained_earnings', 1)
                                         ->get();
 
         if (count($chartofaccount) > 0) {

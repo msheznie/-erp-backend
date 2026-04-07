@@ -47,20 +47,16 @@ class AttendanceCrossDayPulling implements ShouldQueue{
 
         CommonJobService::db_switch($this->dispatchDb);
 
-        $msg = "Company id {$this->companyId} started to execute the cross day end pulling in";
-        $msg .= "{$this->dispatchDb} DB ( {$this->attDate}111 )";
-
+        $msg = "Company id {$this->companyId} started to executed the cross day end pulling in at ";
+        $msg .= "{$this->dispatchDb} DB ( {$this->attDate} )";
 
         $isShiftModule = HrModuleAssignService::checkModuleAvailability($this->companyId, Modules::SHIFT);
 
         if(!$isShiftModule){
-            return Log::channel('attendance_cross_day_job_service')->error("cannot proceed in old shift module");
+            return;
         }
 
         $obj = new SMAttendanceCrossDayPullingService($this->companyId, $this->attDate);
         $obj->execute();
-
-
-
     }
 }

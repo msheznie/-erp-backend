@@ -3237,17 +3237,17 @@ IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatc
     (
     mainQuery.documentRptAmount + IF(mainQuery.documentSystemID = 21, 
     IF(matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount), 
-    0) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) )  + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) )
+    0) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) )  + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) ) + ( IF ( mainQuery.documentSystemID = 21 AND mainQuery.documentType = 15, IFNULL(advanceReceiptRefund.sumAdvanceReceiptAmountRpt, 0), 0 ) )
     ) AS balanceRpt,
     (
     mainQuery.documentLocalAmount  + IF(mainQuery.documentSystemID = 21, 
     IF(matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount), 
-    0)  + round(( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( srInvoiced.sumReturnLocalAmount  IS NULL, 0, srInvoiced.sumReturnLocalAmount  * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ), mainQuery.documentLocalDecimalPlaces) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) )
+    0)  + round(( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( srInvoiced.sumReturnLocalAmount  IS NULL, 0, srInvoiced.sumReturnLocalAmount  * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ), mainQuery.documentLocalDecimalPlaces) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) ) + ( IF ( mainQuery.documentSystemID = 21 AND mainQuery.documentType = 15, IFNULL(advanceReceiptRefund.sumAdvanceReceiptAmountLocal, 0), 0 ) )
     ) AS balanceLocal,
     (
     mainQuery.documentTransAmount + IF(mainQuery.documentSystemID = 21, 
     IF(matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount), 
-    0)  + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) )
+    0)  + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) ) + ( IF ( mainQuery.documentSystemID = 21 AND mainQuery.documentType = 15, IFNULL(advanceReceiptRefund.sumAdvanceReceiptAmount, 0), 0 ) )
     ) AS balanceTrans,
     mainQuery.customerName,   
     mainQuery.PONumber 
@@ -3479,6 +3479,20 @@ WHERE
     ) AS cnRefund ON mainQuery.documentSystemID = 19
     AND mainQuery.documentSystemCode = cnRefund.creditNoteAutoID
     AND mainQuery.companySystemID = cnRefund.companySystemID
+    LEFT JOIN (
+    SELECT
+        advanceReceiptAutoID,
+        companySystemID,
+        SUM(advanceReceiptAmount) AS sumAdvanceReceiptAmount,
+        SUM(advanceReceiptAmountLocal) AS sumAdvanceReceiptAmountLocal,
+        SUM(advanceReceiptAmountRpt) AS sumAdvanceReceiptAmountRpt
+    FROM erp_pay_advance_receipt_details
+    WHERE companySystemID IN (' . join(',', $companyID) . ')
+    GROUP BY advanceReceiptAutoID, companySystemID
+    ) AS advanceReceiptRefund ON mainQuery.documentSystemID = 21
+    AND mainQuery.documentType = 15
+    AND mainQuery.documentSystemCode = advanceReceiptRefund.advanceReceiptAutoID
+    AND mainQuery.companySystemID = advanceReceiptRefund.companySystemID
     LEFT JOIN (
     SELECT
         companySystemID,
@@ -3755,22 +3769,22 @@ IF( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactio
 IF( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) AS sumReturnDEOLocalAmount,
 IF( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) AS sumReturnDEORptAmount,
     (
-    mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) )+ + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) )
+    mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) )+ + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) ) + ( IF ( mainQuery.documentSystemID = 21 AND mainQuery.documentType = 15, IFNULL(advanceReceiptRefund.sumAdvanceReceiptAmountRpt, 0), 0 ) )
     ) AS balanceRpt,
     (
-    mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) )+  + ROUND(( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ),  mainQuery.documentLocalDecimalPlaces) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) )
+    mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) )+  + ROUND(( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ),  mainQuery.documentLocalDecimalPlaces) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) ) + ( IF ( mainQuery.documentSystemID = 21 AND mainQuery.documentType = 15, IFNULL(advanceReceiptRefund.sumAdvanceReceiptAmountLocal, 0), 0 ) )
     ) AS balanceLocal,
     (
-    mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) )+  + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) )
+    mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) )+  + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) ) + ( IF ( srInvoiced.sumReturnTransactionAmount IS NULL, 0, srInvoiced.sumReturnTransactionAmount * -1) ) + ( IF ( srDEO.sumReturnDEOTransactionAmount IS NULL, 0, srDEO.sumReturnDEOTransactionAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) ) + ( IF ( mainQuery.documentSystemID = 21 AND mainQuery.documentType = 15, IFNULL(advanceReceiptRefund.sumAdvanceReceiptAmount, 0), 0 ) )
     ) AS balanceTrans,
     (
-    mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) )+ + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0)) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) )
+    mainQuery.documentRptAmount + ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) )+ + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionRptAmount,0)) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) ) + ( IF ( mainQuery.documentSystemID = 21 AND mainQuery.documentType = 15, IFNULL(advanceReceiptRefund.sumAdvanceReceiptAmountRpt, 0), 0 ) )
     ) AS balanceSubsequentCollectionRpt,
     (
-    mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) )+ +  ROUND(( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0)),mainQuery.documentLocalDecimalPlaces) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) )
+    mainQuery.documentLocalAmount + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) )+ +  ROUND(( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionLocalAmount,0)),mainQuery.documentLocalDecimalPlaces) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) ) + ( IF ( mainQuery.documentSystemID = 21 AND mainQuery.documentType = 15, IFNULL(advanceReceiptRefund.sumAdvanceReceiptAmountLocal, 0), 0 ) )
     ) AS balanceSubsequentCollectionLocal,
     (
-    mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) )+ + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) )+ ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0)) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) )
+    mainQuery.documentTransAmount + ( IF ( matchedBRV.MatchedBRVTransAmount IS NULL, 0, matchedBRV.MatchedBRVTransAmount ) )+ + ( IF ( InvoicedBRV.BRVTransAmount IS NULL, 0, InvoicedBRV.BRVTransAmount ) )+ ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) ) + ( IF ( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceTransAmount *- 1 ) -  IFNULL(Subsequentcollection.SubsequentCollectionTransAmount,0)) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) ) + ( IF ( mainQuery.documentSystemID = 21 AND mainQuery.documentType = 15, IFNULL(advanceReceiptRefund.sumAdvanceReceiptAmount, 0), 0 ) )
     ) AS balanceSubsequentCollectionTrans,
 
     mainQuery.customerName,
@@ -3922,6 +3936,20 @@ GROUP BY erp_generalledger.companySystemID, erp_generalledger.chartOfAccountSyst
     ) AS cnRefund ON mainQuery.documentSystemID = 19
     AND mainQuery.documentSystemCode = cnRefund.creditNoteAutoID
     AND mainQuery.companySystemID = cnRefund.companySystemID
+    LEFT JOIN (
+    SELECT
+        advanceReceiptAutoID,
+        companySystemID,
+        SUM(advanceReceiptAmount) AS sumAdvanceReceiptAmount,
+        SUM(advanceReceiptAmountLocal) AS sumAdvanceReceiptAmountLocal,
+        SUM(advanceReceiptAmountRpt) AS sumAdvanceReceiptAmountRpt
+    FROM erp_pay_advance_receipt_details
+    WHERE companySystemID IN (' . join(',', $companyID) . ')
+    GROUP BY advanceReceiptAutoID, companySystemID
+    ) AS advanceReceiptRefund ON mainQuery.documentSystemID = 21
+    AND mainQuery.documentType = 15
+    AND mainQuery.documentSystemCode = advanceReceiptRefund.advanceReceiptAutoID
+    AND mainQuery.companySystemID = advanceReceiptRefund.companySystemID
     LEFT JOIN (
     SELECT
         erp_matchdocumentmaster.companySystemID,
@@ -4314,13 +4342,13 @@ IF( InvoiceFromBRVAndMatching.InvoiceTransAmount IS NULL, 0, InvoiceFromBRVAndMa
 IF( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) AS InvoiceLocalAmount,
 IF( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) AS InvoiceRptAmount,
     (
-    (mainQuery.documentRptAmount) +  ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) )
+    (mainQuery.documentRptAmount) +  ( IF ( matchedBRV.MatchedBRVRptAmount IS NULL, 0, matchedBRV.MatchedBRVRptAmount ) ) + ( IF ( InvoicedBRV.BRVRptAmount IS NULL, 0, InvoicedBRV.BRVRptAmount ) ) + ( IF ( srInvoiced.sumReturnRptAmount IS NULL, 0, srInvoiced.sumReturnRptAmount * -1) ) + ( IF ( srDEO.sumReturnDEORptAmount IS NULL, 0, srDEO.sumReturnDEORptAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceRptAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceRptAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountRpt, 0), 0 ) ) + ( IF ( mainQuery.documentSystemID = 21 AND mainQuery.documentType = 15, IFNULL(advanceReceiptRefund.sumAdvanceReceiptAmountRpt, 0), 0 ) )
     ) AS balanceRpt,
     (
-    (mainQuery.documentLocalAmount) + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) )
+    (mainQuery.documentLocalAmount) + ( IF ( matchedBRV.MatchedBRVLocalAmount IS NULL, 0, matchedBRV.MatchedBRVLocalAmount ) ) + ( IF ( InvoicedBRV.BRVLocalAmount IS NULL, 0, InvoicedBRV.BRVLocalAmount ) ) + ( IF ( srInvoiced.sumReturnLocalAmount IS NULL, 0, srInvoiced.sumReturnLocalAmount * -1) ) + ( IF ( srDEO.sumReturnDEOLocalAmount IS NULL, 0, srDEO.sumReturnDEOLocalAmount * -1) )  + ( IF ( InvoiceFromBRVAndMatching.InvoiceLocalAmount IS NULL, 0, InvoiceFromBRVAndMatching.InvoiceLocalAmount *- 1 ) ) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmountLocal, 0), 0 ) ) + ( IF ( mainQuery.documentSystemID = 21 AND mainQuery.documentType = 15, IFNULL(advanceReceiptRefund.sumAdvanceReceiptAmountLocal, 0), 0 ) )
     ) AS balanceLocal,
     (
-    (mainQuery.documentTransAmount) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) )
+    (mainQuery.documentTransAmount) + ( IF ( mainQuery.documentSystemID = 19, IFNULL(cnRefund.sumCreditNotePaymentAmount, 0), 0 ) ) + ( IF ( mainQuery.documentSystemID = 21 AND mainQuery.documentType = 15, IFNULL(advanceReceiptRefund.sumAdvanceReceiptAmount, 0), 0 ) )
     ) AS balanceTrans,
     mainQuery.CustomerName,
     mainQuery.creditDays,
@@ -4447,16 +4475,30 @@ WHERE
     AND mainQuery.companySystemID = cnRefund.companySystemID
     LEFT JOIN (
     SELECT
+        advanceReceiptAutoID,
+        companySystemID,
+        SUM(advanceReceiptAmount) AS sumAdvanceReceiptAmount,
+        SUM(advanceReceiptAmountLocal) AS sumAdvanceReceiptAmountLocal,
+        SUM(advanceReceiptAmountRpt) AS sumAdvanceReceiptAmountRpt
+    FROM erp_pay_advance_receipt_details
+    WHERE companySystemID IN (' . join(',', $companyID) . ')
+    GROUP BY advanceReceiptAutoID, companySystemID
+    ) AS advanceReceiptRefund ON mainQuery.documentSystemID = 21
+    AND mainQuery.documentType = 15
+    AND mainQuery.documentSystemCode = advanceReceiptRefund.advanceReceiptAutoID
+    AND mainQuery.companySystemID = advanceReceiptRefund.companySystemID
+    LEFT JOIN (
+    SELECT
         erp_matchdocumentmaster.companySystemID,
         erp_matchdocumentmaster.documentSystemID,
         erp_matchdocumentmaster.PayMasterAutoId,
         erp_matchdocumentmaster.BPVcode,
         sum( erp_custreceivepaymentdet.receiveAmountTrans ) AS MatchedBRVTransAmount,
         sum( erp_custreceivepaymentdet.receiveAmountLocal ) AS MatchedBRVLocalAmount,
-        sum( erp_custreceivepaymentdet.receiveAmountRpt ) AS MatchedBRVRptAmount 
+        sum( erp_custreceivepaymentdet.receiveAmountRpt ) AS MatchedBRVRptAmount
     FROM
         erp_matchdocumentmaster
-        INNER JOIN erp_custreceivepaymentdet ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID 
+        INNER JOIN erp_custreceivepaymentdet ON erp_matchdocumentmaster.companyID = erp_custreceivepaymentdet.companyID
         AND erp_matchdocumentmaster.matchDocumentMasterAutoID = erp_custreceivepaymentdet.matchingDocID 
     WHERE
         erp_matchdocumentmaster.matchingConfirmedYN = 1 
@@ -4906,6 +4948,9 @@ SELECT
     customermaster.CustomerName,
     CONCAT(customermaster.CutomerCode, " - ", customermaster.CustomerName) AS concatCustomerName,
     CASE
+     WHEN erp_generalledger.documentSystemID = 21 AND erp_generalledger.documentType = 15 AND advance_receipt_pulled_amounts.advanceReceiptAutoID IS NOT NULL
+     THEN
+        IFNULL(advance_receipt_pulled_amounts.advanceReceiptAmountLocal, 0)
      WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND cn_pulled_amounts.creditNoteAutoID IS NOT NULL
      THEN
         IFNULL(cn_pulled_amounts.creditNotePaymentAmountLocal, 0)
@@ -4967,6 +5012,9 @@ SELECT
         END
     END AS receivedAmountLocal,
     CASE
+     WHEN erp_generalledger.documentSystemID = 21 AND erp_generalledger.documentType = 15 AND advance_receipt_pulled_amounts.advanceReceiptAutoID IS NOT NULL
+     THEN
+        IFNULL(advance_receipt_pulled_amounts.advanceReceiptAmountRpt, 0)
      WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND cn_pulled_amounts.creditNoteAutoID IS NOT NULL
      THEN
         IFNULL(cn_pulled_amounts.creditNotePaymentAmountRpt, 0)
@@ -5013,6 +5061,9 @@ SELECT
         END 
     END AS receivedAmountRpt,
     CASE
+     WHEN erp_generalledger.documentSystemID = 21 AND erp_generalledger.documentType = 15 AND advance_receipt_pulled_amounts.advanceReceiptAutoID IS NOT NULL
+     THEN
+        IFNULL(advance_receipt_pulled_amounts.advanceReceiptAmount, 0)
      WHEN erp_generalledger.documentSystemID = 19 AND erp_creditnote.type = 3 AND cn_pulled_amounts.creditNoteAutoID IS NOT NULL
      THEN
         IFNULL(cn_pulled_amounts.creditNotePaymentAmount, 0)
@@ -5088,6 +5139,22 @@ LEFT JOIN (
 ) AS cn_pulled_amounts ON erp_creditnote.creditNoteAutoID = cn_pulled_amounts.creditNoteAutoID
     AND erp_creditnote.type = 3
     AND erp_creditnote.companySystemID = cn_pulled_amounts.companySystemID
+LEFT JOIN (
+    SELECT
+        pard.advanceReceiptAutoID,
+        pard.companySystemID,
+        SUM(pard.advanceReceiptAmount) AS advanceReceiptAmount,
+        SUM(pard.advanceReceiptAmountLocal) AS advanceReceiptAmountLocal,
+        SUM(pard.advanceReceiptAmountRpt) AS advanceReceiptAmountRpt
+    FROM erp_pay_advance_receipt_details pard
+    INNER JOIN erp_customerreceivepayment ecrp
+        ON ecrp.custReceivePaymentAutoID = pard.advanceReceiptAutoID
+        AND ecrp.companySystemID = pard.companySystemID
+        AND ecrp.documentSystemID = 21
+        AND ecrp.documentType = 15
+    GROUP BY pard.advanceReceiptAutoID, pard.companySystemID
+) AS advance_receipt_pulled_amounts ON advance_receipt_pulled_amounts.advanceReceiptAutoID = erp_generalledger.documentSystemCode
+    AND advance_receipt_pulled_amounts.companySystemID = erp_generalledger.companySystemID
 WHERE
     ( erp_generalledger.documentSystemID = "20" OR erp_generalledger.documentSystemID = "19" OR erp_generalledger.documentSystemID = "21" OR erp_generalledger.documentSystemID = "87" ) 
     AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
@@ -5143,7 +5210,7 @@ FROM
         AND erp_generalledger.documentSystemID = 4
         AND erp_generalledger.companySystemID = erp_paysupplierinvoicemaster.companySystemID
         AND erp_paysupplierinvoicemaster.invoiceType = 8
-        AND erp_paysupplierinvoicemaster.refundType = 3
+        AND erp_paysupplierinvoicemaster.refundType IN (1, 3) 
 LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
 LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID
 LEFT JOIN currencymaster currRpt ON erp_generalledger.documentRptCurrencyID = currRpt.currencyID
@@ -5562,7 +5629,7 @@ FROM
         AND erp_generalledger.documentSystemID = 4
         AND erp_generalledger.companySystemID = erp_paysupplierinvoicemaster.companySystemID
         AND erp_paysupplierinvoicemaster.invoiceType = 8
-        AND erp_paysupplierinvoicemaster.refundType = 3
+        AND erp_paysupplierinvoicemaster.refundType IN (1, 3)
     INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
     LEFT JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
     LEFT JOIN currencymaster currTrans ON erp_generalledger.documentTransCurrencyID = currTrans.currencyID
@@ -5764,7 +5831,7 @@ WHERE
                         AND erp_generalledger.documentSystemID = 4
                         AND erp_generalledger.companySystemID = erp_paysupplierinvoicemaster.companySystemID
                         AND erp_paysupplierinvoicemaster.invoiceType = 8
-                        AND erp_paysupplierinvoicemaster.refundType = 3
+                        AND erp_paysupplierinvoicemaster.refundType IN (1, 3)
                     INNER JOIN companymaster ON erp_generalledger.companySystemID = companymaster.companySystemID
                     INNER JOIN customermaster ON customermaster.customerCodeSystem = erp_generalledger.supplierCodeSystem
                     LEFT JOIN currencymaster currLocal ON erp_generalledger.documentLocalCurrencyID = currLocal.currencyID

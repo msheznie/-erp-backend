@@ -1,14 +1,15 @@
 <?php
 
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Console\Scheduling\Schedule;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
-use Illuminate\Auth\AuthenticationException;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+
 // Keycloak exceptions are now handled in custom guard
 // use KeycloakGuard\Exceptions\TokenException;
 // use KeycloakGuard\Exceptions\UserNotFoundException;
@@ -47,10 +48,10 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PORT |
             \Illuminate\Http\Request::HEADER_X_FORWARDED_PROTO
         );
-        
+
         if ($proxies === '*') {
             $middleware->trustProxies(at: '*', headers: $headers);
-        } elseif (is_array($proxies) && !empty($proxies)) {
+        } elseif (is_array($proxies) && ! empty($proxies)) {
             $middleware->trustProxies(at: $proxies, headers: $headers);
         } else {
             // Default: trust all proxies if not specified
@@ -128,13 +129,13 @@ return Application::configure(basePath: dirname(__DIR__))
                     'errors' => [
                         'status' => 401,
                         'message' => 'Unauthenticated',
-                    ]
+                    ],
                 ], 401);
             }
 
             // Other exceptions (non-HTTP, non-Auth, non-Validation)
-            if (!($e instanceof HttpException || $e instanceof AuthenticationException || $e instanceof ValidationException)) {
-                if (!config('app.debug')) {
+            if (! ($e instanceof HttpException || $e instanceof AuthenticationException || $e instanceof ValidationException)) {
+                if (! config('app.debug')) {
                     return response()->json(['message' => 'Something went wrong. Please contact system administrator'], 500);
                 }
             }
@@ -145,7 +146,7 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($e instanceof \League\OAuth2\Server\Exception\OAuthServerException && $e->getCode() == 9) {
                 return false; // Don't report this exception
             }
-            
+
             if (app()->bound('sentry')) {
                 app('sentry')->captureException($e);
             }
@@ -169,14 +170,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('command:removeExpiredUserGroupAccess')->daily()->withoutOverlapping();
 
         $schedule->command('pull-attendance')
-        ->timezone('Asia/Muscat')
-        ->dailyAt('00:30')
-        ->withoutOverlapping();
+            ->timezone('Asia/Muscat')
+            ->dailyAt('00:30')
+            ->withoutOverlapping();
 
         $schedule->command('pull-cross-day-attendance')
-        ->timezone('Asia/Muscat')
-        ->dailyAt('12:30')
-        ->withoutOverlapping();
+            ->timezone('Asia/Muscat')
+            ->dailyAt('12:30')
+            ->withoutOverlapping();
 
         $schedule->command('command:forgotToPunchIn')
             ->timezone('Asia/Muscat')
@@ -202,7 +203,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('command:birthday_wish_schedule')
             ->timezone('Asia/Muscat')
             ->dailyAt('02:00')
-            ->withoutOverlapping(); 
+            ->withoutOverlapping();
 
         $schedule->command('command:leaveCarryForwardComputationSchedule')
             ->timezone('Asia/Muscat')
@@ -213,7 +214,7 @@ return Application::configure(basePath: dirname(__DIR__))
             ->timezone('Asia/Muscat')
             ->hourly()
             ->between('12:00', '23:59')
-            ->withoutOverlapping();    
+            ->withoutOverlapping();
 
         $schedule->command('command:AbsentNotificationCrossDay')
             ->timezone('Asia/Muscat')
@@ -229,6 +230,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $schedule->command('command:budgetSubmissionDeadlineReachedNotification')
             ->timezone('Asia/Muscat')
             ->dailyAt('00:00')
+            ->withoutOverlapping();
+
+        $schedule->command('mfa:purge-sessions')
+            ->timezone('Asia/Muscat')
+            ->dailyAt('01:00')
             ->withoutOverlapping();
     })
     ->create();

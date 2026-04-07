@@ -19,6 +19,8 @@ use App\Models\CompanyDepartment;
 use App\Models\Company;
 use App\Models\YesNoSelection;
 use App\Repositories\CompanyDepartmentRepository;
+use App\Http\Requests\API\PullDepartmentMasterRequest;
+use App\Services\API\DepartmentAPIService;
 use App\Services\UserTypeService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -29,6 +31,8 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 use App\Traits\AuditLogsTrait;
 use Yajra\DataTables\DataTables;
 use App\helper\CreateExcel;
@@ -42,12 +46,45 @@ class CompanyDepartmentAPIController extends AppBaseController
     /** @var  CompanyDepartmentRepository */
     private $companyDepartmentRepository;
     private $userRepository;
+    /** @var DepartmentAPIService */
+    private $departmentAPIService;
     use AuditLogsTrait;
 
-    public function __construct(CompanyDepartmentRepository $companyDepartmentRepo, UserRepository $userRepo)
-    {
+    public function __construct(
+        CompanyDepartmentRepository $companyDepartmentRepo,
+        UserRepository $userRepo,
+        DepartmentAPIService $departmentAPIService
+    ) {
         $this->companyDepartmentRepository = $companyDepartmentRepo;
         $this->userRepository = $userRepo;
+        $this->departmentAPIService = $departmentAPIService;
+    }
+
+    /**
+     * External integration: POST /api/v1/integrations/departments/search
+     */
+    public function searchDepartments(Request $request)
+    {
+        $formRequest = new PullDepartmentMasterRequest();
+        $validator = Validator::make($request->all(), $formRequest->rules(), $formRequest->messages());
+
+        if ($validator->fails()) {
+            $message = $validator->errors()->first();
+            $message = Str::startsWith($message, 'custom.') ? trans($message) : $message;
+
+            return $this->sendError($message, 422, ['type' => '']);
+        }
+
+        $input = $validator->validated();
+        
+
+        $response = $this->departmentAPIService->searchDepartments($input);
+
+        if (!$response->isSuccess()) {
+            return $this->sendError($response->getMessage(), $response->getStatusCode());
+        }
+
+        return $this->sendResponse($response->getData(), $response->getMessage());
     }
 
     /**

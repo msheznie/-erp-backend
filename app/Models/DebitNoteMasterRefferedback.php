@@ -385,7 +385,13 @@ class DebitNoteMasterRefferedback extends Model
         'createdDateTime',
         'createdDateAndTime',
         'timestamp',
-          'isDelegation'
+          'isDelegation',
+        'cancelYN',
+        'cancelComment',
+        'cancelDate',
+        'canceledByEmpSystemID',
+        'canceledByEmpID',
+        'canceledByEmpName',
     ];
 
     /**

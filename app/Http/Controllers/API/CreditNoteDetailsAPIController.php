@@ -312,6 +312,12 @@ class CreditNoteDetailsAPIController extends AppBaseController
 
         /*get master*/
         $master = CreditNote::select('*')->where('creditNoteAutoID', $creditNoteAutoID)->first();
+        if (empty($master)) {
+            return $this->sendError(trans('custom.credit_note_not_found'), 500);
+        }
+        if (($master->canceledYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.credit_note_is_cancelled_cannot_update'), 500);
+        }
         $myCurr = $master->customerCurrencyID;               /*currencyID*/
         //$companyCurrency = \Helper::companyCurrency($myCurr);
         $decimal = Helper::getCurrencyDecimalPlace($myCurr);

@@ -8,6 +8,7 @@ use Eloquent as Model;
  * @SWG\Definition(
  *      definition="POSSourceSalesReturnDetails",
  *      required={""},
+ *
  *      @SWG\Property(
  *          property="salesReturnDetailID",
  *          description="salesReturnDetailID",
@@ -314,14 +315,11 @@ use Eloquent as Model;
  */
 class POSSourceSalesReturnDetails extends Model
 {
-
     public $table = 'pos_source_salesreturndetails';
-    
+    public $timestamps = false;
     const CREATED_AT = 'created_at';
+
     const UPDATED_AT = 'updated_at';
-
-
-
 
     public $fillable = [
         'salesReturnID',
@@ -375,7 +373,8 @@ class POSSourceSalesReturnDetails extends Model
         'modifiedDateTime',
         'modifiedUserName',
         'timestamp',
-        'transaction_log_id'
+        'transaction_log_id',
+        'pos_type',
     ];
 
     /**
@@ -436,7 +435,7 @@ class POSSourceSalesReturnDetails extends Model
         'modifiedDateTime' => 'datetime',
         'modifiedUserName' => 'string',
         'timestamp' => 'datetime',
-        'transaction_log_id' => 'integer'
+        'transaction_log_id' => 'integer',
     ];
 
     /**
@@ -445,11 +444,11 @@ class POSSourceSalesReturnDetails extends Model
      * @var array
      */
     public static $rules = [
-        'salesReturnID' => 'required'
+        'salesReturnID' => 'required',
     ];
+
     public function item_assigned()
     {
         return $this->hasOne('App\Models\ItemAssigned', 'itemCodeSystem', 'itemAutoID');
     }
-    
 }

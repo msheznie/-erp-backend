@@ -376,7 +376,7 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                     $email = data_get($val, 'supplierAssigned.supEmail') ?? $val['supplier_email'];
                     $regNo = data_get($val, 'supplierAssigned.registrationNumber') ?? $val['registration_number'];
                     $isBidTender = data_get($val, 'supplierAssigned.registrationNumber') !== null ? 0 : 1;
-                    
+
                     $isExist = SupplierRegistrationLink::select('id', 'STATUS', 'token')
                         ->where('email', $email)
                         ->where('registration_number', $regNo)
@@ -513,11 +513,11 @@ class TenderSupplierAssigneeAPIController extends AppBaseController
                         $this->sendSupplierEmailInvitation($email, $companyName, $loginUrl, $tenderId, $companySystemId, 1, $rfx);
                         TenderSupplierAssignee::find($getSupplierAssignedData['id'])
                             ->update(['mail_sent' => 1, 'registration_link_id' => $isExist['id']]);
-                                $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
-                                    $tenderTitle,
-                                    $isExist['id'],
-                                    $documentSystemID
-                                );
+                        $this->srmNotificationService->sendClosedOrSingleInvitationNotification(
+                            $tenderTitle,
+                            $isExist['id'],
+                            $documentSystemID
+                        );
                     }
                 }
                 DB::commit();

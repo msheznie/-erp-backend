@@ -905,6 +905,14 @@ class SupplierMasterAPIController extends AppBaseController
     {
         $input = $this->convertArrayToValue(Arr::except($request->all(),['company', 'final_approved_by', 'blocked_by']));
 
+        if (isset($input['isActive']) && (int) $input['isActive'] === 0) {
+            $comm = $input['supplierCommunicationYN'] ?? null;
+            $wantsCommunication = $comm === true || $comm === 1 || $comm === '1' || $comm === 'true';
+            if ($wantsCommunication) {
+                return $this->sendError(trans('custom.supplier_communication_requires_active_supplier'), 422);
+            }
+        }
+
         $id = $input['supplierCodeSystem'];
 
         $supplierMaster = $this->supplierMasterRepository->findWithoutFail($id);

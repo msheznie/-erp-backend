@@ -111,7 +111,6 @@ class SupplierRegistrationLink extends Model
         }
         return self::whereIn('id', $ids)->get()->keyBy('id');
     }
-
     public static function getUnapprovedSuppliers($tenderId, $companyId, $isDataTable = false)
     {
         $query = self::select('id', 'name', 'email', 'registration_number','approved_yn','uuid')

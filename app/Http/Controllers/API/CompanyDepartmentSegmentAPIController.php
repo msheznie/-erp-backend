@@ -5,28 +5,32 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCompanyDepartmentSegmentAPIRequest;
 use App\Http\Requests\API\UpdateCompanyDepartmentSegmentAPIRequest;
 use App\Models\CompanyDepartmentSegment;
+use App\Models\CompanyDepartment;
 use App\Models\SegmentMaster;
 use App\Models\SegmentAssigned;
 use App\Repositories\CompanyDepartmentSegmentRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
+use App\Models\CompanyDepartmentEmployee;
 use Prettus\Repository\Criteria\RequestCriteria;
+use App\Models\BudgetDelegateAccessRecord;
 use Response;
 use Yajra\DataTables\DataTables;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\AuditLogsTrait;
-
+use App\Services\BudgetPermissionService;
 class CompanyDepartmentSegmentAPIController extends AppBaseController
 {
     use AuditLogsTrait;
 
     private $companyDepartmentSegmentRepository;
-
-    public function __construct(CompanyDepartmentSegmentRepository $companyDepartmentSegmentRepo)
+    private $budgetPermissionService;
+    public function __construct(CompanyDepartmentSegmentRepository $companyDepartmentSegmentRepo, BudgetPermissionService $budgetPermissionService)
     {
         $this->companyDepartmentSegmentRepository = $companyDepartmentSegmentRepo;
+        $this->budgetPermissionService = new BudgetPermissionService();
     }
 
     /**
@@ -97,7 +101,14 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
         $input = $request->all();
 
         $departmentSystemID = $request->get('departmentSystemID');
+        $userPermission = $this->budgetPermissionService->getBudgetPlanningUserPermissions([
+            'companyId' => $input['companySystemID'],
+            'delegateUser' =>  Auth::user()->employee_id
+        ]);
 
+        $companyDeparment = CompanyDepartmentEmployee::where('departmentSystemID', $departmentSystemID)
+                           ->where('employeeSystemID', Auth::user()->employee_id)->first();
+      
         if (!$departmentSystemID) {
             return $this->sendError(trans('custom.department_id_is_required'));
         }
@@ -108,23 +119,80 @@ class CompanyDepartmentSegmentAPIController extends AppBaseController
             $sort = 'desc';
         }
 
-        $query = CompanyDepartmentSegment::where('departmentSystemID', $departmentSystemID)
-            ->with(['segment', 'department'])
-            ->orderBy('departmentSegmentSystemID', $sort);
+        if ($userPermission['success'] && $userPermission['data']['delegateUser']['status']) {
+            // Restrict to departments the current user's employee belongs to (same logic as CompanyBudgetPlanningAPIController)
+            $companyId = $input['companySystemID'] ?? null;
+
+            $segments = collect();
+
+            if ($companyDeparment) {
+                $delegateAccessRecords = BudgetDelegateAccessRecord::with([
+                    'budgetPlanningDetail.departmentSegment.segment'
+                ])->where('delegatee_id', $companyDeparment->departmentEmployeeSystemID)->get();
+
+                $items = $delegateAccessRecords
+                    ->map(function ($record) use ($departmentSystemID) {
+                        $departmentSegment = optional(optional($record->budgetPlanningDetail)->departmentSegment);
+                        $segment = $departmentSegment ? $departmentSegment->segment : null;
+
+                        if (!$segment) {
+                            return null;
+                        }
+
+                        return [
+                            'segment' => $segment,
+                            'departmentSystemID' => $departmentSegment->departmentSystemID ?? null,
+                            'departmentSegmentSystemID' => $departmentSegment->departmentSegmentSystemID ?? null,
+                        ];
+                    })
+                    ->filter(function ($item) {
+                        return $item !== null;
+                    })
+                    ->filter(function ($item) use ($departmentSystemID) {
+                        return (int) ($item['departmentSystemID'] ?? 0) === (int) $departmentSystemID;
+                    });
+
+                $items = $sort === 'asc'
+                    ? $items->sortBy('departmentSegmentSystemID')
+                    : $items->sortByDesc('departmentSegmentSystemID');
+
+                $segments = $items
+                    ->pluck('segment')
+                    ->filter()
+                    ->unique('serviceLineSystemID')
+                    ->values();
+            }
+           
+          
+        } else {
+            $segments = CompanyDepartmentSegment::where('departmentSystemID', $departmentSystemID)
+                ->with(['segment', 'department'])
+                ->orderBy('departmentSegmentSystemID', $sort)
+                ->get()
+                ->pluck('segment')
+                ->filter()
+                ->unique('serviceLineSystemID')
+                ->values();
+        }
+
+
 
         $search = $request->input('search.value');
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $query = $query->whereHas('segment', function ($query) use ($search) {
-                $query->where('ServiceLineCode', 'LIKE', "%{$search}%")
-                    ->orWhere('ServiceLineDes', 'LIKE', "%{$search}%");
-            });
+            $segments = $segments->filter(function ($segment) use ($search) {
+                $code = $segment->ServiceLineCode ?? '';
+                $des = $segment->ServiceLineDes ?? '';
+
+                return (is_string($code) && stripos($code, $search) !== false)
+                    || (is_string($des) && stripos($des, $search) !== false);
+            })->values();
         }
 
 
         return $this->sendResponse([
-            'segments' => $query->get()->pluck('segment')
+            'segments' => $segments
         ], trans('custom.form_data_retrieved_successfully'));
 
     }

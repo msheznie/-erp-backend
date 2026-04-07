@@ -112,6 +112,10 @@ return [
     'budget_template_variable_has_been_updated' => 'Budget template {variable} has been updated',
     'budget_template_variable_has_been_deleted' => 'Budget template {variable} has been deleted',
     'department_budget_planning_variable_has_been_created' => 'Department budget planning {variable} has been created',
+    'department_budget_planning_variable_has_been_deleted' => 'Department budget planning {variable} has been deleted',
+    'company_budget_planning_variable_has_been_created' => 'Company budget planning {variable} has been created',
+    'company_budget_planning_variable_has_been_updated' => 'Company budget planning {variable} has been updated',
+    'company_budget_planning_variable_has_been_deleted' => 'Company budget planning {variable} has been deleted',
     'attribute_variable_has_created' => 'Attribute {variable} has created',
     'company_assign_variable_has_been_updated' => 'Company Assign {variable} has been updated',
     'company_assign_variable_has_been_created' => 'Company Assign {variable} has been created',
@@ -127,5 +131,10 @@ return [
     // Employee Navigation Assign Audit Log Narrations
     'employee_has_been_assigned_to_user_group' => 'Employee {variable} has been assigned to user group',
     'employee_has_been_unassigned_from_user_group' => 'Employee {variable} has been unassigned from user group',
+
+    // Document Communication (messages/comments)
+    'document_communication_comment_added' => 'Document communication comment has been added',
+    'document_communication_comment_edited' => 'Document communication comment has been edited',
+    'document_communication_comment_deleted' => 'Document communication comment has been deleted',
 ];
 

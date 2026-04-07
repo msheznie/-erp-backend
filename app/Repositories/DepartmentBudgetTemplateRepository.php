@@ -85,6 +85,18 @@ class DepartmentBudgetTemplateRepository extends BaseRepository
     }
 
     /**
+     * Check if department already has a template of the given type (any, active or inactive)
+     */
+    public function hasTemplateOfType($departmentSystemID, $templateType)
+    {
+        return $this->model->newQuery()
+            ->join('budget_templates', 'department_budget_templates.budgetTemplateID', '=', 'budget_templates.budgetTemplateID')
+            ->where('department_budget_templates.departmentSystemID', $departmentSystemID)
+            ->where('budget_templates.type', $templateType)
+            ->exists();
+    }
+
+    /**
      * Check if department already has an active template of the same type
      */
     public function hasActiveTemplateOfType($departmentSystemID, $templateType)
@@ -127,4 +139,6 @@ class DepartmentBudgetTemplateRepository extends BaseRepository
 
         return 0;
     }
+
+    
 } 

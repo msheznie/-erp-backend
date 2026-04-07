@@ -91,13 +91,33 @@ class AuditLogCommonService
                 }
                 break;
                 
+            case 'company_budget_plannings':
+                if ($crudType === 'C') {
+                    return 'audit.company_budget_planning_variable_has_been_created';
+                } elseif ($crudType === 'U') {
+                    return 'audit.company_budget_planning_variable_has_been_updated';
+                } elseif ($crudType === 'D') {
+                    return 'audit.company_budget_planning_variable_has_been_deleted';
+                }
+                break;
+
+            case 'dept_budget_planning_time_requests':
+                if ($crudType === 'C') {
+                    return 'audit.time_extension_request_variable_has_been_created';
+                } elseif ($crudType === 'U') {
+                    return 'audit.time_extension_request_variable_has_been_updated';
+                } elseif ($crudType === 'D') {
+                    return 'audit.time_extension_request_variable_has_been_deleted';
+                }
+                break;
+
             case 'department_budget_plannings':
                 if ($crudType === 'C') {
                     return 'audit.department_budget_planning_variable_has_been_created';
                 } elseif ($crudType === 'U') {
                     return 'audit.department_budget_planning_variable_has_been_updated';
                 } elseif ($crudType === 'D') {
-                    return 'audit.time_extension_request_variable_has_been_deleted';
+                    return 'audit.department_budget_planning_variable_has_been_deleted';
                 }
                 break;
                 
@@ -272,6 +292,16 @@ class AuditLogCommonService
                     return 'audit.employee_has_been_unassigned_from_user_group';
                 }
                 break;
+
+            case 'erp_document_communication_messages':
+                if ($crudType === 'C') {
+                    return 'audit.document_communication_comment_added';
+                } elseif ($crudType === 'U') {
+                    return 'audit.document_communication_comment_edited';
+                } elseif ($crudType === 'D') {
+                    return 'audit.document_communication_comment_deleted';
+                }
+                break;
         }
         
         return '';
@@ -388,6 +418,22 @@ class AuditLogCommonService
                     'companySystemIdColumn' => 'companySystemID'
                 ];
                 
+            case 'company_budget_plannings':
+                return [
+                    'tableName' => 'company_budget_plannings',
+                    'primaryKey' => 'id',
+                    'docCodeColumn' => 'planningCode',
+                    'companySystemIdColumn' => 'companySystemID'
+                ];
+
+            case 'dept_budget_planning_time_requests':
+                return [
+                    'tableName' => 'dept_budget_planning_time_requests',
+                    'primaryKey' => 'id',
+                    'docCodeColumn' => 'request_code',
+                    'companySystemIdColumn' => null,
+                ];
+
             case 'department_budget_plannings':
                 return [
                     'tableName' => 'department_budget_plannings',
@@ -522,6 +568,14 @@ class AuditLogCommonService
                     'primaryKey' => 'id',
                     'docCodeColumn' => null, // No document code available
                     'companySystemIdColumn' => 'companyID'
+                ];
+
+            case 'erp_document_communication_messages':
+                return [
+                    'tableName' => 'erp_purchaseordermaster',
+                    'primaryKey' => 'purchaseOrderID',
+                    'docCodeColumn' => 'purchaseOrderCode',
+                    'companySystemIdColumn' => 'companySystemID'
                 ];
                 
             default:
