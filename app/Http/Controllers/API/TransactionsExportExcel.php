@@ -119,7 +119,7 @@ class TransactionsExportExcel extends AppBaseController
         PdcLogRepository $pdcLogRepository,
         RecurringVoucherSetupRepository $recurringVoucherSetupRepository,
         ErpBudgetAdditionRepository $erpBudgetAdditionRepository,
-        SupplierRegistrationLinkRepository $supplierRegistrationLinkRepository,
+        SupplierRegistrationLinkRepository $supplierRegistrationLinkRepository
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
