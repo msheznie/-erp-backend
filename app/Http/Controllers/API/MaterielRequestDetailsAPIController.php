@@ -32,6 +32,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Jobs\AddBulkItem\MaterialRequestAddBulkItemJob;
 use App\Repositories\UserRepository;
 use App\Services\MaterialRequestService;
+use App\Services\DecimalPrecisionService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Criteria\LimitOffsetCriteria;
@@ -50,11 +51,17 @@ class MaterielRequestDetailsAPIController extends AppBaseController
     /** @var  MaterielRequestDetailsRepository */
     private $materielRequestDetailsRepository;
     private $userRepository;
+    private $decimalPrecisionService;
 
-    public function __construct(MaterielRequestDetailsRepository $materielRequestDetailsRepo,UserRepository $userRepo)
+    public function __construct(
+        MaterielRequestDetailsRepository $materielRequestDetailsRepo,
+        UserRepository $userRepo,
+        DecimalPrecisionService $decimalPrecisionService
+    )
     {
         $this->userRepository = $userRepo;
         $this->materielRequestDetailsRepository = $materielRequestDetailsRepo;
+        $this->decimalPrecisionService = $decimalPrecisionService;
     }
 
     /**
@@ -527,8 +534,11 @@ class MaterielRequestDetailsAPIController extends AppBaseController
                 $input['allowCreatePR']   =  0;
             }
 
+            $unitIDForInputPrecision = $input['unitOfMeasureIssued'] ?? $input['unitOfMeasure'] ?? null;
+            $allowedDecimals = $this->decimalPrecisionService->getUnitInputPrecision($unitIDForInputPrecision);
+
             if (!is_numeric($input['quantityRequested']) ||
-                fmod($input['quantityRequested'], 1) !== 0.0 ||
+                !$this->decimalPrecisionService->hasValidScale($input['quantityRequested'], $allowedDecimals) ||
                 $input['quantityRequested'] > 999999999) {
                 return $this->sendError(trans('custom.invalid_quantityrequested'), 422);
             }

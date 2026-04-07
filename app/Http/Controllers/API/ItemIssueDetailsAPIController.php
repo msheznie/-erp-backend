@@ -54,6 +54,7 @@ use Response;
 use App\helper\ItemTracking;
 use App\Jobs\AddBulkItem\ItemIssueBulkItemsJob;
 use App\Services\MaterialRequestService;
+use App\Services\DecimalPrecisionService;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -67,20 +68,24 @@ use App\helper\inventory as Inventory;
  */
 class ItemIssueDetailsAPIController extends AppBaseController
 {
+    const QUANTITY_EPSILON = 1e-6;
     /** @var  ItemIssueDetailsRepository */
     private $itemIssueDetailsRepository;
     private $userRepository;
     private $expenseAssetAllocationRepository;
+    private $decimalPrecisionService;
 
     public function __construct(
         ItemIssueDetailsRepository $itemIssueDetailsRepo,
         UserRepository $userRepo,
-        ExpenseAssetAllocationRepository $expenseAssetAllocationRepo
+        ExpenseAssetAllocationRepository $expenseAssetAllocationRepo,
+        DecimalPrecisionService $decimalPrecisionService
     )
     {
         $this->userRepository = $userRepo;
         $this->itemIssueDetailsRepository = $itemIssueDetailsRepo;
         $this->expenseAssetAllocationRepository = $expenseAssetAllocationRepo;
+        $this->decimalPrecisionService = $decimalPrecisionService;
     }
 
     /**
@@ -659,7 +664,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
                     $checkQuentity = ($detailExistMRDetail->qtyIssuedDefaultMeasure - $itemIssueDetails->qtyIssuedDefaultMeasure);
 
-                    if ($checkQuentity > 0) {
+                    if ($checkQuentity > self::QUANTITY_EPSILON) {
                         $detailExistMRDetail->selectedForIssue = 0;
                     } else {
                         $detailExistMRDetail->selectedForIssue = -1;
@@ -926,8 +931,10 @@ class ItemIssueDetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.materiel_issue_details_not_found_1'));
         }
 
+        $unitIDForInputPrecision = $input['unitOfMeasureIssued'] ?? $input['itemUnitOfMeasure'] ?? null;
+        $allowedDecimals = $this->decimalPrecisionService->getUnitInputPrecision($unitIDForInputPrecision);
         if (!is_numeric($input['qtyIssued']) ||
-            fmod($input['qtyIssued'], 1) !== 0.0 ||
+            !$this->decimalPrecisionService->hasValidScale($input['qtyIssued'], $allowedDecimals) ||
             $input['qtyIssued'] > 999999999) {
             return $this->sendError(trans('custom.invalid_qtyissued'), 422);
         }
@@ -962,9 +969,15 @@ class ItemIssueDetailsAPIController extends AppBaseController
                 $convention = $unitConvention->conversion;
                 $input['convertionMeasureVal'] = $convention;
                 if ($convention > 0) {
-                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] / $convention), 2);
+                    $input['qtyIssuedDefaultMeasure'] = $this->decimalPrecisionService->roundQuantityToUnitPrecision(
+                        (float) $input['qtyIssued'] / $convention,
+                        $input['itemUnitOfMeasure']
+                    );
                 } else {
-                    $input['qtyIssuedDefaultMeasure'] = round(($input['qtyIssued'] * $convention), 2);
+                    $input['qtyIssuedDefaultMeasure'] = $this->decimalPrecisionService->roundQuantityToUnitPrecision(
+                        (float) $input['qtyIssued'] * $convention,
+                        $input['itemUnitOfMeasure']
+                    );
                 }
             }
         } else {
@@ -1074,7 +1087,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
                     $checkQuentity = ($detailExistMRDetail->qtyIssuedDefaultMeasure - $itemIssueDetails->qtyIssuedDefaultMeasure);
 
-                    if ($checkQuentity > 0) {
+                    if ($checkQuentity > self::QUANTITY_EPSILON) {
                         $detailExistMRDetail->selectedForIssue = 0;
                     } else {
                         $detailExistMRDetail->selectedForIssue = -1;
@@ -1432,7 +1445,7 @@ class ItemIssueDetailsAPIController extends AppBaseController
                                 'itemPrimaryCode' => isset($item->item_by->primaryCode) ? $item->item_by->primaryCode : "",
                                 'secondaryItemCode' => isset($item->item_by->secondaryItemCode) ? $item->item_by->secondaryItemCode : ""
                             );
-                            if($totalQuantityRequested != 0 && ($totalQuantityRequested != $totalIssuedQty)) {
+                            if ($totalQuantityRequested != 0 && abs($totalQuantityRequested - $totalIssuedQty) >= self::QUANTITY_EPSILON) {
                                 array_push($temArray, $temp);
                             }
                         }
