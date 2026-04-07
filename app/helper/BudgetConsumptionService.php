@@ -5926,7 +5926,8 @@ class BudgetConsumptionService
 	
 	    $consumedAmountOfPO = BudgetConsumedData::with(['purchase_order' => function ($query) use($detail){
 
-												$query->with(['grv_details'=>function($query){
+												$query->where('manuallyClosed', 0)
+													->with(['grv_details'=>function($query){
 													$query->select('grvDetailsID','grvAutoID','purchaseOrderMastertID','purchaseOrderDetailsID','financeGLcodePLSystemID','netAmount')->with(['grv_master'=>function($query){
 														$query->with('details')->select('grvAutoID','grvPrimaryCode','approved','grvConfirmedYN','grvTotalComRptCurrency');
 													}]);
@@ -5948,6 +5949,7 @@ class BudgetConsumptionService
                                             ->where('documentSystemID', 2)
 											->when($detail->controlAccountsSystemID != 3,function($query){
 												$query->whereHas('purchase_order', function ($query) {
+													$query->where('manuallyClosed', 0);
 													//$query->where('grvRecieved', '!=', 2);
 												});
 											})
@@ -6086,10 +6088,27 @@ class BudgetConsumptionService
 
 		
         }
-		
+
+		$manuallyClosedPoConsumedRpt = (float) BudgetConsumedData::query()
+			->where('consumeYN', -1)
+			->where('companySystemID', $detail->companySystemID)
+			->when(($DLBCPolicy || $departmentsWiseCheck), function ($query) use ($detail) {
+				$query->where('serviceLineSystemID', $detail->serviceLineSystemID);
+			})
+			->where(function ($query) {
+				$query->where('projectID', 0)->orWhereNull('projectID');
+			})
+			->where('chartOfAccountID', $detail->chartOfAccountID)
+			->where('companyFinanceYearID', $detail->companyFinanceYearID)
+			->where('documentSystemID', 2)
+			->whereHas('purchase_order', function ($query) {
+				$query->where('manuallyClosed', 1);
+			})
+			->sum('consumedRptAmount');
+
 		if(!$isAssets){
 
-			$actuallConsumptionAmount = $detail->consumed_amount - $committedAmount;
+			$actuallConsumptionAmount = $detail->consumed_amount - $committedAmount - $manuallyClosedPoConsumedRpt;
 
 		}
 		else
