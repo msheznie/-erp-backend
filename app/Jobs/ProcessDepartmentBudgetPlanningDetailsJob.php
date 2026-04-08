@@ -284,17 +284,11 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
                     ->where('companyFinanceYearID', $year->companyFinanceYearID)
                     ->where('serviceLineSystemID', $companyDepartmentSegment->serviceLineSystemID)
                     ->where('chartOfAccountID', $glCode)
+                    ->whereHas('budget_master', function ($query) {
+                        $query->where('confirmedYN', 1)
+                            ->where('approvedYN', -1);
+                    })
                     ->sum('budjetAmtLocal');
-
-                //get the sum of request_amount from the department budget planning details table
-                // $budgetAmount = DepartmentBudgetPlanningDetail::whereHas('departmentBudgetPlanning', function($query) use ($departmentId, $year, $companySystemID) {
-                //     $query->where('yearID', $year->companyFinanceYearID)
-                //         ->whereHas('masterBudgetPlannings', function ($q) use ($companySystemID) {
-                //             $q->where('companySystemID', $companySystemID);
-                //         });
-                // })->whereHas('budgetTemplateGl', function($query) use ($glCode) {
-                //         $query->where('chartOfAccountSystemID', $glCode);
-                // })->sum('request_amount');
 
                 return abs($budgetAmount) ?? 0.00;
             } else {
