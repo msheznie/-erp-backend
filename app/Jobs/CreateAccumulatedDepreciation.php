@@ -231,7 +231,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                                     $data['depAmountRpt'] = $depAmountRpt;
 
 
-                                    if (round($nbvRpt,2) != 0 && round($nbvLocal,2) != 0) {
+                                    //if (round($nbvRpt,2) != 0 && round($nbvLocal,2) != 0) {
                                         $data['FYID'] = $depMaster->companyFinanceYearID;
                                         $data['depForFYStartDate'] = $depMaster->FYBiggin;
                                         $data['depForFYEndDate'] = $depMaster->FYEnd;
@@ -239,7 +239,7 @@ class CreateAccumulatedDepreciation implements ShouldQueue
                                         $data['depForFYperiodStartDate'] = $depMaster->FYPeriodDateFrom;
                                         $data['depForFYperiodEndDate'] = $depMaster->FYPeriodDateTo;
                                         $data['timestamp'] = NOW();
-                                    }
+                                    //}
 
                                     $dep_per = FixedAssetDepreciationPeriod::create($data);
 
