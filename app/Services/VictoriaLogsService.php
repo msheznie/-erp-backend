@@ -121,10 +121,13 @@ class VictoriaLogsService
         $fromDate = $params['fromDate'] ?? null;
         $toDate = $params['toDate'] ?? null;
         $locale = $params['locale'] ?? 'en';
+        $companyId = $params['companyId'] ?? null;
+        $employeeId = $params['employeeId'] ?? null;
+        $accessType = $params['accessType'] ?? null;
         
         $limit = $this->config['limit'] ?? 10000;
         
-        $logsQL = $this->buildTransactionAuditQuery($tenantUuid, $transactionId, $module, $fromDate, $toDate, $locale, $limit);
+        $logsQL = $this->buildTransactionAuditQuery($tenantUuid, $transactionId, $module, $fromDate, $toDate, $locale, $limit, $params['departmentSystemID'] ?? null, $companyId, $employeeId, $accessType);
         
         $logs = $this->queryLogsQL($logsQL);
         
@@ -315,9 +318,13 @@ class VictoriaLogsService
      * @param string|null $toDate
      * @param string $locale
      * @param int $limit
+     * @param mixed $departmentSystemId optional; when set with module companyfinanceperiod and empty transaction id, narrows by department_system_id
+     * @param mixed $companyId reserved for transaction-audit filtering (same request shape as action tracking)
+     * @param mixed $employeeId reserved for transaction-audit filtering
+     * @param mixed $accessType reserved for transaction-audit filtering
      * @return string
      */
-    protected function buildTransactionAuditQuery(string $tenantUuid, string $transactionId, string $module, ?string $fromDate, ?string $toDate, string $locale = 'en', int $limit = 10000): string
+    protected function buildTransactionAuditQuery(string $tenantUuid, string $transactionId, string $module, ?string $fromDate, ?string $toDate, string $locale = 'en', int $limit = 10000, $departmentSystemId = null, $companyId = null, $employeeId = null, $accessType = null): string
     {
         $query = '';
         if ($fromDate && $toDate) {
@@ -342,6 +349,9 @@ class VictoriaLogsService
         
         if (empty($transactionId) || $transactionId === '0' || $transactionId === 0) {
             $query .= ' | filter table:="' . addslashes($module) . '" or parent_table:="' . addslashes($module) . '"';
+            if ($module === 'companyfinanceperiod' && $departmentSystemId !== null && $departmentSystemId !== '') {
+                $query .= ' | filter department_system_id:="' . addslashes((string) $departmentSystemId) . '"';
+            }
         } else {
             $query .= ' | filter (transaction_id:="' . addslashes($transactionId) . '" and table:="' . addslashes($module) . '") or (parent_table:="' . addslashes($module) . '" and parent_id:="' . addslashes($transactionId) . '")';
         }
