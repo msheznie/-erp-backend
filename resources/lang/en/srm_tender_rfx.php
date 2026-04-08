@@ -358,6 +358,7 @@ return [
     'item_wise_no_awarded_items_for_supplier' => 'No awarded items found for this supplier.',
     'item_wise_supplier_not_found' => 'Supplier not found.',
     'item_wise_supplier_has_no_email' => 'Supplier has no email address.',
+    'item_wise_email_history_not_available' => 'Email history not available.',
     'loa_loa_already_sent' => 'LOA/LOI has already been sent to this supplier.',
     'company_is_required'=> 'Company is required',
     // Award / Regret email popup

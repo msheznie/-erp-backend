@@ -20,6 +20,7 @@ use App\Models\TenderCustomEmail;
 use App\Services\TenderConfirmationService;
 use App\Models\TenderMaster;
 use App\Models\TenderNegotiation;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -358,6 +359,12 @@ class TenderItemWiseAwardingService
             ])
             ->get();
 
+        $historySupplierIds = TenderCustomEmail::getSupplierIdsByTenderAndDocumentCode(
+            $tenderId,
+            self::DOCUMENT_CODE_ITEM_WISE_AWARD
+        );
+        $historyMap = array_fill_keys($historySupplierIds, true);
+
         $bySupplier = [];
         foreach ($rows as $row) {
             $sid = $row->supplier_id;
@@ -371,9 +378,14 @@ class TenderItemWiseAwardingService
                     'supplier_name' => $supplier ? $supplier->name : '',
                     'email' => $supplier && !empty($supplier->email) ? $supplier->email : '',
                     'award_email_sent' => (int) $row->award_email_sent,
+                    'award_email_date' => $row->award_email_date,
+                    'award_email_sent_by' => $row->award_email_sent_by,
+                    'has_email_history' => isset($historyMap[$sid]),
                 ];
             } elseif ($row->award_email_sent) {
                 $bySupplier[$sid]['award_email_sent'] = 1;
+                $bySupplier[$sid]['award_email_date'] = $row->award_email_date ?: $bySupplier[$sid]['award_email_date'];
+                $bySupplier[$sid]['award_email_sent_by'] = $row->award_email_sent_by ?: $bySupplier[$sid]['award_email_sent_by'];
             }
         }
 
@@ -434,7 +446,7 @@ class TenderItemWiseAwardingService
      *
      * @return array{success: bool, message?: string, data?: mixed}
      */
-    public function sendAwardEmailToSupplier(int $tenderId, int $supplierId): array
+    public function sendAwardEmailToSupplier(int $tenderId, int $supplierId, ?int $userId = null): array
     {
         $tender = TenderMaster::where('id', $tenderId)->with(['company', 'currency'])->first();
         if (!$tender) {
@@ -474,22 +486,43 @@ class TenderItemWiseAwardingService
             ];
         }
 
+        $saved = TenderCustomEmail::getCustomEmailSupplier($tenderId, $supplierId, self::DOCUMENT_CODE_ITEM_WISE_AWARD);
+
         $subject = 'Letter of Awarding | ' . $tender->tender_code . ' | ' . $tender->title;
         $ccEmail = [];
         $attachmentList = [];
+        $documentId = null;
 
-        // Item-wise award email body: use blade so awarded items list is displayed (no email configuration)
-        $currency = $tender->currency ? $tender->currency->CurrencyName : '';
-        $companyName = $tender->company ? $tender->company->CompanyName : '';
-        $items = $this->buildAwardEmailItems($rows);
-        $body = view('email.item_wise_tender_award', [
-            'supplierName' => $supplier->name,
-            'tenderCode' => $tender->tender_code,
-            'tenderTitle' => $tender->title,
-            'items' => $items,
-            'currency' => $currency,
-            'companyName' => $companyName,
-        ])->render();
+        if ($saved && !empty($saved->email_body)) {
+            $body = $saved->email_body;
+            $documentId = $saved->document_id;
+            if (!empty($saved->email_subject)) {
+                $subject = $saved->email_subject;
+            }
+            if (!empty($saved->cc_email)) {
+                $decoded = is_string($saved->cc_email) ? json_decode($saved->cc_email, true) : $saved->cc_email;
+                $ccEmail = is_array($decoded) ? $decoded : [];
+            }
+            if ($saved->attachment && !empty($saved->attachment->path)) {
+                $url = Helper::getFileUrlFromS3($saved->attachment->path);
+                if ($url) {
+                    $attachmentList[] = $url;
+                }
+            }
+        } else {
+            // First send: build the default template and persist it for future view/resend.
+            $currency = $tender->currency ? $tender->currency->CurrencyName : '';
+            $companyName = $tender->company ? $tender->company->CompanyName : '';
+            $items = $this->buildAwardEmailItems($rows);
+            $body = view('email.item_wise_tender_award', [
+                'supplierName' => $supplier->name,
+                'tenderCode' => $tender->tender_code,
+                'tenderTitle' => $tender->title,
+                'items' => $items,
+                'currency' => $currency,
+                'companyName' => $companyName,
+            ])->render();
+        }
 
         $dataEmail = [
             'empEmail' => $email,
@@ -501,19 +534,114 @@ class TenderItemWiseAwardingService
         ];
         Email::sendEmailSRM($dataEmail);
 
-        SrmItemWiseTenderAwarding::markAwardEmailSentForSupplier($tenderId, $isNegotiation, $supplierId);
+        $sentAt = Carbon::now();
+        SrmItemWiseTenderAwarding::markAwardEmailSentForSupplier(
+            $tenderId,
+            $isNegotiation,
+            $supplierId,
+            $sentAt,
+            $userId
+        );
+
+        TenderCustomEmail::createOrUpdateCustomEmail(
+            [
+                'tender_id' => $tenderId,
+                'supplier_id' => $supplierId,
+                'document_code' => self::DOCUMENT_CODE_ITEM_WISE_AWARD,
+            ],
+            [
+                'company_id' => $tender->company_id,
+                'document_code' => self::DOCUMENT_CODE_ITEM_WISE_AWARD,
+                'email_subject' => $subject,
+                'email_body' => $body,
+                'cc_email' => !empty($ccEmail) ? json_encode($ccEmail) : null,
+                'document_id' => $documentId,
+            ]
+        );
+
+        return [
+            'success' => true,
+            'message' => trans('srm_tender_rfx.item_wise_award_email_sent_successfully'),
+            'data' => null,
+        ];
+    }
+
+    public function getItemWiseAwardEmailData(int $tenderId, int $supplierId): array
+    {
+        $tender = TenderMaster::where('id', $tenderId)->with(['currency', 'company'])->first();
+        if (!$tender) {
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.tender_not_found'),
+                'data' => null,
+            ];
+        }
+        $supplier = SupplierRegistrationLink::find($supplierId);
+        if (!$supplier) {
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.item_wise_supplier_not_found'),
+                'data' => null,
+            ];
+        }
+
+        $saved = TenderCustomEmail::getCustomEmailSupplier($tenderId, $supplierId, self::DOCUMENT_CODE_ITEM_WISE_AWARD);
+        if (!$saved || empty($saved->email_body)) {
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.item_wise_email_history_not_available'),
+                'data' => null,
+            ];
+        }
+
+        $ccEmails = [];
+        if (!empty($saved->cc_email)) {
+            $decoded = is_string($saved->cc_email) ? json_decode($saved->cc_email, true) : $saved->cc_email;
+            $ccEmails = is_array($decoded) ? $decoded : [];
+        }
+
+        $attachments = [];
+        if ($saved->attachment) {
+            $attachments[] = [
+                'attachmentID' => $saved->attachment->attachmentID,
+                'originalFileName' => $saved->attachment->originalFileName,
+                'path' => $saved->attachment->path,
+            ];
+        }
 
         return [
             'success' => true,
             'message' => null,
-            'data' => null,
+            'data' => [
+                'email_subject' => $saved->email_subject ?: ('Letter of Awarding | ' . $tender->tender_code . ' | ' . $tender->title),
+                'email_body' => $saved->email_body,
+                'cc_emails' => $ccEmails,
+                'attachments' => $attachments,
+                'supplier_email' => $supplier->email ?? '',
+                'recipient_display' => ($supplier->name ?? '') . (!empty($supplier->email) ? ' <' . $supplier->email . '>' : ''),
+            ],
         ];
+    }
+
+    public function resendAwardEmailToSupplier(int $tenderId, int $supplierId, ?int $userId = null): array
+    {
+        $saved = TenderCustomEmail::getCustomEmailSupplier($tenderId, $supplierId, self::DOCUMENT_CODE_ITEM_WISE_AWARD);
+        if (!$saved || empty($saved->email_body)) {
+            return [
+                'success' => false,
+                'message' => trans('srm_tender_rfx.item_wise_email_history_not_available'),
+                'data' => null,
+            ];
+        }
+
+        return $this->sendAwardEmailToSupplier($tenderId, $supplierId, $userId);
     }
 
     /**
      * LOA/LOI document_code for item-wise Tender/RFX.
      */
     const DOCUMENT_CODE_LOI_LOA = 'TLL';
+    const DOCUMENT_CODE_ITEM_WISE_AWARD = 'IAE';
 
     /** Document code for Tender regret email draft (supplier_id = 0). */
     const DOCUMENT_CODE_REGRET_TENDER = 'TRD';

@@ -118,4 +118,12 @@ class TenderCustomEmail extends Model
             ->where('supplier_id', $supplierId)
             ->first();
     }
+
+    public static function getSupplierIdsByTenderAndDocumentCode(int $tenderId, string $documentCode): array
+    {
+        return self::where('tender_id', $tenderId)
+            ->where('document_code', $documentCode)
+            ->pluck('supplier_id')
+            ->toArray();
+    }
 }

@@ -231,6 +231,8 @@ Route::post('awardItemWiseSupplier', 'TenderMasterAPIController@awardItemWiseSup
 Route::post('markSupplierItemWiseAwarded', 'TenderMasterAPIController@markSupplierItemWiseAwarded')->name("Mark supplier item-wise awarded");
 Route::post('getItemWiseAwardedSuppliers', 'TenderMasterAPIController@getItemWiseAwardedSuppliers')->name("Get item-wise awarded suppliers");
 Route::post('sendItemWiseAwardEmail', 'TenderMasterAPIController@sendItemWiseAwardEmail')->name("Send item-wise award email");
+Route::post('getItemWiseAwardEmailData', 'TenderMasterAPIController@getItemWiseAwardEmailData')->name("Get item-wise award email data");
+Route::post('resendItemWiseAwardEmail', 'TenderMasterAPIController@resendItemWiseAwardEmail')->name("Resend item-wise award email");
 Route::post('getItemWiseAwardingForPO', 'TenderMasterAPIController@getItemWiseAwardingForPO')->name("Get item-wise awarding for PO");
 Route::post('getItemWiseLoiLoaList', 'TenderMasterAPIController@getItemWiseLoiLoaList')->name("Get item-wise LOA/LOI list");
 Route::post('getLoiLoaEmailData', 'TenderMasterAPIController@getLoiLoaEmailData')->name("Get LOA/LOI email data");
