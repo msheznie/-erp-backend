@@ -159,7 +159,7 @@ class EmployeeTaskingNotificationService
                 $mailBody = "Dear {$name},<br/><br/>";
                 $mailBody .= $this->emailBody();
 
-                $subject = 'Employee Tasking Created';
+                $subject = $this->emailSubject();
 
                 $emails = [
                     'companySystemID' => $this->companyId,
@@ -212,6 +212,14 @@ class EmployeeTaskingNotificationService
                 ->value('isEmailVerified');
     }
 
+    public function emailSubject()
+    {
+        $isExtension = $this->masterDet['isExtension'] ?? false;
+        $extText = $isExtension ? 'Extension ' : '';
+
+        return "Employee Tasking {$extText}Created";
+    }
+
     public function emailBody()
     {
         $empName = $this->masterDet['empName'] ?? '';
@@ -221,8 +229,16 @@ class EmployeeTaskingNotificationService
         $endDate = $this->masterDet['toDate'] ?? '';
         $assignee = $assigneeName . ' / ' . $assigneeDepartment;
         $period = $startDate . ' - ' . $endDate;
-        
-        return "Tasking has been created for <b>{$empName}</b> and assigned to <b>{$assignee}</b> for the period <b>{$period}</b>.";
+        $isExtension = $this->masterDet['isExtension'] ?? false;
+        $extText = $isExtension ? 'Extension ' : '';
+
+        $body = 'This is to inform you that the following Employee Tasking '.$extText.'Request has been created in the system.<br/><br/>';
+        $body .= '<b>Employee Tasking '.$extText.'Details:</b><br/>';
+        $body .= 'Employee Name: ' . $empName . '<br/>';
+        $body .= 'Assigned to: ' . $assignee . '<br/>';
+        $body .= 'Period: ' . $period . '<br/>';
+
+        return $body;
     }
 
     public function insertToLogTb($logData, $logType = 'info')
