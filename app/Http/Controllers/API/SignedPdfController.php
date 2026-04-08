@@ -286,6 +286,7 @@ class SignedPdfController extends AppBaseController
             'schedule-wise-report',
             'SupplierScheduleWiseExportReport',
             'printERPAssetTransfer',
+            'printAssetCosting',
             'genearetBarcode',
             'printAssetDepreciation'
         ];
@@ -487,6 +488,10 @@ class SignedPdfController extends AppBaseController
             'printERPAssetTransfer' => [
                 'controller' => 'App\Http\Controllers\API\ERPAssetTransferDetailAPIController',
                 'method' => 'printERPAssetTransfer'
+            ],
+            'printAssetCosting' => [
+                'controller' => 'App\Http\Controllers\API\FixedAssetMasterAPIController',
+                'method' => 'printAssetCosting'
             ],
             'printAssetDepreciation' => [
                 'controller' => 'App\Http\Controllers\API\FixedAssetDepreciationMasterAPIController',
