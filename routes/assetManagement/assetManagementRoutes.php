@@ -20,6 +20,7 @@ Route::group([], function(){
     Route::post('getAssetTransferApprovalByUserApproved', 'ERPAssetTransferAPIController@getAssetTransferApprovalByUserApproved')->name("Get asset transfer approved");
     Route::get('asset-transfer-details', 'ERPAssetTransferDetailAPIController@getAssetTransferDetails')->name("Get asset transfer details");
     Route::get('printERPAssetTransfer', 'ERPAssetTransferDetailAPIController@printERPAssetTransfer')->name("Print asset transfer");
+    Route::get('printAssetCosting', 'FixedAssetMasterAPIController@printAssetCosting')->name("Print asset costing");
     Route::post('rejectAssetTransfer', 'ERPAssetTransferAPIController@rejectAssetTransfer')->name("Reject asset transfer");
     Route::post('approveAssetTransfer', 'ERPAssetTransferAPIController@approveAssetTransfer')->name("Approve asset transfer");
     Route::post('getCapitalizationApprovalByUser', 'AssetCapitalizationAPIController@getCapitalizationApprovalByUser')->name("Get asset capitalization pending for approval");
