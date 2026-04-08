@@ -134,6 +134,7 @@ class SrmDocumentModifyService
             'isTenderBidSubmitted'           => BidSubmissionMaster::checkTenderBidSubmitted($tender_id),
             'isSupplierRankingNotCompleted'  => $tenderMaster['commercial_ranking_line_item_status'] == 0 &&
                 $tenderMaster['is_negotiation_started'] == 0,
+            'tender_awarded'                 => $tenderMaster['final_tender_awarded'] == 0
         ];
     }
     public static function checkForEditOrAmendRequest($tenderMasterID){
@@ -998,10 +999,11 @@ class SrmDocumentModifyService
         $isSupplierProceeded = $conditions['tenderPurchasedOrProceed'];
         $isSupplierSubmittedBid = $conditions['isTenderBidSubmitted'];
         $isSupplierRankingNotCompleted = $conditions['isSupplierRankingNotCompleted'];
+        $finallyAwarded = $conditions['tender_awarded'];
 
         $permissions['tender_strategy'] = !$isSupplierProceeded;
         $permissions['alternative_solution'] = !$isSupplierSubmittedBid;
-        $permissions['minimum_approval'] = $isSupplierRankingNotCompleted;
+        $permissions['minimum_approval'] = $finallyAwarded;
         $permissions['weightage'] = !$isSupplierSubmittedBid;
         $permissions['passing_weightage'] = $isSupplierRankingNotCompleted;
         $permissions['prebid_method'] = $isOpeningDateValid;
