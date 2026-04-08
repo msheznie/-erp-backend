@@ -17,14 +17,14 @@ class DepartmentBudgetPlanningAuditService
             // For creation, log all the new values
             if ($auditData['parentID'] == 0) {
                 $modifiedData[] = ['amended_field' => "planning_code", 'previous_value' => '', 'new_value' => $auditData['newValue']['planningCode']];
-                $modifiedData[] = ['amended_field' => "initiated_date", 'previous_value' => '', 'new_value' => $auditData['newValue']['initiatedDate']];
-                $modifiedData[] = ['amended_field' => "submission_date", 'previous_value' => '', 'new_value' => $auditData['newValue']['submissionDate']];
+                $modifiedData[] = ['amended_field' => "initiated_date", 'previous_value' => '', 'new_value' => self::formatDateOnlyForAudit($auditData['newValue']['initiatedDate'])];
+                $modifiedData[] = ['amended_field' => "submission_date", 'previous_value' => '', 'new_value' => self::formatDateOnlyForAudit($auditData['newValue']['submissionDate'])];
 
                 $workflow = WorkflowConfiguration::find($auditData['newValue']['workflowID']);
                 $modifiedData[] = ['amended_field' => "workflow", 'previous_value' => '', 'new_value' => $workflow->workflowName];
                 $modifiedData[] = ['amended_field' => "budget_type", 'previous_value' => '', 'new_value' => self::getType($auditData['newValue']['typeID'])];
                 $year = CompanyFinanceYear::find($auditData['newValue']['yearID']);
-                $modifiedData[] = ['amended_field' => "budget_year", 'previous_value' => '', 'new_value' => $year->bigginingDate . " | " . $year->endingDate];
+                $modifiedData[] = ['amended_field' => "budget_year", 'previous_value' => '', 'new_value' => self::formatDateOnlyForAudit($year->bigginingDate) . " | " . self::formatDateOnlyForAudit($year->endingDate)];
                 $modifiedData[] = ['amended_field' => "budget_period", 'previous_value' => '', 'new_value' => 'Yearly'];
             }
         }
