@@ -233,7 +233,13 @@ class ItemMasterAPIController extends AppBaseController
                 }
 
                 if ($input['itemConfirmedYN'] == true) {
-                    $params = array('autoID' => $itemMaster->itemCodeSystem, 'company' => $item["primaryCompanySystemID"], 'document' => $item["documentSystemID"]);
+                    $params = array(
+                        'autoID' => $itemMaster->itemCodeSystem,
+                        'company' => $item["primaryCompanySystemID"],
+                        'document' => $item["documentSystemID"],
+                        'category' => $item['financeCategoryMaster'],
+                        'subCategory' => $item['financeCategorySub']
+                    );
                     $confirm = DocumentConfirm::confirmDocument($params);
                     if (!$confirm["success"]) {
                         return $this->sendError($confirm["message"], 500);
@@ -1271,7 +1277,13 @@ class ItemMasterAPIController extends AppBaseController
                 return $this->sendError(trans('custom.the_finance_sub_category_field_is_required'), 500);
             }
 
-            $params = array('autoID' => $id, 'company' => $input["primaryCompanySystemID"], 'document' => $input["documentSystemID"]);
+            $params = array(
+                'autoID' => $id,
+                'company' => $input["primaryCompanySystemID"],
+                'document' => $input["documentSystemID"],
+                'category' => $input['financeCategoryMaster'],
+                'subCategory' => $input['financeCategorySub']
+            );
             $confirm = DocumentConfirm::confirmDocument($params);
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"], 500);
