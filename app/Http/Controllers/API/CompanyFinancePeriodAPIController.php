@@ -17,6 +17,7 @@ namespace App\Http\Controllers\API;
 use App\Http\Requests\API\CreateCompanyFinancePeriodAPIRequest;
 use App\Http\Requests\API\UpdateCompanyFinancePeriodAPIRequest;
 use App\Models\CompanyFinancePeriod;
+use App\Models\DepartmentMaster;
 use App\Repositories\CompanyFinancePeriodRepository;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -25,6 +26,8 @@ use Prettus\Repository\Criteria\RequestCriteria;
 use Illuminate\Support\Facades\DB;
 use Response;
 use App\helper\Helper;
+use App\Traits\AuditLogsTrait;
+use Carbon\Carbon;
 
 /**
  * Class CompanyFinancePeriodController
@@ -32,12 +35,54 @@ use App\helper\Helper;
  */
 class CompanyFinancePeriodAPIController extends AppBaseController
 {
+    use AuditLogsTrait;
+
     /** @var  CompanyFinancePeriodRepository */
     private $companyFinancePeriodRepository;
 
     public function __construct(CompanyFinancePeriodRepository $companyFinancePeriodRepo)
     {
         $this->companyFinancePeriodRepository = $companyFinancePeriodRepo;
+    }
+
+    /**
+     * @param array{isActive?: int, isCurrent?: int, isClosed?: int} $previosValue
+     * @param array{isActive?: int, isCurrent?: int, isClosed?: int} $newValue
+     */
+    protected function writeFinancePeriodAuditLog(
+        string $db,
+        string $uuid,
+        int $periodId,
+        array $previosValue,
+        array $newValue,
+        CompanyFinancePeriod $periodRow
+    ): void {
+        $narration = $this->financePeriodLabel($periodRow);
+        $this->auditLog($db, $periodId, $uuid, 'companyfinanceperiod', $narration, 'U', $newValue, $previosValue);
+    }
+
+    private function financePeriodLabel(CompanyFinancePeriod $p): string
+    {
+        try {
+            $from = Carbon::parse($p->dateFrom)->format('d/m/Y');
+            $to = Carbon::parse($p->dateTo)->format('d/m/Y');
+            $departmentName = '';
+            if (!empty($p->departmentSystemID)) {
+                $departmentName = (string) (DepartmentMaster::where('departmentSystemID', $p->departmentSystemID)
+                    ->value('DepartmentDescription') ?? '');
+            }
+            if ($departmentName === '' && !empty($p->departmentID)) {
+                $departmentName = (string) $p->departmentID;
+            }
+
+            return trans('custom.finance_period_audit_narration_variable', [
+                'department' => $departmentName !== '' ? $departmentName : '-',
+                'from' => $from,
+                'to' => $to,
+            ]);
+        } catch (\Throwable $e) {
+            return (string) $p->companyFinancePeriodID;
+        }
     }
 
     /**
@@ -227,6 +272,9 @@ class CompanyFinancePeriodAPIController extends AppBaseController
     public function update($id, UpdateCompanyFinancePeriodAPIRequest $request)
     {
         $input = $request->all();
+        $uuid = $input['tenant_uuid'] ?? 'local';
+        $db = $input['db'] ?? '';
+        unset($input['tenant_uuid'], $input['db']);
 
         /** @var CompanyFinancePeriod $companyFinancePeriod */
         $companyFinancePeriod = $this->companyFinancePeriodRepository->findWithoutFail($id);
@@ -234,6 +282,13 @@ class CompanyFinancePeriodAPIController extends AppBaseController
         if (empty($companyFinancePeriod)) {
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_finance_periods')]));
         }
+
+        $snapshotBeforePrimary = [
+            'isActive' => (int) $companyFinancePeriod->isActive,
+            'isCurrent' => (int) $companyFinancePeriod->isCurrent,
+            'isClosed' => (int) $companyFinancePeriod->isClosed,
+        ];
+        $bulkAuditIds = [];
 
         if ($input['isActive']) {
             $input['isActive'] = -1;
@@ -298,8 +353,16 @@ class CompanyFinancePeriodAPIController extends AppBaseController
                                                                 ->whereDate('dateFrom', $companyFinancePeriod->dateFrom)
                                                                 ->get();
 
-                    foreach ($updateFinancePeriod as $period){
-                        $this->companyFinancePeriodRepository->update(['isActive' => 0,'isCurrent' => 0,'isClosed' => -1],$period->companyFinancePeriodID);
+                    foreach ($updateFinancePeriod as $period) {
+                        $prevSnap = [
+                            'isActive' => (int) $period->isActive,
+                            'isCurrent' => (int) $period->isCurrent,
+                            'isClosed' => (int) $period->isClosed,
+                        ];
+                        $newSnap = ['isActive' => 0, 'isCurrent' => 0, 'isClosed' => -1];
+                        $this->companyFinancePeriodRepository->update(['isActive' => 0, 'isCurrent' => 0, 'isClosed' => -1], $period->companyFinancePeriodID);
+                        $this->writeFinancePeriodAuditLog($db, $uuid, (int) $period->companyFinancePeriodID, $prevSnap, $newSnap, $period);
+                        $bulkAuditIds[] = (int) $period->companyFinancePeriodID;
                     }
                 //}
             }
@@ -308,6 +371,19 @@ class CompanyFinancePeriodAPIController extends AppBaseController
         }
 
         $companyFinancePeriod = $this->companyFinancePeriodRepository->update($input, $id);
+
+        if (!in_array((int) $id, $bulkAuditIds, true)) {
+            /** @var CompanyFinancePeriod|null $afterRow */
+            $afterRow = CompanyFinancePeriod::find($id);
+            if ($afterRow) {
+                $snapAfter = [
+                    'isActive' => (int) $afterRow->isActive,
+                    'isCurrent' => (int) $afterRow->isCurrent,
+                    'isClosed' => (int) $afterRow->isClosed,
+                ];
+                $this->writeFinancePeriodAuditLog($db, $uuid, (int) $id, $snapshotBeforePrimary, $snapAfter, $afterRow);
+            }
+        }
 
         return $this->sendResponse($companyFinancePeriod->toArray(), trans('custom.update', ['attribute' => trans('custom.company_finance_periods')]));
     }

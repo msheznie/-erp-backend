@@ -3869,7 +3869,7 @@ class DocumentApprovedAPIController extends AppBaseController
             $request->merge($requestData);
             $approve = DocumentApprove::approveDocument($request);
             if (!$approve["success"]) {
-                return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
+                return $this->approveDocumentErrorResponse($approve);
             } else {
                 return $this->sendResponse(array(), $approve["message"]);
             }
@@ -3888,11 +3888,27 @@ class DocumentApprovedAPIController extends AppBaseController
         }else {
 			$approve = DocumentApprove::approveDocument($request);
 			if (!$approve["success"]) {
-				return $this->sendError($approve["message"], 404, ['type' => isset($approve["type"]) ? $approve["type"] : ""]);
+				return $this->approveDocumentErrorResponse($approve);
 			} else {
 				return $this->sendResponse(array(), $approve["message"]);
 			}
 		} 
+    }
+
+    /**
+     * @param array<string, mixed> $approve
+     */
+    private function approveDocumentErrorResponse(array $approve)
+    {
+        $errorData = ['type' => isset($approve['type']) ? $approve['type'] : ''];
+        if (isset($approve['documentDate'])) {
+            $errorData['documentDate'] = $approve['documentDate'];
+        }
+        if (isset($approve['approvingDate'])) {
+            $errorData['approvingDate'] = $approve['approvingDate'];
+        }
+
+        return $this->sendError($approve['message'], 404, $errorData);
     }
 
 	public function getTenderAmendNotApproved($filter,$employeeSystemID,$documentId,$tenderFilter){ 

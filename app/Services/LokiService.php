@@ -119,6 +119,9 @@ class LokiService
             case 'erp_document_communication_messages':
                 $table = 'erp_document_communication_messages';
                 break;
+            case 'company_finance_period':
+                $table = 'companyfinanceperiod';
+                break;
             default:
                 $table = null;
                 break;
@@ -154,6 +157,7 @@ class LokiService
             'srp_erp_usergroups',
             'srp_erp_employeenavigation',
             'erp_document_communication_messages',
+            'companyfinanceperiod',
         ];
     }
 
