@@ -254,10 +254,10 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
         $departmentId = $departmentBudgetPlanning->departmentID;
 
         // Calculate previous year budget (you may need to adjust this query based on your actual budget data structure)
-        $previousYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $previousYearFinanceYear,$financeYear->companySystemID,$companyDepartmentSegment);
+        $previousYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $previousYearFinanceYear,$financeYear->companySystemID,$companyDepartmentSegment,$departmentBudgetPlanning->typeID);
 
         // Calculate current year budget
-        $currentYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $currentYearFinanceYear,$financeYear->companySystemID,$companyDepartmentSegment);
+        $currentYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $currentYearFinanceYear,$financeYear->companySystemID,$companyDepartmentSegment,$departmentBudgetPlanning->typeID);
 
 
         // Calculate difference
@@ -274,9 +274,22 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
      * Get budget amount for a specific year
      * This method should be adjusted based on your actual budget data structure
      */
-    private function getBudgetAmountForYear($departmentId, $glCode, $year,$companySystemID,$companyDepartmentSegment)
+    private function getBudgetAmountForYear($departmentId, $glCode, $year,$companySystemID,$companyDepartmentSegment,$typeID)
     {
         try {
+
+            // opex
+            if($typeID == 1) {
+                $reportIDArray = [2]; // P&L Template   
+            }
+            // capex
+            if($typeID == 2) {
+                $reportIDArray = [1]; // Balance Sheet Template
+            }
+            // other
+            if($typeID == 3) {
+                $reportIDArray = [1,2]; // Balance Sheet & P&L Template
+            }
 
             if($year) {
 
@@ -284,9 +297,12 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
                     ->where('companyFinanceYearID', $year->companyFinanceYearID)
                     ->where('serviceLineSystemID', $companyDepartmentSegment->serviceLineSystemID)
                     ->where('chartOfAccountID', $glCode)
-                    ->whereHas('budget_master', function ($query) {
+                    ->whereHas('budget_master', function ($query) use ($reportIDArray) {
                         $query->where('confirmedYN', 1)
-                            ->where('approvedYN', -1);
+                            ->where('approvedYN', -1)
+                            ->whereHas('template_master', function ($templateQuery) use ($reportIDArray) {
+                                $templateQuery->whereIn('reportID', $reportIDArray);
+                            });
                     })
                     ->sum('budjetAmtLocal');
 
