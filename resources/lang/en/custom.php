@@ -1134,7 +1134,7 @@ return
     'company_finance_year_not_found_1' => 'Company finance year not found',
     'company_finance_year_period_masters' => 'Company Finance Yearperiod Masters',
     'company_finance_years' => 'Company Finance Years',
-    'company_has_default_user_group' => 'The company already have a default user group',
+    'company_has_default_user_group' => 'The selected User Group is the only available Default group in the company, kindly reassign an existing group or create a new user group to disable the Is Default from the selected group.',
     'company_id_element_required' => 'Company ID element required',
     'company_id_is_required' => 'Company ID is required',
     'company_id_not_found' => 'Company ID not found',

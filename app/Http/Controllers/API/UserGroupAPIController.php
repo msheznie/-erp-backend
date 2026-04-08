@@ -22,6 +22,7 @@ use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Class UserGroupController
@@ -95,13 +96,45 @@ class UserGroupAPIController extends AppBaseController
                 return $this->sendError(trans('custom.user_group_not_found'));
             }
 
-            $employeeExists = EmployeeNavigation::where('userGroupID',$id)->count();
-            
-            if ($employeeExists > 0) {
-                return $this->sendError(trans('custom.user_group_already_assigned_to_employees_cannot_ch'));
+            $requestedDefaultYN = filter_var($input['defaultYN'] ?? false, FILTER_VALIDATE_BOOLEAN);
+            $requestedCompanyID = $input['companyID'] ?? $userGroups->companyID;
+            $requestedDescription = $input['description'] ?? $userGroups->description;
+
+            if (is_array($requestedCompanyID)) {
+                $requestedCompanyID = count($requestedCompanyID) > 0 ? $requestedCompanyID[0] : $userGroups->companyID;
             }
-            
-            if($input["defaultYN"])
+            if (is_array($requestedDescription)) {
+                $requestedDescription = count($requestedDescription) > 0 ? $requestedDescription[0] : $userGroups->description;
+            }
+
+            if ($requestedDefaultYN == false)
+            {
+                $isExistsDefaultUserGroups = UserGroup::where('userGroupID', '!=', $id)
+                    ->where('companyID', $userGroups->companyID)
+                    ->where('defaultYN', true)
+                    ->count();
+
+                if ($isExistsDefaultUserGroups == 0) {
+                    $availableUserGroups = UserGroup::where('companyID', $userGroups->companyID)
+                        ->where('userGroupID', '!=', $id)
+                        ->select('userGroupID', 'description')
+                        ->orderBy('description')
+                        ->get();
+
+                    return $this->sendError(
+                        trans('custom.company_has_default_user_group'),
+                        422,
+                        [
+                            'type' => 'default_untick_confirmation',
+                            'companyID' => $userGroups->companyID,
+                            'currentUserGroupID' => $id,
+                            'availableUserGroups' => $availableUserGroups,
+                        ]
+                    );
+                }
+            }
+
+            if($requestedDefaultYN)
             {
                 $userGroupsCheck = UserGroup::where("userGroupID", $id)->where("defaultYN", true)->count();
                 if($userGroupsCheck == 0)
@@ -115,7 +148,14 @@ class UserGroupAPIController extends AppBaseController
 
                     }
                 }
-    
+            }
+
+            $employeeExists = EmployeeNavigation::where('userGroupID',$id)->count();
+            $isCompanyChanged = (int)$requestedCompanyID !== (int)$userGroups->companyID;
+            $isDescriptionChanged = trim((string)$requestedDescription) !== trim((string)$userGroups->description);
+
+            if ($employeeExists > 0 && ($isCompanyChanged || $isDescriptionChanged)) {
+                return $this->sendError(trans('custom.user_group_already_assigned_to_employees_cannot_ch'));
             }
 
             $previousValue = $userGroups->toArray();
@@ -135,7 +175,7 @@ class UserGroupAPIController extends AppBaseController
             $userGroups->companyID = $input["companyID"];
             $userGroups->description = $input["description"];
             $userGroups->isActive = 1;
-            $userGroups->defaultYN = $input["defaultYN"];
+            $userGroups->defaultYN = $requestedDefaultYN;
 
            $userGroups->save();
         }else{
@@ -271,6 +311,88 @@ class UserGroupAPIController extends AppBaseController
         $input = $request->all();
         $userGroup = $this->userGroupRepository->getUserGroup($input);
         return $this->sendResponse($userGroup, trans('custom.user_group_retrieved_successfully'));
+    }
+
+    public function assignDefaultAndUntick(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'] ?? null;
+        $currentUserGroupID = $input['currentUserGroupID'] ?? null;
+        $selectedUserGroupID = $input['selectedUserGroupID'] ?? null;
+
+        if (!$companyID || !$currentUserGroupID || !$selectedUserGroupID) {
+            return $this->sendError(trans('custom.unable_to_update'), 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $selectedGroup = UserGroup::where('companyID', $companyID)
+                ->where('userGroupID', $selectedUserGroupID)
+                ->first();
+            $currentGroup = UserGroup::where('companyID', $companyID)
+                ->where('userGroupID', $currentUserGroupID)
+                ->first();
+
+            if (!$selectedGroup || !$currentGroup) {
+                DB::rollBack();
+                return $this->sendError(trans('custom.user_group_not_found'), 404);
+            }
+
+            $selectedGroup->defaultYN = true;
+            $selectedGroup->save();
+
+            $currentGroup->defaultYN = false;
+            $currentGroup->save();
+
+            DB::commit();
+            return $this->sendResponse([], trans('custom.user_group_updated_successfully'));
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return $this->sendError(trans('custom.unable_to_update'), 500);
+        }
+    }
+
+    public function createDefaultAndUntick(Request $request)
+    {
+        $input = $request->all();
+        $companyID = $input['companyID'] ?? null;
+        $currentUserGroupID = $input['currentUserGroupID'] ?? null;
+        $description = trim((string)($input['description'] ?? ''));
+
+        if (!$companyID || !$currentUserGroupID || $description === '') {
+            return $this->sendError(trans('custom.unable_to_add'), 422);
+        }
+
+        DB::beginTransaction();
+        try {
+            $currentGroup = UserGroup::where('companyID', $companyID)
+                ->where('userGroupID', $currentUserGroupID)
+                ->first();
+
+            if (!$currentGroup) {
+                DB::rollBack();
+                return $this->sendError(trans('custom.user_group_not_found'), 404);
+            }
+
+            $newGroup = new UserGroup();
+            $newGroup->companyID = $companyID;
+            $newGroup->description = $description;
+            $newGroup->defaultYN = true;
+            $newGroup->isActive = 1;
+            if (isset($input['isDelegation'])) {
+                $newGroup->isDelegation = $input['isDelegation'];
+            }
+            $newGroup->save();
+
+            $currentGroup->defaultYN = false;
+            $currentGroup->save();
+
+            DB::commit();
+            return $this->sendResponse($newGroup->toArray(), trans('custom.user_group_saved_successfully'));
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return $this->sendError(trans('custom.unable_to_add'), 500);
+        }
     }
 
 }

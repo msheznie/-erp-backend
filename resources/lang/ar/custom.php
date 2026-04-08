@@ -1119,7 +1119,7 @@ return
     'company_finance_year_not_found_1' => 'السنة المالية للمؤسسة غير موجودة',
     'company_finance_year_period_masters' => 'السجلات الرئيسية لفترات السنة المالية للمؤسسة',
     'company_finance_years' => 'السنوات المالية للمؤسسة',
-    'company_has_default_user_group' => 'لدى الشركة بالفعل مجموعة مستخدمين افتراضية',
+    'company_has_default_user_group' => 'مجموعة المستخدمين المحددة هي المجموعة الافتراضية الوحيدة المتاحة في الشركة. يرجى إعادة تعيين مجموعة موجودة أو إنشاء مجموعة مستخدمين جديدة لتعطيل «افتراضي» عن المجموعة المحددة.',
     'company_id_element_required' => 'عنصر معرف المؤسسة مطلوب',
     'company_id_is_required' => 'معرف الشركة مطلوب',
     'company_id_not_found' => 'معرف الشركة غير موجود',
