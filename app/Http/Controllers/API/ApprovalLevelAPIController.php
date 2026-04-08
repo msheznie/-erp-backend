@@ -100,6 +100,11 @@ class ApprovalLevelAPIController extends AppBaseController
             }
         }
 
+        $poAttachmentCheck = $this->approvalLevelService->validatePoAttachmentFields($input);
+        if (!$poAttachmentCheck['valid']) {
+            return $this->sendError($poAttachmentCheck['message'], 422);
+        }
+
         $validationExcludedDocuments = [1, 4];
         if(isset($input['documentSystemID']) && !in_array($input['documentSystemID'], $validationExcludedDocuments)){
             $approvalLevelValidation = $this->approvalLevelValidation($input);
@@ -133,6 +138,13 @@ class ApprovalLevelAPIController extends AppBaseController
 
         if (isset($input['documentSystemID']) && (int) $input['documentSystemID'] === 3 && empty($input['subcategoryID'])) {
             $input['subcategoryID'] = null;
+        }
+
+        if (empty($input['attachmentTypeID'])) {
+            $input['attachmentTypeID'] = null;
+        }
+        if (empty($input['attachmentDocumentCount'])) {
+            $input['attachmentDocumentCount'] = null;
         }
 
         if (isset($input['documentSystemID']) && $input['documentSystemID'] == 4) {
@@ -240,8 +252,20 @@ class ApprovalLevelAPIController extends AppBaseController
             return $this->sendError($grvSubcategoryCheck['message'], 422);
         }
 
+        $poAttachmentCheck = $this->approvalLevelService->validatePoAttachmentFields($input);
+        if (!$poAttachmentCheck['valid']) {
+            return $this->sendError($poAttachmentCheck['message'], 422);
+        }
+
         if (isset($input['documentSystemID']) && (int) $input['documentSystemID'] === 3 && empty($input['subcategoryID'])) {
             $input['subcategoryID'] = null;
+        }
+
+        if (empty($input['attachmentTypeID'])) {
+            $input['attachmentTypeID'] = null;
+        }
+        if (empty($input['attachmentDocumentCount'])) {
+            $input['attachmentDocumentCount'] = null;
         }
 
         $approvalLevel = $this->approvalLevelRepository->update($input, $id);
@@ -412,6 +436,10 @@ class ApprovalLevelAPIController extends AppBaseController
             ->when($activate && (isset($input['documentSystemID']) && $input['documentSystemID'] == 1) && (isset($input['prTypeWise']) && $input['prTypeWise']), function ($query) use ($input) {
                 $query->where('prType', $input['prType']);
             })
+            ->when((isset($input['documentSystemID']) && $input['documentSystemID'] == 2) && !empty($input['attachmentTypeID']) && !empty($input['attachmentDocumentCount']), function ($query) use ($input) {
+                $query->where('attachmentTypeID', $input['attachmentTypeID'])
+                    ->where('attachmentDocumentCount', $input['attachmentDocumentCount']);
+            })
             ->where('isActive', -1)
             ->first();
 
@@ -454,9 +482,17 @@ class ApprovalLevelAPIController extends AppBaseController
                 $serviceLineWise = isset($input['serviceLineWise']) && ($input['serviceLineWise'] || $input['serviceLineWise'] == 1) ? -1 : 0;
                 $valueWise = isset($input['valueWise']) && ($input['valueWise'] || $input['valueWise'] == 1) ? -1 : 0;
                 $prTypeWise = isset($input['prTypeWise']) && ($input['prTypeWise'] || $input['prTypeWise'] == 1) ? -1 : 0;
+                $isAttachmentApproval = \App\Services\CompanyDocumentAttachmentService::isApprovalEnabled($documentConf->isAttachmentApproval ?? 0);
+                $hasAttachmentSetup = !empty($input['attachmentTypeID']) && !empty($input['attachmentDocumentCount']);
                 $docSubcategoryApproval = \App\Services\CompanyDocumentAttachmentService::isApprovalEnabled($documentConf->isSubcategoryApproval ?? 0);
 
                 if (($isCategoryWiseApproval != $documentConf->isCategoryApproval) || ($serviceLineWise != $documentConf->isServiceLineApproval) || ($valueWise != $documentConf->isAmountApproval) || ($prTypeWise != $documentConf->isPRTypeApproval)) {
+                    return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
+                }
+                if ($isAttachmentApproval && !$hasAttachmentSetup) {
+                    return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
+                }
+                if (!$isAttachmentApproval && $hasAttachmentSetup) {
                     return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
                 }
                 if ($input['documentSystemID'] == 3 && $docSubcategoryApproval && empty($input['subcategoryID'])) {
@@ -510,6 +546,10 @@ class ApprovalLevelAPIController extends AppBaseController
         if ($request->isActive) {
             $approvalLevel->isActive = -1;
         } else {
+            $documentApproved = $this->approvalLevelService->getPendingDocumentsForApprovalLevel((int) $approvalLevel->approvalLevelID);
+            if ($documentApproved->count() > 0) {
+                return $this->sendError(trans('custom.cannot_inactive_approval_level_following_documents'), 500, $documentApproved->toArray());
+            }
             $approvalLevel->isActive = 0;
         }
         $approvalLevel->save();

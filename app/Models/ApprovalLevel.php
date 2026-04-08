@@ -79,6 +79,8 @@ class ApprovalLevel extends Model
         'workflow',
         'prType',
         'prTypeWise',
+        'attachmentTypeID',
+        'attachmentDocumentCount',
         'pvTypeWise',
         'pvTypeSetupID'
     ];
@@ -114,6 +116,8 @@ class ApprovalLevel extends Model
         'workflow' => 'integer',
         'prType' => 'integer',
         'prTypeWise' => 'integer',
+        'attachmentTypeID' => 'integer',
+        'attachmentDocumentCount' => 'integer',
         'pvTypeWise' => 'integer',
         'pvTypeSetupID' => 'integer',
         'deleted_at' => 'datetime'
@@ -155,6 +159,12 @@ class ApprovalLevel extends Model
     public function subcategory(){
         return $this->belongsTo('App\Models\FinanceItemCategorySub','subcategoryID','itemCategorySubID');
     }
+
+    public function attachmentType()
+    {
+        return $this->belongsTo('App\Models\DocumentAttachmentType', 'attachmentTypeID', 'travelClaimAttachmentTypeID');
+    }
+
     public static function isExistsTenderType($tenderTypeId, $companySystemID, $documentSystemID)
     {
         return ApprovalLevel::where('isActive', -1)

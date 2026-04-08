@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\ApprovalLevel;
 use App\Models\ApprovalRole;
 use App\Models\CompanyDocumentAttachment;
+use App\Models\DocumentApproved;
 use App\Models\FinanceItemcategorySubAssigned;
 use App\Models\PvApprovalTypeSetup;
 
@@ -12,6 +13,7 @@ class ApprovalLevelService
 {
     private const GRV_DOCUMENT_SYSTEM_ID = 3;
     private const PAYMENT_VOUCHER_DOCUMENT_SYSTEM_ID = 4;
+    private const PO_DOCUMENT_SYSTEM_ID = 2;
 
     /**
      *
@@ -73,6 +75,53 @@ class ApprovalLevelService
             ];
         }
         return ['allowed' => true];
+    }
+
+    /**
+     * @param int $approvalLevelID
+     * @return \Illuminate\Support\Collection
+     */
+    public function getPendingDocumentsForApprovalLevel(int $approvalLevelID)
+    {
+        return DocumentApproved::where('approvalLevelID', $approvalLevelID)
+            ->where('approvedYN', 0)
+            ->where('rejectedYN', 0)
+            ->get();
+    }
+
+    /**
+     * @param array $input
+     * @return array{valid: bool, message?: string}
+     */
+    public function validatePoAttachmentFields(array $input): array
+    {
+        $documentSystemID = (int) ($input['documentSystemID'] ?? 0);
+        if ($documentSystemID != self::PO_DOCUMENT_SYSTEM_ID) {
+            return ['valid' => true];
+        }
+
+        $companySystemID = (int) ($input['companySystemID'] ?? 0);
+        if ($companySystemID <= 0) {
+            return ['valid' => true];
+        }
+
+        $attachmentApprovalValue = CompanyDocumentAttachment::where('companySystemID', $companySystemID)
+            ->where('documentSystemID', $documentSystemID)
+            ->value('isAttachmentApproval');
+        if (!CompanyDocumentAttachmentService::isApprovalEnabled($attachmentApprovalValue ?? 0)) {
+            return ['valid' => true];
+        }
+
+        $attachmentTypeID = (int) ($input['attachmentTypeID'] ?? 0);
+        $attachmentDocumentCount = (int) ($input['attachmentDocumentCount'] ?? 0);
+        if ($attachmentTypeID <= 0 || $attachmentDocumentCount <= 0) {
+            return [
+                'valid' => false,
+                'message' => trans('custom.attachment_type_and_no_of_documents_are_required'),
+            ];
+        }
+
+        return ['valid' => true];
     }
 
     /**

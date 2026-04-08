@@ -10149,4 +10149,6 @@ return
     'dep_percent_short' => 'Dep %',
     'residual_value' => 'Residual Value',
     'credit_note_exchange_rates_updated_message' => 'The exchange rates are updated as follows,<br><br>Previous rates Local ER :local_er | Reporting ER :reporting_er<br><br>Current rates Local ER :current_local_er | Reporting ER :current_reporting_er<br><br>Are you sure you want to proceed?',
+    'cannot_inactive_approval_level_following_documents' => 'Cannot inactive approval level. following documents are pending for approval',
+    'attachment_type_and_no_of_documents_are_required' => 'Attachment type or No of documents has invalid input.',
 ];
