@@ -13,9 +13,12 @@ use App\Models\ChequeRegisterDetail;
 use App\Models\CompanyFinancePeriod;
 use App\Models\CompanyFinanceYear;
 use App\Models\CompanyPolicyMaster;
+use App\Models\CreditNote;
 use App\Models\CurrencyMaster;
+use App\Models\CustomerReceivePayment;
 use App\Models\Employee;
 use App\Models\ErpProjectMaster;
+use App\Models\PayCreditNoteDetail;
 use App\Models\PaySupplierInvoiceMaster;
 use App\Models\SegmentAssigned;
 use App\Models\SegmentMaster;
@@ -40,6 +43,7 @@ use App\Models\CustomerAssigned;
 use Illuminate\Support\Arr;
 use App\helper\Workflow\DocumentApprove;
 use App\Services\UserTypeService;
+use App\Models\PayAdvanceReceiptDetail;
 
 class CreatePaymentVoucher implements ShouldQueue
 {
@@ -103,7 +107,7 @@ class CreatePaymentVoucher implements ShouldQueue
             $paymentVoucher['company_id'] = $this->input['company_id'];
 
             $datasetMaster = self::validatePVMasterData($paymentVoucher, $masterIndex);
-
+           
             if (!$datasetMaster['status']) {
                 $fieldErrors = $datasetMaster['fieldErrors'];
                 $headerData['errors'] = $datasetMaster['data'];
@@ -112,7 +116,7 @@ class CreatePaymentVoucher implements ShouldQueue
             $detailIndex = 0;
             $details = $paymentVoucher['details'] ?? null;
 
-            if ($details != null) {
+            if ($details != null && $paymentVoucher['payment_type'] != 8) {
                 foreach ($details as $detail) {
 
                     $datasetDetails = self::validatePVDetailsData($paymentVoucher,$detail);
@@ -131,7 +135,45 @@ class CreatePaymentVoucher implements ShouldQueue
                     $detailIndex++;
                 }
             }
+            else if ($details != null && $paymentVoucher['payment_type'] == 8 && $paymentVoucher['refund_type'] == 3) {
+                foreach ($details as $detail) {
+                    $datasetDetails = self::validateRefundPVDetailsData($paymentVoucher,$detail);
+                  
+                    if ($datasetDetails['status']) {
+                        $detailsDataSets[$masterIndex][] = $datasetDetails['data'];
+                    }
+                    else {
+                        $detailData['errors'][] = [
+                            'index' => $detailIndex + 1,
+                            'error' => $datasetDetails['data']
+                        ];
+                        unset($detailsDataSets[$masterIndex]);
+                    }
 
+                    $detailIndex++;
+
+                }
+            }
+            else if ($details != null && $paymentVoucher['payment_type'] == 8 && $paymentVoucher['refund_type'] == 1) {
+                foreach ($details as $detail) {
+                    $datasetDetails = self::validateRefundPVAdvanceDetailsData($paymentVoucher,$detail);
+                  
+                    if ($datasetDetails['status']) {
+                        $detailsDataSets[$masterIndex][] = $datasetDetails['data'];
+                    }
+                    else {
+                        $detailData['errors'][] = [
+                            'index' => $detailIndex + 1,
+                            'error' => $datasetDetails['data']
+                        ];
+                        unset($detailsDataSets[$masterIndex]);
+                    }
+
+                     $detailIndex++;
+                }
+            }
+        
+       
             $pdcChequeDetailIndex = 0;
             $pdcChequeDetails = $paymentVoucher['pdc_cheque_details'] ?? null;
 
@@ -192,7 +234,7 @@ class CreatePaymentVoucher implements ShouldQueue
 
             $masterIndex++;
         }
-
+      
         if(!empty($masterDatasets)) {
             DB::beginTransaction();
 
@@ -218,26 +260,63 @@ class CreatePaymentVoucher implements ShouldQueue
                     if($masterInsert['status']) {
                         $pvMasterAutoId = $masterInsert['data']['PayMasterAutoId'];
 
-                        foreach ($detailsData as $pvDetail) {
-                            $pvDetail['directPaymentAutoID'] = $pvMasterAutoId;
+                        $isRefundAdvancePV = ( ($masterDataset['invoiceType']) == 8) && (($masterDataset['refundType']) == 1);
+                        $isRefundCreditNotePV = (($masterDataset['invoiceType']) == 8) && (($masterDataset['refundType']) == 3);
+                        if ($isRefundCreditNotePV) {
+                            foreach ($detailsData as $creditNoteDetail) {
+                                $creditNoteAutoID = (int) ($creditNoteDetail['creditNoteAutoID'] ?? 0);
+                                $amount = (float) ($creditNoteDetail['creditNotePaymentAmount'] ?? 0);
 
-                            $detailInsert = PaymentVoucherServices::storeDirectPaymentDetails($pvDetail);
+                                $transAmount = Helper::convertAmountToLocalRpt(203, $pvMasterAutoId, $amount);
 
-                            if (!$detailInsert['status']) {
-                                $documentDetailsStatus = false;
-                                DB::rollBack();
-                                $error = self::createErrorResponseDataArray(
-                                    $masterDataset['BPVNarration'],
-                                    $masterDataset['initialIndex'],
-                                    [],
-                                    $headerData,
-                                    $detailData,
-                                    $isPDCAvailable,
-                                    $pdcDetailData
-                                );
-                                $error['headerData'] = $detailInsert['message'];
-                                $errorDocuments[] = $error;
-                                break 2;
+                                PayCreditNoteDetail::create([
+                                    'PayMasterAutoId' => $pvMasterAutoId,
+                                    'creditNoteAutoID' => $creditNoteAutoID,
+                                    'companySystemID' => $masterDataset['companySystemID'],
+                                    'creditNotePaymentAmount' => $amount,
+                                    'creditNotePaymentAmountLocal' => $transAmount['localAmount'] ?? 0,
+                                    'creditNotePaymentAmountRpt' => $transAmount['reportingAmount'] ?? 0,
+                                ]);
+                            }
+                        } else if ($isRefundAdvancePV) {
+                            foreach ($detailsData as $advanceDetail) {
+                                $advanceAutoID = (int) ($advanceDetail['advanceReceiptAutoID'] ?? 0);
+                                $amount = (float) ($advanceDetail['advanceReceiptPaymentAmount'] ?? 0);
+
+                                $transAmount = Helper::convertAmountToLocalRpt(203, $pvMasterAutoId, $amount);
+
+                                PayAdvanceReceiptDetail::create([
+                                    'PayMasterAutoId' => $pvMasterAutoId,
+                                    'advanceReceiptAutoID' => $advanceAutoID,
+                                    'companySystemID' => $masterDataset['companySystemID'],
+                                    'advanceReceiptAmount' => $amount,
+                                    'advanceReceiptAmountLocal' => $transAmount['localAmount'] ?? 0,
+                                    'advanceReceiptAmountRpt' => $transAmount['reportingAmount'] ?? 0,
+                                ]);
+                            }
+                        }
+                        else {
+                            foreach ($detailsData as $pvDetail) {
+                                $pvDetail['directPaymentAutoID'] = $pvMasterAutoId;
+
+                                $detailInsert = PaymentVoucherServices::storeDirectPaymentDetails($pvDetail);
+
+                                if (!$detailInsert['status']) {
+                                    $documentDetailsStatus = false;
+                                    DB::rollBack();
+                                    $error = self::createErrorResponseDataArray(
+                                        $masterDataset['BPVNarration'],
+                                        $masterDataset['initialIndex'],
+                                        [],
+                                        $headerData,
+                                        $detailData,
+                                        $isPDCAvailable,
+                                        $pdcDetailData
+                                    );
+                                    $error['headerData'] = $detailInsert['message'];
+                                    $errorDocuments[] = $error;
+                                    break 2;
+                                }
                             }
                         }
 
@@ -397,7 +476,7 @@ class CreatePaymentVoucher implements ShouldQueue
         }
 
         $returnData = [];
-
+       
         if(!empty($errorDocuments)) {
             $returnData[] = [
                 'success' => false,
@@ -415,7 +494,6 @@ class CreatePaymentVoucher implements ShouldQueue
                 'data' => $successDocuments,
             ];
         }
-
         // Dispatch webhook job
         $webhookPayload = ['data' => $returnData, 'externalReference' => $this->externalReference];
         InitiateWebhook::dispatch(
@@ -462,11 +540,42 @@ class CreatePaymentVoucher implements ShouldQueue
         $errorData = $fieldErrors = [];
 
         $companyId = $request['company_id'] ?? null;
-
+        $refundType = null;
+        $customerRefund = null;
         if (isset($request['payment_type'])) {
             if (is_int($request['payment_type'])) {
                 if ($request['payment_type'] == 1) {
                     $paymentType = 3;
+                }
+                else if ($request['payment_type'] == 8) {
+                    $paymentType = 8;
+
+                    if (isset($request['refund_type'])) {
+
+                        if (is_int($request['refund_type'])) {
+                            if ($request['refund_type'] == 3 || $request['refund_type'] == 1) {
+                                    $refundType = $request['refund_type'];
+                                }
+                                else {
+                                    $errorData[] = [
+                                        'field' => "refund_type",
+                                        'message' => ["Invalid refund type selected. Please select a valid refund type. (3 or 1)"]
+                                    ];
+                                }
+                            }
+                        else {
+                            $errorData[] = [
+                                'field' => "refund_type",
+                                'message' => ["Refund type must be an integer."]
+                            ];
+                        }
+                    }
+                    else {
+                        $errorData[] = [
+                            'field' => "refund_type",
+                            'message' => ["Refund type is mandatory when payment voucher type is Refund."]
+                        ];
+                    }
                 }
                 else {
                     $errorData[] = [
@@ -561,200 +670,252 @@ class CreatePaymentVoucher implements ShouldQueue
                 'message' => ["pay_invoice_date field is required"]
             ];
         }
+        if($request['payment_type'] != 8) {
+            if (isset($request['payee_type'])) {
+                if (is_int($request['payee_type'])) {
+                    if (in_array($request['payee_type'],[1,2,3,4])) {
 
-        if (isset($request['payee_type'])) {
-            if (is_int($request['payee_type'])) {
-                if (in_array($request['payee_type'],[1,2,3,4])) {
+                        switch ($request['payee_type']) {
+                            // Validate Supplier
+                            case 1:
+                                if (isset($request['supplier'])) {
+                                    $supplier = SupplierMaster::where('primarySupplierCode', $request['supplier'])
+                                        ->orWhere('registrationNumber',$request['supplier'])
+                                        ->first();
 
-                    switch ($request['payee_type']) {
-                        // Validate Supplier
-                        case 1:
-                            if (isset($request['supplier'])) {
-                                $supplier = SupplierMaster::where('primarySupplierCode', $request['supplier'])
-                                    ->orWhere('registrationNumber',$request['supplier'])
-                                    ->first();
+                                    if ($supplier) {
+                                        if ($supplier->approvedYN == 1) {
+                                            $supplierAssign = SupplierAssigned::where('supplierCodeSytem', $supplier->supplierCodeSystem)
+                                                ->where('companySystemID', $companyId)
+                                                ->first();
 
-                                if ($supplier) {
-                                    if ($supplier->approvedYN == 1) {
-                                        $supplierAssign = SupplierAssigned::where('supplierCodeSytem', $supplier->supplierCodeSystem)
-                                            ->where('companySystemID', $companyId)
-                                            ->first();
-
-                                        if ($supplierAssign && $supplierAssign->isAssigned == -1) {
-                                            if ($supplierAssign->isActive == 1) {
-                                                $invoiceDate = $request['pay_invoice_date'] ?? null;
-                                                $validatorResult = Helper::checkBlockSuppliers($invoiceDate, $supplier->supplierCodeSystem);
-                                                if (!$validatorResult['success']) {
+                                            if ($supplierAssign && $supplierAssign->isAssigned == -1) {
+                                                if ($supplierAssign->isActive == 1) {
+                                                    $invoiceDate = $request['pay_invoice_date'] ?? null;
+                                                    $validatorResult = Helper::checkBlockSuppliers($invoiceDate, $supplier->supplierCodeSystem);
+                                                    if (!$validatorResult['success']) {
+                                                        $errorData[] = [
+                                                            'field' => "supplier",
+                                                            'message' => ["Selected supplier is blocked."]
+                                                        ];
+                                                    }
+                                                }
+                                                else {
                                                     $errorData[] = [
                                                         'field' => "supplier",
-                                                        'message' => ["Selected supplier is blocked."]
+                                                        'message' => ["Selected supplier is not active."]
                                                     ];
                                                 }
                                             }
                                             else {
                                                 $errorData[] = [
                                                     'field' => "supplier",
-                                                    'message' => ["Selected supplier is not active."]
+                                                    'message' => ["Selected supplier is not assigned to the company."]
                                                 ];
                                             }
                                         }
                                         else {
                                             $errorData[] = [
                                                 'field' => "supplier",
-                                                'message' => ["Selected supplier is not assigned to the company."]
+                                                'message' => ["Selected supplier is not approved."]
                                             ];
                                         }
                                     }
                                     else {
                                         $errorData[] = [
                                             'field' => "supplier",
-                                            'message' => ["Selected supplier is not approved."]
+                                            'message' => ["Selected Payee type (supplier) is not available in the system."]
                                         ];
                                     }
                                 }
                                 else {
                                     $errorData[] = [
                                         'field' => "supplier",
-                                        'message' => ["Selected Payee type (supplier) is not available in the system."]
+                                        'message' => ["supplier field is required."]
                                     ];
                                 }
-                            }
-                            else {
-                                $errorData[] = [
-                                    'field' => "supplier",
-                                    'message' => ["supplier field is required."]
-                                ];
-                            }
 
-                            break;
-                        // Validate Employee
-                        case 2:
-                            if (isset($request['employee'])) {
-                                $employee = Employee::where('empID', $request['employee'])
-                                    ->when(Helper::checkHrmsIntergrated($companyId), function ($query) use ($request) {
-                                        $query->orWhereHas('hr_emp', function ($q) use ($request) {
-                                            $q->where('EmpSecondaryCode', $request['employee']);
-                                        });
-                                    })->first();
+                                break;
+                            // Validate Employee
+                            case 2:
+                                if (isset($request['employee'])) {
+                                    $employee = Employee::where('empID', $request['employee'])
+                                        ->when(Helper::checkHrmsIntergrated($companyId), function ($query) use ($request) {
+                                            $query->orWhereHas('hr_emp', function ($q) use ($request) {
+                                                $q->where('EmpSecondaryCode', $request['employee']);
+                                            });
+                                        })->first();
 
-                                if ($employee) {
-                                    if ($employee->empActive == 1) {
-                                        if($employee->discharegedYN != 0){
+                                    if ($employee) {
+                                        if ($employee->empActive == 1) {
+                                            if($employee->discharegedYN != 0){
+                                                $errorData[] = [
+                                                    'field' => "employee",
+                                                    'message' => ["Selected employee has already been discharged."]
+                                                ];
+                                            }
+                                        }
+                                        else {
                                             $errorData[] = [
                                                 'field' => "employee",
-                                                'message' => ["Selected employee has already been discharged."]
+                                                'message' => ["Selected employee is not active."]
                                             ];
                                         }
                                     }
                                     else {
                                         $errorData[] = [
                                             'field' => "employee",
-                                            'message' => ["Selected employee is not active."]
+                                            'message' => ["Selected Payee Type (employee) is not available in the system."]
                                         ];
                                     }
                                 }
                                 else {
                                     $errorData[] = [
                                         'field' => "employee",
-                                        'message' => ["Selected Payee Type (employee) is not available in the system."]
+                                        'message' => ["employee field is required."]
                                     ];
                                 }
-                            }
-                            else {
-                                $errorData[] = [
-                                    'field' => "employee",
-                                    'message' => ["employee field is required."]
-                                ];
-                            }
 
-                            break;
-                        // Validate Other
-                        case 3:
-                            if (!isset($request['other'])) {
-                                $errorData[] = [
-                                    'field' => "other",
-                                    'message' => ["other field is required."]
-                                ];
-                            }
+                                break;
+                            // Validate Other
+                            case 3:
+                                if (!isset($request['other'])) {
+                                    $errorData[] = [
+                                        'field' => "other",
+                                        'message' => ["other field is required."]
+                                    ];
+                                }
 
-                            break;
-                        // Validate Customer
-                        case 4:
-                            if (!isset($request['customer'])) {
-                                $errorData[] = [
-                                    'field' => "customer",
-                                    'message' => ["customer field is required."]
-                                ];
-                            }
+                                break;
+                            // Validate Customer
+                            case 4:
+                                if (!isset($request['customer'])) {
+                                    $errorData[] = [
+                                        'field' => "customer",
+                                        'message' => ["customer field is required."]
+                                    ];
+                                }
 
-                            if (isset($request['customer'])) {
-                                $customer = CustomerMaster::where('customerCodeSystem', $request['customer'])
-                                    ->first();
+                                if (isset($request['customer'])) {
+                                    $customer = CustomerMaster::where('customerCodeSystem', $request['customer'])
+                                        ->first();
 
-                                if ($customer) {
-                                    if ($customer->approvedYN == 1) {
-                                        $customerAssign = CustomerAssigned::where('customerCodeSystem', $customer->customerCodeSystem)
-                                            ->where('companySystemID', $companyId)
-                                            ->where('isAssigned', -1)
-                                            ->first();
+                                    if ($customer) {
+                                        if ($customer->approvedYN == 1) {
+                                            $customerAssign = CustomerAssigned::where('customerCodeSystem', $customer->customerCodeSystem)
+                                                ->where('companySystemID', $companyId)
+                                                ->where('isAssigned', -1)
+                                                ->first();
 
-                                        if ($customerAssign && $customerAssign->isAssigned == -1) {
-                                            if ($customerAssign->isActive != 1) {
+                                            if ($customerAssign && $customerAssign->isAssigned == -1) {
+                                                if ($customerAssign->isActive != 1) {
+                                                    $errorData[] = [
+                                                        'field' => "customer",
+                                                        'message' => ["Selected customer is not active."]
+                                                    ];
+                                                }
+                                            }
+                                            else {
                                                 $errorData[] = [
                                                     'field' => "customer",
-                                                    'message' => ["Selected customer is not active."]
+                                                    'message' => ["Selected customer is not assigned to the company."]
                                                 ];
                                             }
                                         }
                                         else {
                                             $errorData[] = [
                                                 'field' => "customer",
-                                                'message' => ["Selected customer is not assigned to the company."]
+                                                'message' => ["Selected customer is not approved."]
                                             ];
                                         }
                                     }
                                     else {
                                         $errorData[] = [
                                             'field' => "customer",
-                                            'message' => ["Selected customer is not approved."]
+                                            'message' => ["Selected Payee type (customer) is not available in the system."]
                                         ];
                                     }
                                 }
                                 else {
                                     $errorData[] = [
                                         'field' => "customer",
-                                        'message' => ["Selected Payee type (customer) is not available in the system."]
+                                        'message' => ["customer field is required."]
                                     ];
                                 }
-                            }
-                            else {
-                                $errorData[] = [
-                                    'field' => "customer",
-                                    'message' => ["customer field is required."]
-                                ];
-                            }
-                            break;
+                                break;
+                        }
+                    }
+                    else {
+                        $errorData[] = [
+                            'field' => "payee_type",
+                            'message' => ["Selected payee type not match with system"]
+                        ];
                     }
                 }
                 else {
                     $errorData[] = [
                         'field' => "payee_type",
-                        'message' => ["Selected payee type not match with system"]
+                        'message' => ["Payee Type must be an integer"]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "payee_type",
-                    'message' => ["Payee Type must be an integer"]
+                    'message' => ["Payee Type field is required"]
                 ];
             }
         }
-        else {
-            $errorData[] = [
-                'field' => "payee_type",
-                'message' => ["Payee Type field is required"]
-            ];
+        else if($request['payment_type'] == 8) {
+            if (isset($request['customer'])) {
+                $customer = CustomerMaster::where('CutomerCode', $request['customer'])
+                    ->first();
+
+                if ($customer) {
+                    if ($customer->approvedYN == 1) {
+                        $customerAssign = CustomerAssigned::where('customerCodeSystem', $customer->customerCodeSystem)
+                            ->where('companySystemID', $companyId)
+                            ->where('isAssigned', -1)
+                            ->first();
+
+                        if ($customerAssign && $customerAssign->isAssigned == -1) {
+                            if ($customerAssign->isActive != 1) {
+                                $errorData[] = [
+                                    'field' => "customer",
+                                    'message' => ["Selected customer is not active."]
+                                ];
+                            }
+                            else {
+                                $customerRefund = $customer->customerCodeSystem;
+                            }
+                        }
+                        else {
+                            $errorData[] = [
+                                'field' => "customer",
+                                'message' => ["Selected customer is not assigned to the company."]
+                            ];
+                        }
+                    }
+                    else {
+                        $errorData[] = [
+                            'field' => "customer",
+                            'message' => ["Selected customer is not approved."]
+                        ];
+                    }
+                }
+                else {
+                    $errorData[] = [
+                        'field' => "customer",
+                        'message' => ["Selected customer is not available in the system."]
+                    ];
+                }
+            }
+            else {
+                $errorData[] = [
+                    'field' => "customer",
+                    'message' => ["customer field is required."]
+                ];
+            }
         }
 
         $paymentMode = null;
@@ -1185,7 +1346,8 @@ class CreatePaymentVoucher implements ShouldQueue
                     'companySystemID' => $companyId,
                     'documentSystemID' => 4,
                     'isAutoCreateDocument' => true,
-                    'initialIndex' => $index
+                    'initialIndex' => $index,
+                    'refundType' => $refundType
                 ]
             ];
 
@@ -1210,20 +1372,24 @@ class CreatePaymentVoucher implements ShouldQueue
                     ];
                 }
             }
-
-            switch ($request['payee_type']) {
-                case 1:
-                    $returnDataset['data']['BPVsupplierID'] = $supplier->supplierCodeSystem;
-                    break;
-                case 2:
-                    $returnDataset['data']['directPaymentPayeeEmpID'] = $employee->employeeSystemID;
-                    break;
-                case 3:
-                    $returnDataset['data']['directPaymentPayee'] = $request['other'];
-                    break;
-                case 4:
-                    $returnDataset['data']['BPVcustomerID'] = $customer->customerCodeSystem;
-                    break;
+            if ($request['payment_type'] != 8) {
+                switch ($request['payee_type']) {
+                    case 1:
+                        $returnDataset['data']['BPVsupplierID'] = $supplier->supplierCodeSystem;
+                        break;
+                    case 2:
+                        $returnDataset['data']['directPaymentPayeeEmpID'] = $employee->employeeSystemID;
+                        break;
+                    case 3:
+                        $returnDataset['data']['directPaymentPayee'] = $request['other'];
+                        break;
+                    case 4:
+                        $returnDataset['data']['BPVcustomerID'] = $customer->customerCodeSystem;
+                        break;
+                }
+            }
+            else if($request['payment_type'] == 8) {
+                $returnDataset['data']['BPVcustomerID'] = $customerRefund;
             }
         }
         else {
@@ -1687,5 +1853,414 @@ class CreatePaymentVoucher implements ShouldQueue
             'index' => $masterIndex + 1,
             'paymentVoucherCode' => $code,
         ];
+    }
+
+    public static function validateRefundPVDetailsData($masterData, $request): array {
+        $errorData = [];
+
+        $companyId = $masterData['company_id'] ?? null;
+        $paymentAmount = null;
+        $paidPv = 0.0;
+        $matched = 0.0;
+        $rv = 0.0;
+        $totalPaidAmount = 0.0;
+        $creditNoteAmount = 0.0;
+        $paymentBalancedAmount = 0.0;
+        $receiptVoucherCode = null;
+
+        if (!isset($request['credit_note']) || !is_string($request['credit_note']) || trim($request['credit_note']) === '') {
+            $errorData[] = [
+                'field' => "credit_note",
+                'message' => ["Credit Note Code should be mandatory"]
+            ];
+        } else {
+            $creditNoteCode = trim($request['credit_note']);
+
+            $creditNote = CreditNote::where('creditNoteCode', $creditNoteCode)->where('companySystemID', $companyId)->first();
+            if (!$creditNote) {
+                $errorData[] = [
+                    'field' => "credit_note",
+                    'message' => ["The Credit note code is not matching with system"]
+                ];
+            } else {
+             
+                if (!array_key_exists('payment_amount', $request) || $request['payment_amount'] === null || $request['payment_amount'] === '') {
+                    $errorData[] = [
+                        'field' => "payment_amount",
+                        'message' => ["Payment amount should be mandatory"]
+                    ];
+                } elseif (!is_numeric($request['payment_amount'])) {
+                    $errorData[] = [
+                        'field' => "payment_amount",
+                        'message' => ["The value should be positive numbers only"]
+                    ];
+                } else {
+                    $paymentAmount = (float) $request['payment_amount'];
+                    if ($paymentAmount <= 0) {
+                        $errorData[] = [
+                            'field' => "payment_amount",
+                            'message' => ["The value should be positive numbers only"]
+                        ];
+                    }
+                }
+
+                if ($creditNote->approved !== -1) {
+                    $errorData[] = [
+                        'field' => "credit_note",
+                        'message' => ["The Credit note code is / are not Fully approved"]
+                    ];
+                }
+
+                if ($creditNote->type !== 3) {
+                    $errorData[] = [
+                        'field' => "credit_note",
+                        'message' => ["The credit note type should be refund"]
+                    ];
+                }
+
+                $pvCurrencyId = null;
+                if (isset($masterData['currency']) && is_string($masterData['currency'])) {
+                    $currency = CurrencyMaster::where('CurrencyCode', $masterData['currency'])->first();
+                    $pvCurrencyId = $currency ?  $currency->currencyID : null;
+                }
+                if (!is_null($pvCurrencyId) &&  $creditNote->customerCurrencyID !==  $pvCurrencyId) {
+                    $errorData[] = [
+                        'field' => "credit_note",
+                        'message' => ["The Credit note currency does not match with payment voucher currency"]
+                    ];
+                }
+
+               
+                if (isset($masterData['customer']) && is_string($masterData['customer'])) {
+                    $customer = CustomerMaster::where('CutomerCode', $masterData['customer'])->first();
+                    if ($customer && $creditNote->customerID !==  $customer->customerCodeSystem) {
+                        $errorData[] = [
+                            'field' => "credit_note",
+                            'message' => ["Customer not matching with payment voucher"]
+                        ];
+                    }
+                }
+
+                
+                    $paidPv = (float) DB::table('erp_paycreditnotedetails')
+                        ->where('creditNoteAutoID', $creditNote->creditNoteAutoID)
+                        ->where('companySystemID', $companyId)
+                        ->sum('creditNotePaymentAmount');
+
+                    $matched = (float) DB::table('erp_matchdocumentmaster')
+                        ->where('PayMasterAutoId', $creditNote->creditNoteAutoID)
+                        ->where('documentSystemID', 19)
+                        ->where('matchingConfirmedYN', 1)
+                        ->where('companySystemID', $companyId)
+                        ->sum('matchingAmount');
+
+                    $rv = (float) DB::table('erp_custreceivepaymentdet')
+                        ->join('erp_customerreceivepayment', function ($join) {
+                            $join->on('erp_custreceivepaymentdet.custReceivePaymentAutoID', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID')
+                                ->where('erp_customerreceivepayment.approved', -1);
+                        })
+                        ->where('erp_custreceivepaymentdet.addedDocumentSystemID', 19)
+                        ->where('erp_custreceivepaymentdet.bookingInvCodeSystem', $creditNote->creditNoteAutoID)
+                        ->where('erp_custreceivepaymentdet.matchingDocID', 0)
+                        ->where('erp_custreceivepaymentdet.companySystemID', $companyId)
+                        ->sum('erp_custreceivepaymentdet.receiveAmountTrans');
+
+                    $totalPaidAmount = $paidPv + $matched - $rv;
+                    $creditNoteAmount = (float) ($creditNote->creditAmountTrans ?? 0);
+                    $paymentBalancedAmount = $creditNoteAmount - $totalPaidAmount;
+                    $balance = $paymentBalancedAmount;
+
+                    if ($balance <= 0) {
+                        $errorData[] = [
+                            'field' => "credit_note",
+                            'message' => ["Selected Credit note already full paid"]
+                        ];
+                    }
+
+                    if (!is_null($paymentAmount) && $paymentAmount > $balance) {
+                        $errorData[] = [
+                            'field' => "payment_amount",
+                            'message' => ["Payment cannot exceed the balance amount"]
+                        ];
+                    }
+                
+
+                if (empty($errorData)) {
+                    $linkedPv = DB::table('erp_paycreditnotedetails as pcd')
+                        ->join('erp_paysupplierinvoicemaster as pvm', 'pcd.PayMasterAutoId', '=', 'pvm.PayMasterAutoId')
+                        ->where('pcd.creditNoteAutoID', $creditNote->creditNoteAutoID)
+                        ->where('pcd.companySystemID', $companyId)
+                        ->where('pvm.approved', '!=', -1)
+                        ->select('pvm.BPVcode', 'pvm.PayMasterAutoId')
+                        ->first();
+
+                    if ($linkedPv) {
+                        $docId = $linkedPv->BPVcode ?? $linkedPv->PayMasterAutoId;
+                        $errorData[] = [
+                            'field' => "credit_note",
+                            'message' => ["The selected Credit note already pulled to (" . $docId . ")"]
+                        ];
+                    }
+
+                    $draftMatching = DB::table('erp_matchdocumentmaster')
+                        ->where('PayMasterAutoId', $creditNote->creditNoteAutoID)
+                        ->where('companySystemID', $companyId)
+                        ->where('documentSystemID', 19)
+                        ->where('matchingConfirmedYN', 0)
+                        ->first();
+
+                    if ($draftMatching) {
+                        $docId = $draftMatching->matchDocID ?? $draftMatching->matchingDocID ?? $draftMatching->id ?? $creditNote->creditNoteCode;
+                        $errorData[] = [
+                            'field' => "credit_note",
+                            'message' => ["The selected Credit note already pulled to (" . $docId . ")"]
+                        ];
+                    }
+                }
+
+            }
+        }
+
+        
+
+        if (empty($errorData)) {
+            $creditNoteCode = trim((string) $request['credit_note']);
+            $creditNote = CreditNote::with('currency')->where('creditNoteCode', $creditNoteCode)
+                ->where('companySystemID', $companyId)
+                ->first();
+
+            $returnData = [
+                "status" => true,
+                "data" => [
+                    'creditNoteAutoID' =>  ($creditNote->creditNoteAutoID ?? 0),
+                    'creditNotePaymentAmount' => (float) ($paymentAmount ?? ($request['payment_amount'] ?? 0))
+                ]
+            ];
+        } else {
+            $returnData = [
+                "status" => false,
+                "data" => $errorData
+            ];
+        }
+
+        return $returnData;
+    }
+
+    private static function validateRefundPVAdvanceDetailsData(array $masterData, array $request): array
+    {
+        $errorData = [];
+        $companyId = (int) ($masterData['company_id'] ?? 0);
+        $paymentAmount = null;
+
+        if (! isset($request['advance_voucher_code']) || ! is_string($request['advance_voucher_code']) || trim($request['advance_voucher_code']) === '') {
+            $errorData[] = [
+                'field' => 'advance_voucher_code',
+                'message' => ['Advance voucher code should be mandatory.'],
+            ];
+        } else {
+            $advanceCode = trim($request['advance_voucher_code']);
+
+            $advance = CustomerReceivePayment::where('custPaymentReceiveCode', $advanceCode)
+                ->where('companySystemID', $companyId)
+                ->first();
+
+            if (! $advance) {
+                $errorData[] = [
+                    'field' => 'advance_voucher_code',
+                    'message' => ['The advance voucher code is not matching with the system.'],
+                ];
+            } else {
+                if ((int) $advance->approved !== -1) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['The advance voucher is not fully approved.'],
+                    ];
+                }
+
+                if ((int) $advance->documentType !== 15) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['The selected document is not a valid advance receipt.'],
+                    ];
+                }
+
+                if ((int) $advance->matchInvoice === 2) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['This advance voucher cannot be used for this payment.Its matched to a payment voucher.'],
+                    ];
+                }
+
+                $pvCurrencyId = null;
+                if (isset($masterData['currency']) && is_string($masterData['currency'])) {
+                    $currency = CurrencyMaster::where('CurrencyCode', $masterData['currency'])->first();
+                    $pvCurrencyId = $currency ? (int) $currency->currencyID : null;
+                }
+                if ($pvCurrencyId !== null &&  $advance->custTransactionCurrencyID !== $pvCurrencyId) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['The advance voucher currency does not match with payment voucher currency.'],
+                    ];
+                }
+
+                if (isset($masterData['customer']) && is_string($masterData['customer'])) {
+                    $customer = CustomerMaster::where('CutomerCode', $masterData['customer'])->first();
+                    if ($customer && $advance->customerID !== $customer->customerCodeSystem) {
+                        $errorData[] = [
+                            'field' => 'advance_voucher_code',
+                            'message' => ['The advance voucher does not match with the selected customer.'],
+                        ];
+                    }
+                }
+
+                $balance = self::computeAdvanceReceiptBalanceRemaining($advance, $companyId);
+
+                if ($balance <= 0) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['Selected advance already fully paid.'],
+                    ];
+                }
+
+                if (self::advanceLinkedToNonApprovedPaymentVoucher($advance->custReceivePaymentAutoID, $companyId)) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['This advance voucher is already linked to a payment voucher in Draft or Pending Approval status and cannot be selected.'],
+                    ];
+                }
+
+                if (self::advanceInDraftReceiptMatching($advance->custReceivePaymentAutoID, $companyId)) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['This advance is currently used in a draft receipt matching transaction and cannot be added.'],
+                    ];
+                }
+
+                $pvDocDate = $masterData['pay_invoice_date'] ?? null;
+                if ($pvDocDate) {
+                        $pvCarbon = Carbon::parse($pvDocDate)->startOfDay();
+                        $advCarbon = Carbon::parse($advance->custPaymentReceiveDate)->startOfDay();
+                        if ($advCarbon->greaterThanOrEqualTo($pvCarbon)) {
+                            $errorData[] = [
+                                'field' => 'advance_voucher_code',
+                                'message' => ['The advance date should be less than payment voucher document date.'],
+                            ];
+                        }
+                }
+
+                if (! array_key_exists('payment_amount', $request) || $request['payment_amount'] === null || $request['payment_amount'] === '') {
+                    $errorData[] = [
+                        'field' => 'payment_amount',
+                        'message' => ['Payment amount should be mandatory.'],
+                    ];
+                } elseif (! is_numeric($request['payment_amount'])) {
+                    $errorData[] = [
+                        'field' => 'payment_amount',
+                        'message' => ['The value should be positive numbers only.'],
+                    ];
+                } else {
+                    $paymentAmount = (float) $request['payment_amount'];
+                    if ($paymentAmount <= 0) {
+                        $errorData[] = [
+                            'field' => 'payment_amount',
+                            'message' => ['The value should be positive numbers only.'],
+                        ];
+                    }
+                }
+
+                if ($paymentAmount !== null && $balance > 0 && $paymentAmount > $balance) {
+                    $errorData[] = [
+                        'field' => 'payment_amount',
+                        'message' => ['Payment amount cannot be greater than balance amount.'],
+                    ];
+                }
+            }
+        }
+       
+        if (empty($errorData)) {
+         
+            $advanceCode = trim((string) $request['advance_voucher_code']);
+            $advance = CustomerReceivePayment::query()
+                ->where('custPaymentReceiveCode', $advanceCode)
+                ->where('companySystemID', $companyId)
+                ->first();
+
+            $balance = $advance ? self::computeAdvanceReceiptBalanceRemaining($advance, $companyId) : 0.0;
+            $amt = (float) ($paymentAmount ?? ($request['payment_amount'] ?? 0));
+
+            $returnData = [
+                'status' => true,
+                'data' => [
+                    'advanceReceiptAutoID' => (int) ($advance->custReceivePaymentAutoID ?? 0),
+                    'advanceReceiptPaymentAmount' => $amt,
+                    'advanceVoucherBalanceAmount' => $balance,
+                    'advanceVoucherDate' => $advance->custPaymentReceiveDate ?? null,
+                    'advanceAmount' => abs((float) ($advance->receivedAmount ?? 0)),
+                ],
+            ];
+        }
+        else {
+            $returnData = [
+                "status" => false,
+                "data" => $errorData
+            ];
+        }
+        return $returnData;
+    }
+
+  
+    private static function computeAdvanceReceiptBalanceRemaining(CustomerReceivePayment $advance, int $companySystemID): float
+    {
+        $id = (int) $advance->custReceivePaymentAutoID;
+        $advanceTransAbs = abs((float) ($advance->receivedAmount ?? 0));
+
+        $paidPv = (float) DB::table('erp_pay_advance_receipt_details')
+            ->where('advanceReceiptAutoID', $id)
+            ->where('companySystemID', $companySystemID)
+            ->selectRaw('COALESCE(SUM(ABS(advanceReceiptAmount)), 0) as s')
+            ->value('s');
+
+        $matched = (float) DB::table('erp_matchdocumentmaster')
+            ->where('PayMasterAutoId', $id)
+            ->where('documentSystemID', 21)
+            ->where('matchingConfirmedYN', 1)
+            ->where('companySystemID', $companySystemID)
+            ->selectRaw('COALESCE(SUM(ABS(matchingAmount)), 0) as s')
+            ->value('s');
+
+        $rv = (float) DB::table('erp_custreceivepaymentdet')
+            ->join('erp_customerreceivepayment', function ($join) {
+                $join->on('erp_custreceivepaymentdet.custReceivePaymentAutoID', '=', 'erp_customerreceivepayment.custReceivePaymentAutoID')
+                    ->where('erp_customerreceivepayment.approved', -1);
+            })
+            ->where('erp_custreceivepaymentdet.addedDocumentSystemID', 21)
+            ->where('erp_custreceivepaymentdet.bookingInvCodeSystem', $id)
+            ->where('erp_custreceivepaymentdet.matchingDocID', 0)
+            ->where('erp_custreceivepaymentdet.companySystemID', $companySystemID)
+            ->sum('erp_custreceivepaymentdet.receiveAmountTrans');
+
+        $totalUsed = $paidPv + $matched - $rv;
+
+        return $advanceTransAbs - $totalUsed;
+    }
+
+    private static function advanceLinkedToNonApprovedPaymentVoucher($advanceReceiptAutoId, $companySystemID): bool
+    {
+        return DB::table('erp_pay_advance_receipt_details as pard')
+            ->join('erp_paysupplierinvoicemaster as pvm', 'pard.PayMasterAutoId', '=', 'pvm.PayMasterAutoId')
+            ->where('pard.advanceReceiptAutoID', $advanceReceiptAutoId)
+            ->where('pard.companySystemID', $companySystemID)
+            ->where('pvm.approved', '!=', -1)
+            ->exists();
+    }
+
+    private static function advanceInDraftReceiptMatching(int $advanceReceiptAutoId, int $companySystemID): bool
+    {
+        return DB::table('erp_matchdocumentmaster')
+            ->where('PayMasterAutoId', $advanceReceiptAutoId)
+            ->where('companySystemID', $companySystemID)
+            ->where('documentSystemID', 21)
+            ->where('matchingConfirmedYN', 0)
+            ->exists();
     }
 }

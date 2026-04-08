@@ -13,15 +13,31 @@ namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateCustomerInvoiceAPIRequest;
 use App\Http\Requests\API\UpdateCustomerInvoiceAPIRequest;
+use App\Models\Company;
 use App\Models\CustomerInvoice;
+use App\Models\CustomerInvoiceDirect;
+use App\Models\CustomerReceivePayment;
+use App\Models\CustomerReceivePaymentDetail;
+use App\Models\DocumentSystemMapping;
+use App\Models\MatchDocumentMaster;
+use App\Models\SalesReturn;
+use App\Models\SalesReturnDetail;
+use App\Models\Taxdetail;
+use App\Models\ThirdPartySystems;
 use App\Repositories\CustomerInvoiceRepository;
+use App\helper\Helper;
 use App\Services\API\CustomerInvoiceAPIService;
+use App\Services\API\CustomerInvoiceBalanceAPIService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Query\Builder;
 use Response;
 use App\Traits\DocumentSystemMappingTrait;
+use App\Models\CustomerMaster;
+use App\Http\Requests\API\GetApprovedCustomerInvoiceBalancesAPIRequest;
 
 /**
  * Class CustomerInvoiceController
@@ -30,12 +46,17 @@ use App\Traits\DocumentSystemMappingTrait;
 
 class CustomerInvoiceAPIController extends AppBaseController
 {
+  
+
+
     /** @var  CustomerInvoiceRepository */
     private $customerInvoiceRepository;
+    private CustomerInvoiceBalanceAPIService $customerInvoiceBalanceAPIService;
     use DocumentSystemMappingTrait;
-    public function __construct(CustomerInvoiceRepository $customerInvoiceRepo)
+    public function __construct(CustomerInvoiceRepository $customerInvoiceRepo, CustomerInvoiceBalanceAPIService $customerInvoiceBalanceAPIService)
     {
         $this->customerInvoiceRepository = $customerInvoiceRepo;
+        $this->customerInvoiceBalanceAPIService = $customerInvoiceBalanceAPIService;
     }
 
     /**
@@ -309,4 +330,18 @@ class CustomerInvoiceAPIController extends AppBaseController
         }
 
     }
+
+
+    public function getApprovedCustomerInvoiceBalancesAPI(GetApprovedCustomerInvoiceBalancesAPIRequest $request)
+    {
+
+        $input = $request->all();
+        $response = $this->customerInvoiceBalanceAPIService->getApprovedBalances($input);
+        if (! $response->isSuccess()) {
+            return $this->sendError($response->getMessage(), $response->getStatusCode());
+        }
+
+        return $this->sendResponse($response->getData(), $response->getMessage());
+    }
+
 }

@@ -22,6 +22,8 @@ use App\Services\UserTypeService;
 use App\Services\DocumentAutoApproveService;
 use App\Services\DocumentReportingManagerService;
 use App\Jobs\PushNotification;
+use App\Models\PvApprovalTypeSetup;
+use App\Services\PvApprovalTypeSetupService;
 
 class DocumentConfirm
 {
@@ -649,6 +651,17 @@ class DocumentConfirm
                     $docInforArr["modelName"] = 'CompanyBudgetPlanning';
                     $docInforArr["primarykey"] = 'id';
                     break;
+                case 134: // SRM Tender/RFX Cancellation
+                    $docInforArr["documentCodeColumnName"] = 'tender_code';
+                    $docInforArr["confirmColumnName"] = 'confirmed_yn';
+                    $docInforArr["confirmedBy"] = 'confirmed_by_name';
+                    $docInforArr["confirmedByEmpID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedBySystemID"] = 'confirmed_by_emp_system_id';
+                    $docInforArr["confirmedDate"] = 'confirmed_date';
+                    $docInforArr["tableName"] = 'srm_tender_cancellation';
+                    $docInforArr["modelName"] = 'TenderCancellation';
+                    $docInforArr["primarykey"] = 'id';
+                    break;
                 default:
                     return ['success' => false, 'message' => trans('custom.document_id_not_found')];
             }
@@ -746,6 +759,11 @@ class DocumentConfirm
                                 $isValueWise = $policy->isAmountApproval;
                                 $isPRTypeWise = $policy->isPRTypeApproval;
                                 $isAttachment = $policy->isAttachmentYN;
+                                $isPvTypeWise = false;
+
+                                if($params["document"] == 4) {
+                                    $isPvTypeWise = PvApprovalTypeSetup::where('company_system_id', $params["company"])->where('document_attachment_id', $policy->companyDocumentAttachmentID)->where('is_active', 1)->exists();
+                                }
 
                                 $fromCiUpload = false;
                                 if(isset($params["fromUpload"]) && $params["fromUpload"] == true){
@@ -766,8 +784,6 @@ class DocumentConfirm
                                 return ['success' => false, 'message' => trans('custom.policy_not_available')];
                             }
 
-
-
                             // get approval rolls
                             $approvalLevel = ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
 
@@ -779,39 +795,57 @@ class DocumentConfirm
                                 }
                             }
 
-
-                            if ($isSegmentWise) {
-                                if (array_key_exists('segment', $params)) {
-
-                                    if ($params["segment"]) {
-                                        $approvalLevel->where('serviceLineSystemID', $params["segment"]);
-                                        $approvalLevel->where('serviceLineWise', 1);
+                            if($params["document"] != 4) {
+                                if ($isSegmentWise) {
+                                    if (array_key_exists('segment', $params)) {
+    
+                                        if ($params["segment"]) {
+                                            $approvalLevel->where('serviceLineSystemID', $params["segment"]);
+                                            $approvalLevel->where('serviceLineWise', 1);
+                                        } else {
+                                            return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                        }
+                                    } else {
+                                        return ['success' => false, 'message' => trans('custom.serviceline_parameters_missing')];
+                                    }
+                                }
+    
+                                if ($isCategoryWise) {
+                                    if (array_key_exists('category', $params)) {
+                                        if ($params["category"]) {
+                                            $approvalLevel->where('categoryID', $params["category"]);
+                                            $approvalLevel->where('isCategoryWiseApproval', -1);
+                                        } else {
+                                            return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                        }
+                                    } else {
+                                        return ['success' => false, 'message' => trans('custom.category_parameter_missing')];
+                                    }
+                                }
+    
+                                if ($isSubcategoryWise) {
+                                    if (array_key_exists('subCategory', $params) && $params['subCategory']) {
+                                        $approvalLevel->where('subcategoryID', $params['subCategory']);
                                     } else {
                                         return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                     }
-                                } else {
-                                    return ['success' => false, 'message' => trans('custom.serviceline_parameters_missing')];
                                 }
-                            }
 
-                            if ($isCategoryWise) {
-                                if (array_key_exists('category', $params)) {
-                                    if ($params["category"]) {
-                                        $approvalLevel->where('categoryID', $params["category"]);
-                                        $approvalLevel->where('isCategoryWiseApproval', -1);
+                                if ($isValueWise) {
+                                    if (array_key_exists('amount', $params)) {
+                                        if ($params["amount"] >= 0) {
+                                            $amount = $params["amount"];
+                                            $approvalLevel->where(function ($query) use ($amount) {
+                                                $query->where('valueFrom', '<=', $amount);
+                                                $query->where('valueTo', '>=', $amount);
+                                            });
+                                            $approvalLevel->where('valueWise', 1);
+                                        } else {
+                                            return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                        }
                                     } else {
-                                        return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                        return ['success' => false, 'message' => trans('custom.amount_parameter_missing')];
                                     }
-                                } else {
-                                    return ['success' => false, 'message' => trans('custom.category_parameter_missing')];
-                                }
-                            }
-
-                            if ($isSubcategoryWise) {
-                                if (array_key_exists('subCategory', $params) && $params['subCategory']) {
-                                    $approvalLevel->where('subcategoryID', $params['subCategory']);
-                                } else {
-                                    return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
                                 }
                             }
 
@@ -829,23 +863,6 @@ class DocumentConfirm
                                 });
                             }
 
-                            if ($isValueWise) {
-                                if (array_key_exists('amount', $params)) {
-                                    if ($params["amount"] >= 0) {
-                                        $amount = $params["amount"];
-                                        $approvalLevel->where(function ($query) use ($amount) {
-                                            $query->where('valueFrom', '<=', $amount);
-                                            $query->where('valueTo', '>=', $amount);
-                                        });
-                                        $approvalLevel->where('valueWise', 1);
-                                    } else {
-                                        return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
-                                    }
-                                } else {
-                                    return ['success' => false, 'message' => trans('custom.amount_parameter_missing')];
-                                }
-                            }
-
                             if ($isPRTypeWise && ($reference_document_id == 1)) {
                                 if (array_key_exists('prType', $params)) {
                                     if ($params["prType"]) {
@@ -859,11 +876,81 @@ class DocumentConfirm
                                 }
                             }
 
+                            if($params["document"] == 4) {
+                                if($isPvTypeWise) {
+                                    $pvDocumentType = PvApprovalTypeSetupService::getPVDocumentTypeForApproval($masterRec);
+                                    $invoiceTypeColumnName = $pvDocumentType['invoiceTypeColumnName'];
+                                    $expenseClaimOrPettyCashColumnName = $pvDocumentType['expenseClaimOrPettyCashColumnName'];
+
+                                    if (!is_null($invoiceTypeColumnName)) {
+                                        $matchingSetup = PvApprovalTypeSetup::where('company_system_id', $params["company"])
+                                            ->where('document_attachment_id', $policy->companyDocumentAttachmentID)
+                                            ->when(!is_null($invoiceTypeColumnName), function ($query) use ($invoiceTypeColumnName) {
+                                                $query->where($invoiceTypeColumnName, 1);
+                                            })
+                                            ->when(!is_null($expenseClaimOrPettyCashColumnName), function ($query) use ($expenseClaimOrPettyCashColumnName) {
+                                                $query->where($expenseClaimOrPettyCashColumnName, 1);
+                                            })
+                                            ->where('is_active', 1)
+                                            ->get();
+
+                                        if (empty($matchingSetup->toArray())) {
+                                            return ['success' => false, 'message' => trans('custom.no_active_type_based_approval_setup_found_for_this_payment_voucher_type')];
+                                        }
+
+                                        if (count($matchingSetup) > 1) {
+                                            return ['success' => false, 'message' => trans('custom.multiple_active_type_based_approval_setup_found_for_this_payment_voucher_type')];
+                                        }
+
+                                        $approvalLevel->where('pvTypeWise', 1)->where('pvTypeSetupID', $matchingSetup->first()->id);
+
+                                        if ($matchingSetup->first()->is_amount_approval) {
+                                            if (array_key_exists('amount', $params)) {
+                                                if ($params["amount"] >= 0) {
+                                                    $amount = $params["amount"];
+                                                    $approvalLevel->where(function ($query) use ($amount) {
+                                                        $query->where('valueFrom', '<=', $amount);
+                                                        $query->where('valueTo', '>=', $amount);
+                                                    });
+                                                    $approvalLevel->where('valueWise', 1);
+                                                } 
+                                                else {
+                                                    return ['success' => false, 'message' => trans('custom.no_active_type_based_approval_setup_found_for_this_payment_voucher_type')];
+                                                }
+                                            } 
+                                            else {
+                                                return ['success' => false, 'message' => trans('custom.amount_parameter_missing')];
+                                            }
+                                        }
+                                    }
+                                }
+                                else {
+                                    if ($isValueWise) {
+                                        if (array_key_exists('amount', $params)) {
+                                            if ($params["amount"] >= 0) {
+                                                $amount = $params["amount"];
+                                                $approvalLevel->where(function ($query) use ($amount) {
+                                                    $query->where('valueFrom', '<=', $amount);
+                                                    $query->where('valueTo', '>=', $amount);
+                                                });
+                                                $approvalLevel->where('valueWise', 1);
+                                            } 
+                                            else {
+                                                return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                            }
+                                        } 
+                                        else {
+                                            return ['success' => false, 'message' => trans('custom.amount_parameter_missing')];
+                                        }
+                                    }
+                                }
+                            }
+
                             $output = $approvalLevel->first();
 
                             //when iscategorywiseapproval true and output is empty again check for isCategoryWiseApproval = 0
                             if (empty($output)) {
-                                if ($isCategoryWise) {
+                                if ($isCategoryWise && ($params["document"] != 4)) {
                                     $approvalLevel = ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $params["document"])->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
                                     if ($isSegmentWise) {
                                         if (array_key_exists('segment', $params)) {
@@ -1069,7 +1156,7 @@ class DocumentConfirm
 
                                        
 
-                                            $documentValues = [107,108,113,117,118]; // srm related documents.
+                                            $documentValues = [107,108,113,117,118,134]; // srm related documents.
                                             $redirectUrl = (in_array($params["document"], $documentValues)) ? Helper::checkDomainErp($params["document"], $documentApproved->documentSystemCode) : Helper::checkDomai();
 
                                             $body = '<p>' . trans('email.is_pending_approval', ['attribute' => $approvedDocNameBody]) . '. <br><br>';
@@ -1080,10 +1167,16 @@ class DocumentConfirm
                                                 $body .= $ammendText;
                                             }
 
-                                            if ($document->documentSystemID == 113 || $document->documentSystemID == 108) {
+                                            if (in_array($document->documentSystemID, [108, 113, 134])) {
                                                 $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
-                                                $body .= '<p>' . trans('email.tender_title', ['type' => $type[$params["document_type"]], 'title' => $params["tender_title"]]) . '</p>';
-                                                $body .= '<p>' . trans('email.tender_description', ['type' => $type[$params["document_type"]], 'description' => $params["tender_description"]]) . '</p>';
+                                                if ($document->documentSystemID == 134) {
+                                                    $body .= '<p><b>Cancellation request:</b> ' . ($params["tender_title"] ?? '') . '</p>';
+                                                    $body .= '<p><b>Internal Comment:</b> ' . ($params["internal_comment"] ?? '-') . '</p>';
+                                                    $body .= '<p><b>Supplier Comment:</b> ' . ($params["external_comment"] ?? '-') . '</p>';
+                                                } else {
+                                                    $body .= '<p>' . trans('email.tender_title', ['type' => $type[$params["document_type"]], 'title' => $params["tender_title"]]) . '</p>';
+                                                    $body .= '<p>' . trans('email.tender_description', ['type' => $type[$params["document_type"]], 'description' => $params["tender_description"]]) . '</p>';
+                                                }
                                             }
 
                                             $body .= '<a href="' . $redirectUrl . '">' . trans('email.click_here_to_approve') . '</a></p>';
@@ -1092,9 +1185,12 @@ class DocumentConfirm
                                                 $subject = trans('email.pending_approval', ['documentDescription' => $document->documentDescription, 'documentCode' => '"' . $documentApproved->suppliername->name . '"']);
                                             }
 
-                                            if($document->documentSystemID == 108 || $document->documentSystemID == 113){
+                                            if(in_array($document->documentSystemID, [108, 113])){
                                                 $type = ['Tender', 'RFQ', 'RFI', 'RFP'];
                                                 $subject = trans('email.pending_approval', ['documentDescription' => $type[$params["document_type"]], 'documentCode' => $documentApproved->documentCode]);
+                                            }
+                                            if ($document->documentSystemID == 134) {
+                                                $subject = trans('email.pending_approval', ['documentDescription' => 'Cancellation', 'documentCode' => $documentApproved->documentCode]);
                                             }
 
                                             $pushNotificationMessage = $document->documentDescription . " " . $documentApproved->documentCode . " is pending for your approval.";

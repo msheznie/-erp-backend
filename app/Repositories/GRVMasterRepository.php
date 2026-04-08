@@ -8,6 +8,7 @@ use App\Models\CustomerInvoiceItemDetails;
 use App\Models\DeliveryOrderDetail;
 use App\Models\GRVDetails;
 use App\Models\GRVMaster;
+use App\Models\SupplierMaster;
 use App\Models\ItemIssueDetails;
 use App\Models\PurchaseReturnDetails;
 use App\Models\StockTransferDetails;
@@ -16,7 +17,9 @@ use App\Models\FixedAssetMaster;
 use Carbon\Carbon;
 use App\Repositories\BaseRepository;
 use App\helper\StatusService;
+use App\Services\GrvRoleBasedAccessService;
 use Illuminate\Http\Request;
+use App\helper\email as Email;
 
 /**
  * Class GRVMasterRepository
@@ -334,10 +337,16 @@ class GRVMasterRepository extends BaseRepository
         ];
     }
 
-    public function grvListQuery($request, $input, $search = '', $grvLocation = null, $serviceLineSystemID = null, $projectID = null) {
+    public function grvListQuery($request, $input, GrvRoleBasedAccessService $grvRoleBasedAccessService, $search = '', $grvLocation = null, $serviceLineSystemID = null, $projectID = null) {
 
         $grvMaster = GRVMaster::where('companySystemID', $input['companyId']);
         $grvMaster->where('documentSystemID', $input['documentId']);
+        $employeeSystemID = (int) Helper::getEmployeeSystemID();
+        $grvMaster = $grvRoleBasedAccessService->applyViewScope(
+            $grvMaster,
+            (int)$input['companyId'],
+            $employeeSystemID
+        );
         $grvMaster->with(['local_currency_by','reporting_currency_by','created_by' => function ($query) {
             }, 'segment_by' => function ($query) {
             }, 'location_by' => function ($query) {
@@ -499,5 +508,63 @@ class GRVMasterRepository extends BaseRepository
         }
 
         return $data;
+    }
+
+    public function sendAppointmentConfirmationEmail($input)
+    {
+        $GrvData = GRVMaster::getGrvForDeliveryAppointment($input['grvAutoID']);
+        $supplier =  SupplierMaster::getSupplierData($input['supplierID']);
+        $body = $this->buildAppointmentEmailBody($GrvData);
+
+        if ($supplier && !empty($supplier)) {
+            $dataEmail = [
+                'empEmail' => $supplier->supEmail,
+                'companySystemID' => $input['companySystemID'],
+                'alertMessage' => 'Goods Receipt Confirmation – GRV Created',
+                'emailAlertMessage' => $body,
+            ];
+
+            Email::sendEmailErp($dataEmail);
+        }
+    }
+
+    private function buildAppointmentEmailBody($GrvData) {
+        $body = "Dear Supplier, <br><br>
+    We would like to inform you that the Goods Receipt Voucher (GRV) has been successfully created in our system for the below Purchase Order.<br><br>
+    
+    GRV Details:<br><br>";
+
+        $body .= "GRV Number: {$GrvData->grvPrimaryCode}<br>";
+        $body .= "GRV Date: " . ($GrvData->grvDate ? Carbon::parse($GrvData->grvDate)->format('Y-m-d') : '-') . "<br>";
+        $body .= "Delivery Appointment Number: " . ($GrvData['deliveryAppointment'] ? $GrvData['deliveryAppointment']['primary_code'] : '-') . "<br><br>";
+
+        $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="text-align: center;border: 1px solid black;">PO Number</th> 
+                <th style="text-align: center;border: 1px solid black;">Item Code</th>
+                <th style="text-align: center;border: 1px solid black;">Item Description</th> 
+                <th style="text-align: center;border: 1px solid black;">GRV Quantity</th> 
+            </tr>
+        </thead>
+        <tbody>';
+
+        foreach ($GrvData['details'] as $val) {
+            $body .= '<tr>
+            <td style="text-align:center;border: 1px solid black;">' . $val->po_master->purchaseOrderCode . '</td>
+            <td style="text-align:center;border: 1px solid black;">' . $val->itemPrimaryCode . '</td>
+            <td style="text-align:center;border: 1px solid black;">' . $val->itemDescription . '</td>
+       <td style="text-align:center;border: 1px solid black;">' . number_format($val->noQty, 5, '.', '') . '</td>
+        </tr>';
+        }
+
+        $body .= '</tbody></table><br><br>';
+
+        $body .= "If you have any questions or require further clarification regarding this receipt, please feel free to contact us.<br><br>
+        Thank you for your continued cooperation.<br><br>";
+
+        $body .= Helper::getSupplierEmailFooter($GrvData['companySystemID']);
+
+        return $body;
     }
 }

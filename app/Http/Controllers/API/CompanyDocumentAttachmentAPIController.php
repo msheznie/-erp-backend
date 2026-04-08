@@ -22,12 +22,14 @@ use App\Models\CompanyDocumentAttachment;
 use App\Models\DocumentMaster;
 use App\Models\DocumentAccessRole;
 use App\Models\DocumentAccessEmployee;
+use App\Models\DocumentAccessRoleOwner;
 use App\Models\Employee;
 use App\Repositories\CompanyDocumentAttachmentRepository;
 use App\Services\CompanyDocumentAttachmentService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
 use App\Criteria\LimitOffsetCriteria;
+use App\Models\PvApprovalTypeSetup;
 use Prettus\Repository\Criteria\RequestCriteria;
 use Response;
 use Illuminate\Support\Arr;
@@ -129,11 +131,13 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.company_document_attachments')]));
         }
 
-        $result = $this->companyDocumentAttachmentService->validateAndNormalizeGrvApprovalUpdate($companyDocumentAttachment, $input);
-        if (!$result['valid']) {
-            return $this->sendAPIError($result['message'], $result['status'], $result['errors']);
+        if ($companyDocumentAttachment->documentSystemID == 3) {
+            $result = $this->companyDocumentAttachmentService->validateAndNormalizeGrvApprovalUpdate($companyDocumentAttachment, $input);
+            if (!$result['valid']) {
+                return $this->sendAPIError($result['message'], $result['status'], $result['errors']);
+            }
+            $input = $result['input'];
         }
-        $input = $result['input'];
 
         $approvalResult = $this->companyDocumentAttachmentService->validateApprovalConfigChange($companyDocumentAttachment, $input);
         if (!$approvalResult['allowed']) {
@@ -257,12 +261,54 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             return $this->sendError(trans('custom.not_found', ['attribute' => trans('custom.policy')]));
         }
 
+        if ($documentSystemID == 4) {
+            $pvTypeBasedSetups = PvApprovalTypeSetup::where('document_attachment_id', $result->companyDocumentAttachmentID)
+                ->where('company_system_id', $companySystemID)
+                ->where('is_active', 1)
+                ->get();
+
+            $result->pvTypeBasedSetups = $pvTypeBasedSetups;
+        }
+
         return $this->sendResponse($result, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
 
 
-    private function buildOwnersArray($documentAccessRole = null)
+    private function buildOwnersArray($documentAccessRole = null, bool $isGrv = false)
     {
+        if ($isGrv) {
+            $defaults = [
+                'creator'           => ['view' => true,  'edit' => true],
+                'approver'          => ['view' => true,  'edit' => true],
+                'reporting_manager' => ['view' => true,  'edit' => true],
+                'hod'               => ['view' => true,  'edit' => true],
+                'segment_owner'     => ['view' => false, 'edit' => true],
+                'warehouse_owner'   => ['view' => false, 'edit' => true],
+                'admin'             => ['view' => true,  'edit' => true],
+            ];
+
+            $persisted = [];
+            if ($documentAccessRole && $documentAccessRole->id) {
+                $rows = DocumentAccessRoleOwner::where('document_access_role_id', $documentAccessRole->id)->get();
+                foreach ($rows as $r) {
+                    $persisted[$r->owner_key] = [
+                        'view' => ((int)$r->can_view) !== 0,
+                        'edit' => ((int)$r->can_edit) !== 0,
+                    ];
+                }
+            }
+
+            $out = [];
+            foreach ($defaults as $key => $d) {
+                $p = $persisted[$key] ?? null;
+                $out[$key] = [
+                    'document_view_access' => $p ? $p['view'] : $d['view'],
+                    'document_edit_access' => $p ? $p['edit'] : $d['edit'],
+                ];
+            }
+            return $out;
+        }
+
         return [
             'reporting_manager' => [
                 'document_view_access' => $documentAccessRole ? ($documentAccessRole->reportingManager_view != 0) : false,
@@ -288,15 +334,18 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             return $this->sendError('Document attachment ID is required');
         }
 
+        $companyDocumentAttachment = CompanyDocumentAttachment::where('companyDocumentAttachmentID', $documentAttachmentId)->first();
+        $isGrv = !empty($companyDocumentAttachment) && ((int)$companyDocumentAttachment->documentSystemID === 3);
+
         $documentAccessRole = DocumentAccessRole::where('document_attachment_id', $documentAttachmentId)
-            ->with(['employees.employee'])
+            ->with($isGrv ? ['employees.employee', 'owners'] : ['employees.employee'])
             ->first();
 
         if (empty($documentAccessRole)) {
             $defaultData = [
                 'id' => null,
                 'document_attachment_id' => $documentAttachmentId,
-                'owners' => $this->buildOwnersArray(null),
+                'owners' => $this->buildOwnersArray(null, $isGrv),
                 'document_view_employees' => [],
                 'create_access_employees' => []
             ];
@@ -308,6 +357,9 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
 
         foreach ($documentAccessRole->employees as $emp) {
             if ($emp->employee) {
+                if ($isGrv && ((int)($emp->employee->discharegedYN ?? 0) !== 0)) {
+                    continue;
+                }
                 $employeeData = [
                     'id' => $emp->id,
                     'employee_id' => $emp->employee_id,
@@ -329,7 +381,7 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
         $result = [
             'id' => $documentAccessRole->id,
             'document_attachment_id' => $documentAccessRole->document_attachment_id,
-            'owners' => $this->buildOwnersArray($documentAccessRole),
+            'owners' => $this->buildOwnersArray($documentAccessRole, $isGrv),
             'document_view_employees' => $documentViewEmployees,
             'create_access_employees' => $createAccessEmployees
         ];
@@ -376,7 +428,10 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
         $documentAttachmentId =  $input['companyDocumentAttachmentID'];
         $ownerKey = $input['owner_key'];
         $documentViewAccess = filter_var($input['document_view_access'], FILTER_VALIDATE_BOOLEAN);
-        $createAccessOnBehalf = filter_var($input['create_access_on_behalf'], FILTER_VALIDATE_BOOLEAN);
+        $documentEditAccessValue = array_key_exists('document_edit_access', $input)
+            ? $input['document_edit_access']
+            : ($input['create_access_on_behalf'] ?? false);
+        $documentEditAccess = filter_var($documentEditAccessValue, FILTER_VALIDATE_BOOLEAN);
 
         if (empty($documentAttachmentId)) {
             return $this->sendError(trans('custom.document_attachment_id_required'));
@@ -385,14 +440,8 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             return $this->sendError(trans('custom.owner_key_required'));
         }
 
-        $columnMap = [
-            'reporting_manager' => ['view' => 'reportingManager_view', 'create' => 'reportingManager_create'],
-            'hod'              => ['view' => 'hod_view', 'create' => 'hod_create'],
-            'admin'            => ['view' => 'admin_view', 'create' => 'admin_create'],
-        ];
-        if (!isset($columnMap[$ownerKey])) {
-            return $this->sendError(trans('custom.invalid_owner_key'));
-        }
+        $companyDocumentAttachment = CompanyDocumentAttachment::where('companyDocumentAttachmentID', $documentAttachmentId)->first();
+        $isGrv = !empty($companyDocumentAttachment) && ((int)$companyDocumentAttachment->documentSystemID === 3);
 
         try {
             $documentAccessRole = DocumentAccessRole::firstOrNew(['document_attachment_id' => $documentAttachmentId]);
@@ -404,8 +453,46 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
                 $documentAccessRole->admin_view = 0;
                 $documentAccessRole->admin_create = 0;
             }
+            $documentAccessRole->save();
+
+            if ($isGrv) {
+                $allowed = ['creator','approver','reporting_manager','hod','segment_owner','warehouse_owner','admin'];
+                if (!in_array($ownerKey, $allowed, true)) {
+                    return $this->sendError(trans('custom.invalid_owner_key'));
+                }
+
+                $row = DocumentAccessRoleOwner::firstOrNew([
+                    'document_access_role_id' => $documentAccessRole->id,
+                    'owner_key' => $ownerKey,
+                ]);
+                $row->can_view = $documentViewAccess ? 1 : 0;
+                $row->can_edit = $documentEditAccess ? 1 : 0;
+                $row->save();
+
+                $columnMap = [
+                    'reporting_manager' => ['view' => 'reportingManager_view', 'create' => 'reportingManager_create'],
+                    'hod'              => ['view' => 'hod_view', 'create' => 'hod_create'],
+                    'admin'            => ['view' => 'admin_view', 'create' => 'admin_create'],
+                ];
+                if (isset($columnMap[$ownerKey])) {
+                    $documentAccessRole->{$columnMap[$ownerKey]['view']} = $documentViewAccess ? 1 : 0;
+                    $documentAccessRole->{$columnMap[$ownerKey]['create']} = $documentEditAccess ? 1 : 0;
+                    $documentAccessRole->save();
+                }
+
+                return $this->sendResponse($documentAccessRole->toArray(), trans('custom.document_access_role_updated_successfully'));
+            }
+
+            $columnMap = [
+                'reporting_manager' => ['view' => 'reportingManager_view', 'create' => 'reportingManager_create'],
+                'hod'              => ['view' => 'hod_view', 'create' => 'hod_create'],
+                'admin'            => ['view' => 'admin_view', 'create' => 'admin_create'],
+            ];
+            if (!isset($columnMap[$ownerKey])) {
+                return $this->sendError(trans('custom.invalid_owner_key'));
+            }
             $documentAccessRole->{$columnMap[$ownerKey]['view']} = $documentViewAccess ? 1 : 0;
-            $documentAccessRole->{$columnMap[$ownerKey]['create']} = $createAccessOnBehalf ? 1 : 0;
+            $documentAccessRole->{$columnMap[$ownerKey]['create']} = $documentEditAccess ? 1 : 0;
             $documentAccessRole->save();
 
             return $this->sendResponse($documentAccessRole->toArray(), trans('custom.document_access_role_updated_successfully'));

@@ -2,6 +2,7 @@
 
 namespace App\helper\Workflow;
 
+use App\helper\SourcingDocsService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Models\DocumentApproved;
@@ -729,6 +730,18 @@ class DocumentApprove
                 $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
                 $docInforArr["approveValue"] = 1;
                 break;
+            case 134: // SRM Tender/RFX Cancellation
+                $docInforArr["tableName"] = 'srm_tender_cancellation';
+                $docInforArr["modelName"] = 'TenderCancellation';
+                $docInforArr["primarykey"] = 'id';
+                $docInforArr["approvedColumnName"] = 'approved';
+                $docInforArr["approvedBy"] = 'approved_by_emp_name';
+                $docInforArr["approvedBySystemID"] = 'approved_by_user_system_id';
+                $docInforArr["approvedDate"] = 'approved_date';
+                $docInforArr["approveValue"] = -1;
+                $docInforArr["confirmedYN"] = "confirmed_yn";
+                $docInforArr["confirmedEmpSystemID"] = "confirmed_by_emp_system_id";
+                break;
             default:
                 return ['success' => false, 'message' => trans('custom.document_id_not_found')];
         }
@@ -930,7 +943,7 @@ class DocumentApprove
                         }
 
 
-                        if ($input['documentSystemID'] == 107 || $input['documentSystemID'] == 127 || $input['documentSystemID'] == 117 || $input['documentSystemID'] == 118) {
+                        if ($input['documentSystemID'] == 106 || $input['documentSystemID'] == 107 || $input['documentSystemID'] == 127 || $input['documentSystemID'] == 117 || $input['documentSystemID'] == 118 || $input['documentSystemID'] == 134) {
                             // pass below data for taking action in controller
                             $more_data = [
                                 'numberOfLevels' => $approvalLevel->noOfLevels,
@@ -1259,6 +1272,18 @@ class DocumentApprove
                                 $finalupdate = $namespacedModel::withoutGlobalScope('final_level')->find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
                             } else {
                                 $finalupdate = $namespacedModel::find($input["documentSystemCode"])->update([$docInforArr["approvedColumnName"] => $docInforArr["approveValue"], $docInforArr["approvedBy"] => $empInfo->empID, $docInforArr["approvedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["approvedDate"] => now()]);
+                            }
+
+                            if ($input["documentSystemID"] == 134) {
+                                $cancellationRecord = $namespacedModel::find($input["documentSystemCode"]);
+                                if ($cancellationRecord && $cancellationRecord->tender_id) {
+                                    TenderMaster::where('id', $cancellationRecord->tender_id)->update([
+                                        'cancelled_yn' => 1,
+                                        'cancelled_by' => $empInfo->employeeSystemID,
+                                        'cancelled_by_emp_name' => $empInfo->empName,
+                                        'cancelled_date' => now(),
+                                    ]);
+                                }
                             }
 
                             $masterData = ['documentSystemID' => $docApproved->documentSystemID, 'autoID' => $docApproved->documentSystemCode, 'companySystemID' => $docApproved->companySystemID, 'employeeSystemID' => $empInfo->employeeSystemID];
@@ -1734,6 +1759,13 @@ class DocumentApprove
                                     $consoleJVData['type'] = "INTER_ASSET_DISPOSAL";
 
                                     CreateConsoleJV::dispatch($consoleJVData);
+                                }
+                            }
+
+                            if($input["documentSystemID"] == 3){
+                                $grvMaster  = GRVMaster::find($input["documentSystemCode"]);
+                                if(!empty($grvMaster['deliveryAppoinmentID'])){
+                                  $deliveryAppointment = SourcingDocsService::sendDeliveryAppointmentConfirmationMail($grvMaster);
                                 }
                             }
 

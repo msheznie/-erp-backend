@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API;
 use App\Models\Company;
 use App\Repositories\RecurringVoucherSetupRepository;
 use App\Repositories\ErpBudgetAdditionRepository;
+use App\Repositories\SupplierRegistrationLinkRepository;
 use Response;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -44,6 +45,7 @@ use App\Repositories\PdcLogRepository;
 use App\helper\CreateExcel;
 use App\Jobs\ExportDetailedPRList;
 use App\helper\Helper;
+use App\Services\GrvRoleBasedAccessService;
 
 class TransactionsExportExcel extends AppBaseController
 {
@@ -81,6 +83,9 @@ class TransactionsExportExcel extends AppBaseController
     private $pdcLogRepository;
     private $recurringVoucherSetupRepository;
     private $erpBudgetAdditionRepository;
+    private $supplierRegistrationLinkRepository;
+    /** @var GrvRoleBasedAccessService */
+    private $grvRoleBasedAccessService;
 
     public function __construct(
         GRVMasterRepository $gRVMasterRepo, 
@@ -116,7 +121,9 @@ class TransactionsExportExcel extends AppBaseController
         FixedAssetDepreciationMasterRepository $fixedAssetDepreciationMasterRepo,
         PdcLogRepository $pdcLogRepository,
         RecurringVoucherSetupRepository $recurringVoucherSetupRepository,
-        ErpBudgetAdditionRepository $erpBudgetAdditionRepository
+        ErpBudgetAdditionRepository $erpBudgetAdditionRepository,
+        SupplierRegistrationLinkRepository $supplierRegistrationLinkRepository,
+        GrvRoleBasedAccessService $grvRoleBasedAccessService
     )
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
@@ -153,6 +160,8 @@ class TransactionsExportExcel extends AppBaseController
         $this->pdcLogRepository = $pdcLogRepository;
         $this->recurringVoucherSetupRepository = $recurringVoucherSetupRepository;
         $this->erpBudgetAdditionRepository = $erpBudgetAdditionRepository;
+        $this->supplierRegistrationLinkRepository = $supplierRegistrationLinkRepository;
+        $this->grvRoleBasedAccessService = $grvRoleBasedAccessService;
     }
 
     public function exportRecord(Request $request) { 
@@ -176,6 +185,7 @@ class TransactionsExportExcel extends AppBaseController
                 $data = isset($input['stat']) && $input['stat'] ? $this->purchaseRequestRepository->setExportExcelDataDetail($dataQry) : $this->purchaseRequestRepository->setExportExcelData($dataQry);
                 break;
             case '3':
+                $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$input['companyId'], (int)Helper::getEmployeeSystemID());
                 $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID', 'projectID'));
                 $grvLocation = $request['grvLocation'];
                 $grvLocation = (array)$grvLocation;
@@ -189,7 +199,7 @@ class TransactionsExportExcel extends AppBaseController
                 $projectID = (array)$projectID;
                 $projectID = collect($projectID)->pluck('id');
 
-                $dataQry = $this->gRVMasterRepository->grvListQuery($request, $input, $search, $grvLocation, $serviceLineSystemID, $projectID);
+                $dataQry = $this->gRVMasterRepository->grvListQuery($request, $input, $this->grvRoleBasedAccessService, $search, $grvLocation, $serviceLineSystemID, $projectID);
                 $data = $this->gRVMasterRepository->setExportExcelData($dataQry);
                 break;
 
@@ -511,6 +521,11 @@ class TransactionsExportExcel extends AppBaseController
                 $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approvedYN', 'month', 'year', 'createdBy'));
                 $dataQry = $this->erpBudgetAdditionRepository->budgetAdditionFormListQuery($request, $input, $search);
                 $data = $this->erpBudgetAdditionRepository->setExportExcelData($dataQry);
+                break;
+            case '107':
+                $input = $this->convertArrayToSelectedValue($input, array('approved_yn'));
+                $dataQry = $this->supplierRegistrationLinkRepository->getSupplierRegistrationData($request, $input, $search);
+                $data =  $this->supplierRegistrationLinkRepository->setExportExcelData($dataQry);
                 break;
             default:
                 return $this->sendResponse(array(), trans('custom.export_failed'));

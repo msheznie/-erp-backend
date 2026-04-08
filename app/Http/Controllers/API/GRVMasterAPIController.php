@@ -94,6 +94,7 @@ use App\Models\AppointmentDetails;
 use App\Models\SupplierBlock;
 use App\Services\DecimalPrecisionService;
 use App\Services\GeneralLedgerService;
+use App\Services\GrvRoleBasedAccessService;
 use App\Services\ValidateDocumentAmend;
 use Illuminate\Support\Arr;
 use App\helper\email as Email;
@@ -113,13 +114,21 @@ class GRVMasterAPIController extends AppBaseController
     /** @var GRVConfirmValidationService */
     private $grvConfirmValidationService;
     private $decimalPrecisionService;
+    /** @var GrvRoleBasedAccessService */
+    private $grvRoleBasedAccessService;
 
-    public function __construct(GRVMasterRepository $gRVMasterRepo, UserRepository $userRepo, GRVConfirmValidationService $grvConfirmValidationService, DecimalPrecisionService $decimalPrecisionService)
+    public function __construct(GRVMasterRepository $gRVMasterRepo, UserRepository $userRepo, GRVConfirmValidationService $grvConfirmValidationService, DecimalPrecisionService $decimalPrecisionService, GrvRoleBasedAccessService $grvRoleBasedAccessService)
     {
         $this->gRVMasterRepository = $gRVMasterRepo;
         $this->userRepository = $userRepo;
         $this->grvConfirmValidationService = $grvConfirmValidationService;
         $this->decimalPrecisionService = $decimalPrecisionService;
+        $this->grvRoleBasedAccessService = $grvRoleBasedAccessService;
+    }
+
+    private function ensureGrvViewAccessOrFail(GRVMaster $grvMaster): void
+    {
+        $this->grvRoleBasedAccessService->requireCanViewOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
     }
 
     /**
@@ -151,6 +160,12 @@ class GRVMasterAPIController extends AppBaseController
         $input = $request->all();
 
         $input = $this->convertArrayToValue($input);
+
+        if (!isset($input['companySystemID'])) {
+            return $this->sendError(trans('custom.company_system_id_not_found'), 500);
+        }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$input['companySystemID'], (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireCreateNavigationOrFail($request, (int)$input['companySystemID'], (int)Helper::getEmployeeSystemID());
 
         $id = Auth::id();
         $user = $this->userRepository->with(['employee'])->findWithoutFail($id);
@@ -355,8 +370,17 @@ class GRVMasterAPIController extends AppBaseController
         if (empty($gRVMaster)) {
             return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail(request(), (int)$gRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->ensureGrvViewAccessOrFail($gRVMaster);
 
-        return $this->sendResponse($gRVMaster->toArray(), trans('custom.good_receipt_voucher_retrieved_successfully'));
+        $employeeSystemID = (int)Helper::getEmployeeSystemID();
+        $data = $gRVMaster->toArray();
+        $access = $this->grvRoleBasedAccessService->resolveAccessForGrv(request(), $gRVMaster, $employeeSystemID);
+        $data['uiMode'] = $access['accessMode'];
+        $data['accessMode'] = $access['accessMode'];
+        $data['canView'] = $access['canView'];
+        $data['canEdit'] = $access['canEdit'];
+        return $this->sendResponse($data, trans('custom.good_receipt_voucher_retrieved_successfully'));
     }
 
     /**
@@ -385,6 +409,9 @@ class GRVMasterAPIController extends AppBaseController
         if (empty($gRVMaster)) {
             return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$gRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$gRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($gRVMaster, (int)Helper::getEmployeeSystemID());
 
         if ($gRVMaster->grvCancelledYN == -1) {
             return $this->sendError(trans('custom.good_receipt_voucher_closed_you_cannot_edit'), 500);
@@ -989,7 +1016,6 @@ class GRVMasterAPIController extends AppBaseController
             if (!$confirm["success"]) {
                 return $this->sendError($confirm["message"]);
             }
-
         }
         $input['modifiedPc'] = gethostname();
         $input['modifiedUser'] = $user->employee['empID'];
@@ -998,198 +1024,6 @@ class GRVMasterAPIController extends AppBaseController
       
 
         $gRVMaster = $this->gRVMasterRepository->update($input, $id);
-
-
-        if(isset($gRVMaster->deliveryAppoinmentID))
-        {
-           $selected_segment = $gRVMaster->serviceLineSystemID;
-           $appoinmnet_po_ids =  AppointmentDetails::whereHas('po_master',function($q) use($selected_segment){
-            $q->where('serviceLineSystemID',$selected_segment);
-                })->where('appointment_id',$gRVMaster->deliveryAppoinmentID)->pluck('po_detail_id')->toArray();
-
-           $grv_purchase =  GRVDetails::where('grvAutoID',$id)->pluck('purchaseOrderDetailsID')->toArray();
-
-
-           $appoinmnet_details =  AppointmentDetails::whereHas('po_master',function($q) use($selected_segment){
-            $q->where('serviceLineSystemID',$selected_segment);
-             })->where('appointment_id',$gRVMaster->deliveryAppoinmentID)->get();
-
-
-            $extra_po =  array_values(array_diff($grv_purchase,$appoinmnet_po_ids));
-
-            $ignore_po =  array_values(array_diff($appoinmnet_po_ids,$grv_purchase));
-
-
-           $total_msg = '';
-           $extra_po_msg = [];
-
-           if(count($extra_po) > 0)
-           {
-             foreach($extra_po as $extra)
-             {
-
-               $extra_po_msg_info =  GRVDetails::where('grvAutoID',$id)->where('purchaseOrderDetailsID',$extra)->with(['po_master'=>function($q){
-                $q->select('purchaseOrderID','purchaseOrderCode');
-               }])->select('grvDetailsID','itemPrimaryCode','itemDescription','noQty','purchaseOrderMastertID')->get();
-
-               foreach($extra_po_msg_info as $info)
-               {
-                array_push($extra_po_msg,$info);
-
-               }
-
-             }
-           
-           }
-           else
-           {
-            $extra_po_msg = [];
-           }
-
-           $ignore_po_msg = [];
-           if(count($ignore_po) > 0)
-           {
-             foreach($ignore_po as $extra)
-             {
-
-                $ignore_po_msg_info =  AppointmentDetails::where('po_detail_id',$extra)->where('appointment_id',$gRVMaster->deliveryAppoinmentID)->with(['po_master'=>function($q){
-                    $q->select('purchaseOrderID','purchaseOrderCode');
-                   },'item'=>function($q){
-                    $q->select('itemCodeSystem','primaryCode','itemDescription');
-                   }])->select('id','qty','po_master_id','item_id')->get();
-
-                   foreach($ignore_po_msg_info as $info)
-                   {
-                    array_push($ignore_po_msg,$info);
-    
-                   }
-
-             }
-           }
-           else
-           {
-            $ignore_po_msg = [];
-        
-           }
-           
-         
-           $appointment_info = Appointment::where('id',$gRVMaster->deliveryAppoinmentID)->select('id','primary_code')->first();
-
-      
-
-           $changes_item = [];
-           foreach($appoinmnet_details as $po)
-           {
-                
-              $planeed_qty =  $po->qty;
-              $po_detail_id = $po->po_detail_id;
-              $grv_Details = GRVDetails::where('grvAutoID',$id)->where('purchaseOrderMastertID',$po->po_master_id)->where('purchaseOrderDetailsID',$po_detail_id)
-                            ->with(['po_master'=>function($q){
-                                $q->select('purchaseOrderID','purchaseOrderCode');
-                            }])->first();
-              if(isset($grv_Details))
-              {
-
-                $grv_changes['po_code'] = $po->po_master->purchaseOrderCode;
-                $grv_changes['item'] = $grv_Details->itemPrimaryCode;
-                $grv_changes['description'] = $grv_Details->itemDescription;
-                $grv_changes['appoinment_qty'] = $po->qty;
-                $grv_changes['grv_qty'] = $grv_Details->noQty;
-                $changes_item[]=$grv_changes;
-
-           
-              }
-
-              
-           }
-         
-       
-            $body = "Dear Supplier, <br><br> Please be informed GRV <b>$gRVMaster->grvPrimaryCode</b> created for delivery appointment <b>$appointment_info->primary_code</b>  is confirmed. 
-            <br><br>Please note below changes.<br><br> <b>Extra purchase order documents added to GRV</b><br><br>";
-            $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
-            <thead>
-                <tr>
-                    <th style="text-align: center;border: 1px solid black;">PO Code</th> 
-                    <th style="text-align: center;border: 1px solid black;">Item Code</th>
-                    <th style="text-align: center;border: 1px solid black;">Item Description </th> 
-                    <th style="text-align: center;border: 1px solid black;">Qty </th> 
-                </tr>
-            </thead>';
-            $body .= '<tbody>';
-            foreach ($extra_po_msg as $val) {
-                $body .= '<tr>
-                    <td style="text-align:center;border: 1px solid black;">' . $val->po_master->purchaseOrderCode . '</td>  
-                    <td style="text-align:center;border: 1px solid black;">' . $val->itemPrimaryCode . '</td>  
-                    <td style="text-align:center;border: 1px solid black;">' . $val->itemDescription . '</td>   
-                    <td style="text-align:center;border: 1px solid black;">' . $val->noQty . '</td>  
-                </tr>';
-            
-            }
-            $body .= '</tbody>
-            </table>';
-            $body .= "<br><br>";
-            $body .= "<b>Purchase order documents removed from GRV</b> <br><br>";
-            $body .= "<br><br>";
-            $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
-            <thead>
-                <tr>
-                    <th style="text-center: center;border: 1px solid black;">PO Code</th> 
-                    <th style="text-center: center;border: 1px solid black;">Item Code</th>
-                    <th style="text-center: center;border: 1px solid black;">Item Description </th> 
-                    <th style="text-center: center;border: 1px solid black;">Qty </th> 
-                </tr>
-            </thead>';
-            $body .= '<tbody>';
-            foreach ($ignore_po_msg as $val) {
-                $body .= '<tr>
-                    <td style="text-align:center;border: 1px solid black;">' . $val->po_master->purchaseOrderCode . '</td>  
-                    <td style="text-align:center;border: 1px solid black;">' . $val->item->primaryCode . '</td>  
-                    <td style="text-align:center;border: 1px solid black;">' . $val->item->itemDescription . '</td>   
-                    <td style="text-align:center;border: 1px solid black;">' . $val->qty . '</td>  
-                </tr>';
-            
-                }
-            $body .= '</tbody>
-            </table>';
-            $body .= "<br><br>";
-            $body .= "<b>Quantity changes from delivery appointment</b> <br><br>";
-            $body .= "<br><br>";
-            $body .= '<table style="width:100%;border: 1px solid black;border-collapse: collapse;">
-            <thead>
-                <tr>
-                    <th style="text-align: center;border: 1px solid black;">PO Code</th> 
-                    <th style="text-align: center;border: 1px solid black;">Item Code</th>
-                    <th style="text-align: center;border: 1px solid black;">Item Description </th> 
-                    <th style="text-align: center;border: 1px solid black;">Appointment Qty </th> 
-                    <th style="text-align: center;border: 1px solid black;">GRV Qty </th> 
-                </tr>
-            </thead>';
-            $body .= '<tbody>';
-            foreach ($changes_item as $val) {
-                $body .= '<tr>
-                    <td style="text-align:center;border: 1px solid black;">' . $val['po_code'] . '</td>  
-                    <td style="text-align:center;border: 1px solid black;">' . $val['item'] . '</td>  
-                    <td style="text-align:center;border: 1px solid black;">' . $val['description'] . '</td>   
-                    <td style="text-align:center;border: 1px solid black;">' . $val['appoinment_qty'] . '</td>  
-                    <td style="text-align:center;border: 1px solid black;">' . $val['grv_qty'] . '</td>  
-                </tr>';
-            
-                }
-            $body .= '</tbody>
-            </table>';
-            $body .= "<br><br>";
-            $body .= trans('custom.thank_you');
-
-            $supplier = $this->getSupplierDetails($input['supplierID']);
-            if(isset($supplier) && !empty($supplier)){ 
-                $dataEmail['empEmail'] = $supplier->supEmail;
-                $dataEmail['companySystemID'] = $input['companySystemID'];
-                $dataEmail['alertMessage'] = trans('email.grv_confirmed');
-                $dataEmail['emailAlertMessage'] = $body;
-                $sendEmail = Email::sendEmailErp($dataEmail); 
-            } 
-        }
-
 
         return $this->sendReponseWithDetails($gRVMaster->toArray(), trans('custom.grv_updated_successfully'),1, $confirm['data'] ?? null);
     }
@@ -1211,6 +1045,10 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
 
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail(request(), (int)$gRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireEditNavigationOrFail(request(), (int)$gRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($gRVMaster, (int)Helper::getEmployeeSystemID());
+
         $gRVMaster->delete();
 
         return $this->sendResponse($id, trans('custom.good_receipt_voucher_deleted_successfully'));
@@ -1219,6 +1057,7 @@ class GRVMasterAPIController extends AppBaseController
     public function getGoodReceiptVoucherMasterView(Request $request)
     {
         $input = $request->all();
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$input['companyId'], (int)Helper::getEmployeeSystemID());
         $input = $this->convertArrayToSelectedValue($input, array('serviceLineSystemID', 'grvLocation', 'poCancelledYN', 'poConfirmedYN', 'approved', 'grvRecieved', 'month', 'year', 'invoicedBooked', 'grvTypeID', 'projectID'));
 
         $grvLocation = $request['grvLocation'];
@@ -1242,7 +1081,7 @@ class GRVMasterAPIController extends AppBaseController
         
         $search = $request->input('search.value');
 
-        $grvMaster = $this->gRVMasterRepository->grvListQuery($request,$input,$search,$grvLocation, $serviceLineSystemID, $projectID);
+        $grvMaster = $this->gRVMasterRepository->grvListQuery($request, $input, $this->grvRoleBasedAccessService, $search, $grvLocation, $serviceLineSystemID, $projectID);
 
         $policySuplierEvaluation = CompanyPolicyMaster::where('companyPolicyCategoryID', 92)
             ->where('companySystemID', $input['companyId'])->first();
@@ -1264,6 +1103,18 @@ class GRVMasterAPIController extends AppBaseController
         return \DataTables::eloquent($grvMaster)
             ->addColumn('Actions', $policy)
             ->addColumn('SupplierEvaluationPolicy', $supplierEvaluationEnabled)
+            ->addColumn('uiMode', function ($row) use ($request) {
+                $employeeSystemID = (int) Helper::getEmployeeSystemID();
+                return $this->grvRoleBasedAccessService->getUiModeForGrv($request, $row, $employeeSystemID);
+            })
+            ->addColumn('accessMode', function ($row) use ($request) {
+                $employeeSystemID = (int) Helper::getEmployeeSystemID();
+                return $this->grvRoleBasedAccessService->resolveAccessForGrv($request, $row, $employeeSystemID)['accessMode'];
+            })
+            ->addColumn('canEdit', function ($row) use ($request) {
+                $employeeSystemID = (int) Helper::getEmployeeSystemID();
+                return $this->grvRoleBasedAccessService->resolveAccessForGrv($request, $row, $employeeSystemID)['canEdit'];
+            })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -1464,6 +1315,10 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
 
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
+
         //checking segment is active
 
         $segments = SegmentMaster::where("serviceLineSystemID", $grvMaster->serviceLineSystemID)
@@ -1495,8 +1350,17 @@ class GRVMasterAPIController extends AppBaseController
         if (empty($gRVMaster)) {
             return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$gRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->ensureGrvViewAccessOrFail($gRVMaster);
 
-        return $this->sendResponse($gRVMaster->toArray(), trans('custom.record_retrieve', ['attribute' => trans('custom.grv')]));
+        $employeeSystemID = (int)Helper::getEmployeeSystemID();
+        $data = $gRVMaster->toArray();
+        $access = $this->grvRoleBasedAccessService->resolveAccessForGrv($request, $gRVMaster, $employeeSystemID);
+        $data['uiMode'] = $access['accessMode'];
+        $data['accessMode'] = $access['accessMode'];
+        $data['canView'] = $access['canView'];
+        $data['canEdit'] = $access['canEdit'];
+        return $this->sendResponse($data, trans('custom.record_retrieve', ['attribute' => trans('custom.grv')]));
     }
 
     public function getGRVMasterApproval(Request $request)
@@ -1712,6 +1576,8 @@ class GRVMasterAPIController extends AppBaseController
         if (empty($grvMaster)) {
             return $this->sendError(trans('custom.grv_master_not_found'));
         }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->ensureGrvViewAccessOrFail($grvMaster);
 
         $outputRecord = $this->gRVMasterRepository->with(['created_by', 'confirmed_by',
             'cancelled_by', 'modified_by', 'approved_by' => function ($query) {
@@ -1750,6 +1616,13 @@ class GRVMasterAPIController extends AppBaseController
         $companySystemID = $input['companySystemID'];
         $documentSystemID = $input['documentSystemID'];
 
+        $grvMasterData = $this->gRVMasterRepository->findWithoutFail($grvAutoID);
+        if (empty($grvMasterData)) {
+            return $this->sendError(trans('custom.grv_master_not_found'));
+        }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMasterData->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMasterData->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMasterData, (int)Helper::getEmployeeSystemID());
         $poIDS = GRVDetails::where('grvAutoID', $grvAutoID)
             ->groupBy('purchaseOrderMastertID')
             ->pluck('purchaseOrderMastertID');
@@ -1813,6 +1686,10 @@ class GRVMasterAPIController extends AppBaseController
             if (empty($grvMasterData)) {
                 return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
             }
+
+            $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMasterData->companySystemID, (int)Helper::getEmployeeSystemID());
+            $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMasterData->companySystemID, (int)Helper::getEmployeeSystemID());
+            $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMasterData, (int)Helper::getEmployeeSystemID());
 
             if ($grvMasterData->RollLevForApp_curr > 1) {
                 return $this->sendError(trans('custom.you_cannot_reopen_this_grv_it_is_already_partially'));
@@ -1963,6 +1840,12 @@ class GRVMasterAPIController extends AppBaseController
 
         $companySystemID = $input['companySystemID'];
         $grvAutoID = $input['grvAutoID'];
+        $grvMaster = GRVMaster::where('companySystemID', $companySystemID)->find($grvAutoID);
+        if (empty($grvMaster)) {
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
+        }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->ensureGrvViewAccessOrFail($grvMaster);
 
         $detail = DB::select('SELECT
 	erp_bookinvsuppmaster.bookingDate,
@@ -2007,6 +1890,10 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         if (empty($grvMasterData)) {
             return $this->sendError(trans('custom.good_receipt_voucher_not_found'));
         }
+
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMasterData->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMasterData->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMasterData, (int)Helper::getEmployeeSystemID());
 
         if ($grvMasterData->refferedBackYN != -1) {
             return $this->sendError(trans('custom.you_cannot_refer_back_this_good_receipt_voucher'));
@@ -2069,6 +1956,15 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
     public function cancelGRVPreCheck(Request $request)
     {
         $input = $request->all();
+        $grvMaster = GRVMaster::find($input['grvAutoID'] ?? null);
+        if (empty($grvMaster)) {
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
+        }
+        $employeeSystemID = (int)Helper::getEmployeeSystemID();
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, $employeeSystemID);
+        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMaster->companySystemID, $employeeSystemID);
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, $employeeSystemID);
+
         $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input);
         if ($isEligible['status'] == 1) {
             return $this->sendResponse([], 'GRV Eligible for cancellation');
@@ -2080,6 +1976,15 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
     public function reverseGRVPreCheck(Request $request)
     {
         $input = $request->all();
+
+        $grvMaster = GRVMaster::find($input['grvAutoID'] ?? null);
+        if (empty($grvMaster)) {
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
+        }
+        $employeeSystemID = (int)Helper::getEmployeeSystemID();
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, $employeeSystemID);
+        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMaster->companySystemID, $employeeSystemID);
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, $employeeSystemID);
 
         $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input, 'reversal');
 
@@ -2099,6 +2004,15 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
 
         $input = $request->all();
+
+        $grvForAccess = GRVMaster::find($input['grvAutoID'] ?? null);
+        if (empty($grvForAccess)) {
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
+        }
+        $employeeSystemID = (int)Helper::getEmployeeSystemID();
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvForAccess->companySystemID, $employeeSystemID);
+        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvForAccess->companySystemID, $employeeSystemID);
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvForAccess, $employeeSystemID);
 
         $employee = Helper::getEmployeeInfo();
 
@@ -2166,6 +2080,15 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
     public function reverseGRV(Request $request)
     {
         $input = $request->all();
+        $grvForAccess = GRVMaster::find($input['grvAutoID'] ?? null);
+        if (empty($grvForAccess)) {
+            return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
+        }
+        $employeeSystemID = (int)Helper::getEmployeeSystemID();
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvForAccess->companySystemID, $employeeSystemID);
+        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvForAccess->companySystemID, $employeeSystemID);
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvForAccess, $employeeSystemID);
+
         $employee = Helper::getEmployeeInfo();
         $emails = array();
 
@@ -2499,6 +2422,9 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         if (empty($grvMaster)) {
             return $this->sendError(trans('custom.grv_not_found'));
         }
+        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
         if ($grvMaster->isMarkupUpdated==1) {
             return $this->sendError(trans('custom.grv_markup_update_process_restricted'),500);
         }
@@ -2506,13 +2432,6 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
 
         return $this->sendResponse($grv, trans('custom.grv_markup_updated_successfully'));
     }
-
-    public function getSupplierDetails($supplierId){
-        return SupplierMaster::select('supEmail')
-            ->where('supplierCodeSystem', $supplierId)
-            ->first();
-    }
-
     public function getDeliveryEvaluationTemplates(Request $request)
     {
         $companyId = $request['companyId'];

@@ -246,6 +246,8 @@ class CompanyFinancePeriod extends Model
             ->where('companyFinanceYearID', $companyFinanceYearID)
             ->whereDate('dateFrom', '<=', $date)
             ->whereDate('dateTo', '>=', $date)
+            ->where('isActive', -1)
+            ->where('isCurrent',-1)
             ->first();
     }
 

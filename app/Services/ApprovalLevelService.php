@@ -6,10 +6,12 @@ use App\Models\ApprovalLevel;
 use App\Models\ApprovalRole;
 use App\Models\CompanyDocumentAttachment;
 use App\Models\FinanceItemcategorySubAssigned;
+use App\Models\PvApprovalTypeSetup;
 
 class ApprovalLevelService
 {
     private const GRV_DOCUMENT_SYSTEM_ID = 3;
+    private const PAYMENT_VOUCHER_DOCUMENT_SYSTEM_ID = 4;
 
     /**
      *
@@ -139,5 +141,89 @@ class ApprovalLevelService
                 'label' => $row->finance_item_category_sub ? $row->finance_item_category_sub->categoryDescription : $row->categoryDescription,
             ];
         })->values()->toArray();
+    }
+
+    public function validatePaymentVoucherActivation(ApprovalLevel $level, $input): array
+    {
+        $pvTypeWise = $level->pvTypeWise;
+        $companySystemID = $level->companySystemID;
+        $currentId = $level->approvalLevelID;
+
+        if ($pvTypeWise == 0) {
+            $query = ApprovalLevel::where('companySystemID', $companySystemID)
+                ->where('documentSystemID', self::PAYMENT_VOUCHER_DOCUMENT_SYSTEM_ID)
+                ->where('pvTypeWise', 0)
+                ->where('isActive', -1)
+                ->where('approvalLevelID', '!=', $currentId);
+
+            $this->constrainQueryToSamePaymentVoucherValueBand($query, $level);
+
+            if ($query->exists()) {
+                return ['status' => false, 'message' => trans('custom.approval_level_already_exists')];
+            }
+
+            $documentConf = CompanyDocumentAttachment::where('companySystemID', $companySystemID)
+                ->where('documentSystemID', self::PAYMENT_VOUCHER_DOCUMENT_SYSTEM_ID)
+                ->first();
+
+            if ($documentConf) {
+                $valueWise = isset($input['valueWise']) && ($input['valueWise'] || $input['valueWise'] == 1) ? -1 : 0;
+
+                if ($valueWise != $documentConf->isAmountApproval) {
+                    return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
+                }
+            }
+        }
+        else {
+            $pvTypeSetupID = $level->pvTypeSetupID;
+
+            $query = ApprovalLevel::where('companySystemID', $companySystemID)
+                ->where('documentSystemID', self::PAYMENT_VOUCHER_DOCUMENT_SYSTEM_ID)
+                ->where('pvTypeWise', 1)
+                ->where('isActive', -1)
+                ->where('approvalLevelID', '!=', $currentId)
+                ->where('pvTypeSetupID', $pvTypeSetupID);
+
+            $this->constrainQueryToSamePaymentVoucherValueBand($query, $level);
+
+            if ($query->exists()) {
+                return ['status' => false, 'message' => trans('custom.approval_level_already_exists')];
+            }
+
+            $valueWise = isset($input['valueWise']) && ($input['valueWise'] || $input['valueWise'] == 1) ? 1 : 0;
+
+            $documentConf = CompanyDocumentAttachment::where('companySystemID', $companySystemID)
+                ->where('documentSystemID', self::PAYMENT_VOUCHER_DOCUMENT_SYSTEM_ID)
+                ->first();
+
+            $pvTypeSetups = PvApprovalTypeSetup::where('document_attachment_id', $documentConf->companyDocumentAttachmentID)
+                ->where('company_system_id', $companySystemID)
+                ->where('is_active', 1)
+                ->where('is_amount_approval', $valueWise);
+
+            if (!$pvTypeSetups->exists()) {
+                return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
+            }
+        }
+
+        return ['status' => true];
+    }
+
+    private function constrainQueryToSamePaymentVoucherValueBand($query, ApprovalLevel $level): void
+    {
+        $valueWise = $level->valueWise;
+        $valueFrom = $level->valueFrom;
+        $valueTo = $level->valueTo;
+
+        if ($valueWise == 0) {
+            $query->where('valueWise', 0)
+                ->where('valueFrom', 0)
+                ->where('valueTo', 0);
+        } 
+        else {
+            $query->where('valueWise', 1)
+                ->where('valueFrom', $valueFrom)
+                ->where('valueTo', $valueTo);
+        }
     }
 }

@@ -64,7 +64,8 @@ class DocumentAttachments extends Model
         'parent_id',
         'envelopType',
         'order_number',
-        'isAutoCreateDocument'
+        'isAutoCreateDocument',
+        'documentParentID'
     ];
 
     /**
@@ -75,6 +76,7 @@ class DocumentAttachments extends Model
     protected $casts = [
         'attachmentID' => 'integer',
         'companySystemID' => 'integer',
+        'documentParentID' => 'integer',
         'companyID' => 'string',
         'documentSystemID' => 'integer',
         'documentID' => 'string',
@@ -459,12 +461,17 @@ class DocumentAttachments extends Model
             ->where('documentSystemCode', $tenderId)->exists();
     }
 
-    public static function getOriginalFileName($companyId, $tenderId)
+    public static function getOriginalFileName($companyId, $tenderId, $excludeAttachmentIds = [])
     {
-        $originalFileName = DocumentAttachments::select('originalFileName', 'attachmentID')
+        $originalFileName = DocumentAttachments::select('originalFileName', 'attachmentID', 'attachmentDescription')
             ->where('documentSystemID', 130)
             ->where('companySystemID', $companyId)
-            ->where('documentSystemCode', $tenderId)->first();
+            ->where('documentSystemCode', $tenderId)
+            ->when(!empty($excludeAttachmentIds), function ($q) use ($excludeAttachmentIds) {
+                $q->whereNotIn('attachmentID', $excludeAttachmentIds);
+            })
+            ->orderBy('attachmentID', 'asc')
+            ->first();
 
         return $originalFileName;
     }
@@ -524,5 +531,13 @@ class DocumentAttachments extends Model
             ->where('attachmentType',0)
             ->where('envelopType', $envelopType)
             ->where('parent_id',$parentId);
+    }
+
+    public static function getAttachmentData($params)
+    {
+        return  self::select('documentParentID', 'documentSystemID','documentSystemCode')
+                 ->where('documentSystemID',$params['docSystemId'])
+                 ->where('documentSystemCode',$params['tenderId'])
+                 ->get();
     }
 }

@@ -28,6 +28,7 @@ class SrmCommonService
             'bidOpeningUserDrop'           => $this->tenderUserAccessData($tenderId, $companyId, 1, $requestData),
             'commercialBidOpeningUserDrop' => $this->tenderUserAccessData($tenderId, $companyId, 2, $requestData),
             'supplierRankingUserDrop'      => $this->tenderUserAccessData($tenderId, $companyId, 3, $requestData),
+            'awardingMembersUserDrop'      => $this->tenderAwardingMemberData($tenderId, $companyId, $requestData),
             'tenderUserAccessDetails'      => $this->getUserAccessDetails($tenderId, $companyId, $requestData),
             'employeeApproval'             => [],
         ];
@@ -47,6 +48,18 @@ class SrmCommonService
     public function tenderUserAccessData($tenderId,$companyId,$moduleId, $requestData)
     {
         $employees = SrmEmployees::tenderUserAccessData($tenderId,$companyId,$moduleId, $requestData);
+
+        return $employees->pluck('employee')->map(function ($employee) {
+            return [
+                'employeeSystemID' => $employee->employeeSystemID,
+                'employeeFullName' => $employee->empFullDetails,
+            ];
+        });
+    }
+
+    public function tenderAwardingMemberData($tenderId, $companyId, $requestData)
+    {
+        $employees = SrmEmployees::tenderAwardingMemberData($tenderId, $companyId, $requestData);
 
         return $employees->pluck('employee')->map(function ($employee) {
             return [
