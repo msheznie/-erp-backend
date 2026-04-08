@@ -139,6 +139,12 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
             $input = $result['input'];
         }
 
+        $poResult = $this->companyDocumentAttachmentService->validatePoAttachmentApprovalUpdate($companyDocumentAttachment, $input);
+        if (!$poResult['valid']) {
+            return $this->sendAPIError($poResult['message'], $poResult['status'], $poResult['errors']);
+        }
+        $input = $poResult['input'];
+
         $approvalResult = $this->companyDocumentAttachmentService->validateApprovalConfigChange($companyDocumentAttachment, $input);
         if (!$approvalResult['allowed']) {
             return $this->sendError($approvalResult['message'], $approvalResult['status']);
