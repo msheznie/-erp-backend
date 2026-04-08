@@ -254,10 +254,26 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
         $departmentId = $departmentBudgetPlanning->departmentID;
 
         // Calculate previous year budget (you may need to adjust this query based on your actual budget data structure)
-        $previousYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $previousYearFinanceYear,$financeYear->companySystemID,$companyDepartmentSegment,$departmentBudgetPlanning->typeID);
+        $previousYearBudget = $this->getBudgetAmountForYear(
+            $departmentId,
+            $glCode,
+            $previousYearFinanceYear,
+            $financeYear->companySystemID,
+            $companyDepartmentSegment,
+            $departmentBudgetPlanning->typeID,
+            $departmentBudgetPlanning->workflow->method ?? null
+        );
 
         // Calculate current year budget
-        $currentYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $currentYearFinanceYear,$financeYear->companySystemID,$companyDepartmentSegment,$departmentBudgetPlanning->typeID);
+        $currentYearBudget = $this->getBudgetAmountForYear(
+            $departmentId,
+            $glCode,
+            $currentYearFinanceYear,
+            $financeYear->companySystemID,
+            $companyDepartmentSegment,
+            $departmentBudgetPlanning->typeID,
+            $departmentBudgetPlanning->workflow->method ?? null
+        );
 
 
         // Calculate difference
@@ -274,7 +290,7 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
      * Get budget amount for a specific year
      * This method should be adjusted based on your actual budget data structure
      */
-    private function getBudgetAmountForYear($departmentId, $glCode, $year,$companySystemID,$companyDepartmentSegment,$typeID)
+    private function getBudgetAmountForYear($departmentId, $glCode, $year, $companySystemID, $companyDepartmentSegment, $typeID, $workflowMethod = null)
     {
         try {
 
@@ -295,8 +311,10 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
 
                 $budgetAmount = Budjetdetails::where('companySystemID', $companySystemID)
                     ->where('companyFinanceYearID', $year->companyFinanceYearID)
-                    ->where('serviceLineSystemID', $companyDepartmentSegment->serviceLineSystemID)
                     ->where('chartOfAccountID', $glCode)
+                    ->when((int) $workflowMethod === 1 && !empty($companyDepartmentSegment), function ($query) use ($companyDepartmentSegment) {
+                        $query->where('serviceLineSystemID', $companyDepartmentSegment->serviceLineSystemID);
+                    })
                     ->whereHas('budget_master', function ($query) use ($reportIDArray) {
                         $query->where('confirmedYN', 1)
                             ->where('approvedYN', -1)
