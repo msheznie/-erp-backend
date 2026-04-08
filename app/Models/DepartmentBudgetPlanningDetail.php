@@ -172,7 +172,7 @@ class DepartmentBudgetPlanningDetail extends Model
         $this->difference_last_current_year = $this->current_year_budget - $this->previous_year_budget;
         
         // Calculate difference between current year and request amount
-        $this->difference_current_request = $this->request_amount - $this->current_year_budget;
+        $this->difference_current_request = $this->current_year_budget - $this->request_amount;
         
         return $this;
     }
