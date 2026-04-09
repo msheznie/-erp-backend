@@ -627,6 +627,7 @@ return
     'budget_addition_form_detail_retrieved_successfully' => 'تم استرداد تفاصيل نموذج إضافة الميزانية بنجاح',
     'budget_addition_form_detail_saved_successfully' => 'تم حفظ تفاصيل نموذج إضافة الميزانية بنجاح',
     'budget_addition_form_saved_successfully' => 'تم حفظ نموذج إضافة الميزانية بنجاح',
+    'budget_addition_document_cannot_confirm_without_details' => 'مطلوب إضافة سجل تفاصيل واحد على الأقل قبل التأكيد',
     'budget_addition_not_found' => 'إضافة الميزانية غير موجودة',
     'budget_addition_reffered_back_not_found' => 'إرجاع إضافة الميزانية غير موجود',
     'budget_addition_reffered_back_retrieved_successful' => 'تم استرداد إرجاع إضافة الميزانية بنجاح',
