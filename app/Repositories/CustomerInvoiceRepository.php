@@ -195,7 +195,6 @@ class CustomerInvoiceRepository extends BaseRepository
             ->where(function ($qq) {
                 $qq->whereNull('det.matchingDocID')->orWhere('det.matchingDocID', 0);
             })
-            ->where('rv.approved', -1)
             ->toBase();
     }
 
@@ -213,7 +212,6 @@ class CustomerInvoiceRepository extends BaseRepository
             ->whereIn('det.companySystemID', $subCompanies)
             ->where('det.addedDocumentSystemID', 20)
             ->where('det.matchingDocID', '>', 0)
-            ->where('m.matchingConfirmedYN', 1)
             ->toBase();
     }
 
@@ -226,7 +224,6 @@ class CustomerInvoiceRepository extends BaseRepository
             ->from($srdTable.' as srd')
             ->join($srTable.' as sr', 'srd.salesReturnID', '=', 'sr.id')
             ->whereIn('srd.companySystemID', $subCompanies)
-            ->where('sr.approvedYN', -1)
             ->toBase();
     }
 
@@ -316,28 +313,58 @@ class CustomerInvoiceRepository extends BaseRepository
 
     public function receiptVoucherStatusLabel($rvApproved, $rvConfirmed): string
     {
-        $approved = (int) ($rvApproved ?? 0) === -1;
-        $confirmed = (int) ($rvConfirmed ?? 0) === 1;
-        if ($approved && $confirmed) {
-            return 'Approved & Confirmed';
+        $rvConfirmed = (int) ($rvConfirmed ?? 0);
+        $rvApproved = (int) ($rvApproved ?? 0);
+
+        if ($rvConfirmed === 0) {
+            return 'Unconfirmed';
         }
-        if ($confirmed) {
-            return 'Confirmed';
+
+        if ($rvConfirmed === 1 && $rvApproved === 0) {
+            return 'Unapproved';
         }
-        if ($approved) {
+
+        if ($rvApproved === -1) {
             return 'Approved';
         }
+
         return 'Pending';
     }
 
     public function matchingStatusLabel($matchingConfirmed): string
     {
-        return (int) ($matchingConfirmed ?? 0) === 1 ? 'Confirmed' : 'Pending';
+
+        if($matchingConfirmed === 0)
+        {
+            return 'Unconfirmed';
+        }
+        elseif($matchingConfirmed === 1)
+        {
+            return 'Confirmed';
+        }
+        else{
+            return 'Pending';
+        }
     }
 
-    public function salesReturnStatusLabel($approvedYn): string
+    public function salesReturnStatusLabel($srApproved, $srConfirmed): string
     {
-        return (int) ($approvedYn ?? 0) === -1 ? 'Approved' : 'Pending';
+        $srConfirmed = (int) ($srConfirmed ?? 0);
+        $srApproved = (int) ($srApproved ?? 0);
+
+        if ($srConfirmed === 0) {
+            return 'Unconfirmed';
+        }
+
+        if ($srConfirmed === 1 && $srApproved === 0) {
+            return 'Unapproved';
+        }
+
+        if ($srApproved === -1) {
+            return 'Approved';
+        }
+
+        return 'Pending';
     }
 
 
@@ -401,12 +428,13 @@ class CustomerInvoiceRepository extends BaseRepository
 
         $returnRows = $this->salesReturnBaseQuery($subCompanies)
             ->whereIn('srd.custInvoiceDirectAutoID', $invoiceIds)
-            ->groupBy('srd.custInvoiceDirectAutoID', 'sr.id', 'sr.salesReturnCode', 'sr.approvedYN')
+            ->groupBy('srd.custInvoiceDirectAutoID', 'sr.id', 'sr.salesReturnCode', 'sr.approvedYN', 'sr.confirmedYN')
             ->selectRaw('
                 srd.custInvoiceDirectAutoID as invoice_id,
                 sr.salesReturnCode as doc_code,
                 SUM(IFNULL(srd.transactionAmount,0) + (IFNULL(srd.transactionAmount,0) * IFNULL(srd.VATPercentage,0) / 100)) as amount,
-                sr.approvedYN as sr_approved
+                sr.approvedYN as sr_approved,
+                sr.confirmedYN as sr_confirmed
             ')
             ->get();
 
@@ -419,7 +447,7 @@ class CustomerInvoiceRepository extends BaseRepository
                 'Document type' => 'sales_return',
                 'Document Code' => $r->doc_code,
                 'Amount' => (float) ($r->amount ?? 0),
-                'Document status' => $this->salesReturnStatusLabel($r->sr_approved),
+                'Document status' => $this->salesReturnStatusLabel($r->sr_approved, $r->sr_confirmed),
             ];
         }
 
