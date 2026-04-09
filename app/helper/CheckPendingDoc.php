@@ -15,6 +15,7 @@ class CheckPendingDoc
                 $docInforArr["confirmedYN"] = 'confirmedYN';
                 $docInforArr["approved"] = 'approved';
                 $docInforArr["companyID"] = 'companySystemID';
+                $docInforArr["cancelYN"] = 'cancelYN';
                 break;
             case 3:
                 $docInforArr["tableName"] = 'erp_grvmaster';
@@ -31,13 +32,23 @@ class CheckPendingDoc
                 $docInforArr["confirmedYN"] = 'confirmedYN';
                 $docInforArr["approved"] = 'approved';
                 $docInforArr["companyID"] = 'companySystemID';
+                $docInforArr["cancelYN"] = 'cancelYN';
                 break;
             default:
                 return ['success' => false, 'message' => 'Document ID not set'];
     }
 
     $namespacedModel = 'App\Models\\' . $docInforArr["modelName"]; 
-    $document = $namespacedModel::where($docInforArr["supplierID"], $supplierID)->where($docInforArr["companyID"], $companyID)->where($docInforArr["confirmedYN"], 1)->where($docInforArr["approved"], 0)->first();
+    $document = $namespacedModel::where($docInforArr["supplierID"], $supplierID)
+        ->where($docInforArr["companyID"], $companyID)
+        ->where($docInforArr["confirmedYN"], 1)
+        ->where($docInforArr["approved"], 0);
+
+    if (isset($docInforArr["cancelYN"])) {
+        $document->where($docInforArr["cancelYN"], 0);
+    }
+
+    $document = $document->first();
 
     
     if ($document) {
