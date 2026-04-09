@@ -18,7 +18,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-
+use App\Models\UnbilledGrvGroupBy;
+use App\Models\BookInvSuppDet;
 class CreateGRVSupplierInvoice implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -225,6 +226,24 @@ class CreateGRVSupplierInvoice implements ShouldQueue
                     }
 
                     $masterModel = ['documentSystemID' => 11, 'autoID' => $bookInvSuppMaster->bookingSuppMasInvAutoID, 'companySystemID' => $bookInvSuppMaster->companySystemID, 'employeeSystemID' => $bookInvSuppMaster->confirmedByEmpSystemID];
+
+                    $updateUnbilledGrvGroupByMaster = UnbilledGrvGroupBy::where('grvAutoID', $this->grvMasterAutoID)->first();
+                    if($updateUnbilledGrvGroupByMaster){
+                        $getTotal = BookInvSuppDet::where('grvAutoID', $this->grvMasterAutoID)
+                            ->sum('totTransactionAmount');
+                        $isAmountEqual = abs((float) $updateUnbilledGrvGroupByMaster->totTransactionAmount - (float) $getTotal) <= 0.01;
+                        if($isAmountEqual){
+                            $updateUnbilledGrvGroupByMaster->selectedForBooking = -1;
+                            $updateUnbilledGrvGroupByMaster->fullyBooked = 2;
+                        } else if($getTotal != 0){
+                            $updateUnbilledGrvGroupByMaster->selectedForBooking = -1;
+                            $updateUnbilledGrvGroupByMaster->fullyBooked = 1;
+                        } else if($getTotal == 0){
+                            $updateUnbilledGrvGroupByMaster->selectedForBooking = -1;
+                            $updateUnbilledGrvGroupByMaster->fullyBooked = 0;
+                        }
+                        $updateUnbilledGrvGroupByMaster->save();
+                    }
                     $generalLedgerInsert = GeneralLedgerInsert::dispatch($masterModel, $this->dataBase);
 
                     $assetDisposal = InterCompanyAssetDisposal::where('grvID', $this->grvMasterAutoID)->first();
