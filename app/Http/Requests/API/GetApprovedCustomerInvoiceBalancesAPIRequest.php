@@ -48,7 +48,7 @@ class GetApprovedCustomerInvoiceBalancesAPIRequest extends FormRequest
         }
 
         $this->merge([
-            'generated_from' => $normalized === [] ? null : array_values(array_unique($normalized)),
+            'generated_from' => $normalized === [] ? [] : array_values(array_unique($normalized)),
         ]);
     }
 
@@ -66,7 +66,7 @@ class GetApprovedCustomerInvoiceBalancesAPIRequest extends FormRequest
             'invoice_type' => ['bail', 'nullable', 'string'],
 
             'generated_from' => ['bail', 'nullable', 'array'],
-            'generated_from.*' => ['bail', 'in:POS,CLUB'],
+            'generated_from.*' => ['bail', 'string'],
             'page' => ['bail', 'sometimes', 'integer', 'min:1'],
             'per_page' => ['bail', 'sometimes', 'integer', 'min:1', 'max:500'],
         ];
@@ -83,8 +83,8 @@ class GetApprovedCustomerInvoiceBalancesAPIRequest extends FormRequest
             'company_id.required' => 'Company ID is required',
             'company_id.integer' => 'Company ID must be an integer',
             'invoice_type.string' => 'Invoice type must be a string',
-            'generated_from.array' => 'generated_from must be an array (e.g. ["POS"] or ["POS","CLUB"])',
-            'generated_from.*.in' => 'Generated from not match with system',
+            'generated_from.array' => 'generated_from must be an array (e.g. ["RPOS"] or ["RPOS","TESTW"])',
+            'generated_from.*.string' => 'Each generated_from value must be a string',
             'page.integer' => 'page must be an integer',
             'page.min' => 'page must be at least 1',
             'per_page.integer' => 'per_page must be an integer',

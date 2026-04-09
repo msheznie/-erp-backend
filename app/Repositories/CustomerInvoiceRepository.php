@@ -120,15 +120,7 @@ class CustomerInvoiceRepository extends BaseRepository
         return CustomerInvoice::class;
     }
 
-    // ---------------------------------------------------------------------
-    // Customer invoice balances (API) query helpers
-    // ---------------------------------------------------------------------
 
-    /**
-     * Request `generated_from` values POS/CLUB map to third_party_systems.description values.
-     *
-     * @return list<string>
-     */
     public function thirdPartyDescriptionsForGeneratedFrom(string $generatedFrom): array
     {
         if ($generatedFrom === 'POS') {
@@ -146,10 +138,6 @@ class CustomerInvoiceRepository extends BaseRepository
     {
         $dsmTable = (new DocumentSystemMapping)->getTable();
         $tpsTable = (new ThirdPartySystems)->getTable();
-        $displayDescriptions = array_merge(
-            $this->thirdPartyDescriptionsForGeneratedFrom('POS'),
-            $this->thirdPartyDescriptionsForGeneratedFrom('CLUB')
-        );
 
         $latestMappingIdPerDocument = DB::table($dsmTable)
             ->where('documentSystemId', 20)
@@ -159,20 +147,25 @@ class CustomerInvoiceRepository extends BaseRepository
         return DB::table($dsmTable.' as dsm')
             ->joinSub($latestMappingIdPerDocument, 'latest_map', 'latest_map.max_mapping_id', '=', 'dsm.id')
             ->join($tpsTable.' as tps', 'tps.id', '=', 'dsm.thirdPartySystemId')
-            ->whereIn('tps.description', $displayDescriptions)
             ->select('dsm.documentId as documentId', 'tps.description as generated_from_label');
     }
 
     public function mappingInvoiceIdsSubQuery(array $generatedFromList): QueryBuilder
     {
-        $descriptions = [];
-        foreach (array_unique($generatedFromList) as $flag) {
-            $descriptions = array_merge($descriptions, $this->thirdPartyDescriptionsForGeneratedFrom($flag));
-        }
-        $descriptions = array_values(array_unique($descriptions));
+  
+        $descriptions = array_values(array_unique(array_filter(array_map(function ($value) {
+            $value = trim((string) $value);
+            return $value === '' ? null : $value;
+        }, $generatedFromList))));
 
         $dsmTable = (new DocumentSystemMapping)->getTable();
         $tpsTable = (new ThirdPartySystems)->getTable();
+
+        if ($descriptions === []) {
+            return DB::table($dsmTable.' as dsm')
+                ->whereRaw('1 = 0')
+                ->select('dsm.documentId');
+        }
 
         return DB::table($dsmTable.' as dsm')
             ->join($tpsTable.' as tps', 'tps.id', '=', 'dsm.thirdPartySystemId')
@@ -236,7 +229,7 @@ class CustomerInvoiceRepository extends BaseRepository
         $taxTable = (new Taxdetail)->getTable();
         $invTable = (new CustomerInvoiceDirect)->getTable();
 
-        $mappingInvSub = ! empty($generatedFromList)
+        $mappingInvSub = $generatedFromList !== null
             ? $this->mappingInvoiceIdsSubQuery($generatedFromList)
             : null;
 
