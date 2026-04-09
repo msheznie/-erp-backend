@@ -347,7 +347,7 @@ class TransactionsExportExcel extends AppBaseController
                 break;
 
             case '17':
-                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'jvType'));
+                $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'cancelYN', 'month', 'year', 'jvType'));
                 $dataQry = $this->jvMasterRepository->jvMasterListQuery($request, $input, $search);
                 $data = $this->jvMasterRepository->setExportExcelData($dataQry);
                 break;

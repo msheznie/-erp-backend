@@ -530,7 +530,7 @@ class JvMasterAPIController extends AppBaseController
     public function getJournalVoucherMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'jvType'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'cancelYN', 'month', 'year', 'jvType'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1244,6 +1244,43 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             ->with('orderCondition', $sort)
             ->with('balanceTotal', $depAmountLocal)
             ->make(true);
+    }
+
+    public function journalVoucherCancel(Request $request)
+    {
+        $input = $request->all();
+        $jvMasterAutoId = $input['jvMasterAutoId'] ?? 0;
+        $cancelComments = $input['cancelComments'] ?? '';
+
+        $jvMasterData = JvMaster::find($jvMasterAutoId);
+        if (empty($jvMasterData)) {
+            return $this->sendError(trans('custom.journal_voucher_not_found'));
+        }
+
+        if ($jvMasterData->cancelYN == -1) {
+            return $this->sendError(trans('custom.document_already_cancelled', ['type' => 'journal voucher']));
+        }
+
+        if ($jvMasterData->confirmedYN == 1 || $jvMasterData->approved == -1) {
+            return $this->sendError('You can cancel only non confirmed journal vouchers.');
+        }
+
+        if (JvDetail::where('jvMasterAutoId', $jvMasterAutoId)->count() > 0) {
+            return $this->sendError('You cannot cancel the document as there are records in detail');
+        }
+
+        $employee = Helper::getEmployeeInfo();
+        $jvMasterData->cancelYN = -1;
+        $jvMasterData->cancelComment = $cancelComments;
+        $jvMasterData->cancelDate = Carbon::now();
+        $jvMasterData->canceledByEmpSystemID = $employee->employeeSystemID;
+        $jvMasterData->canceledByEmpID = $employee->empID;
+        $jvMasterData->canceledByEmpName = $employee->empName;
+        $jvMasterData->save();
+
+        AuditTrial::createAuditTrial($jvMasterData->documentSystemID, $jvMasterAutoId, $cancelComments, 'Cancelled');
+
+        return $this->sendResponse($jvMasterData->toArray(), trans('custom.successfully_cancelled'));
     }
 
     public function journalVoucherReopen(Request $request)

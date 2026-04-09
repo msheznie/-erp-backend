@@ -67,6 +67,12 @@ class JvMasterRepository extends BaseRepository
         'modifiedPc',
         'createdDateTime',
         'reversalDate',
+        'cancelYN',
+        'cancelComment',
+        'cancelDate',
+        'canceledByEmpSystemID',
+        'canceledByEmpID',
+        'canceledByEmpName',
         'timestamp'
     ];
 
@@ -80,9 +86,9 @@ class JvMasterRepository extends BaseRepository
 
     public function jvMasterListQuery($request, $input, $search = '') {
 
-        $invMaster = JvMaster::where('companySystemID', $input['companySystemID']);
+        $jvMaster = JvMaster::where('companySystemID', $input['companySystemID']);
         //$invMaster->where('documentSystemID', $input['documentId']);
-        $invMaster->with(['created_by', 'transactioncurrency','reportingcurrency', 'detail' => function ($query) {
+        $jvMaster->with(['created_by', 'transactioncurrency','reportingcurrency', 'detail' => function ($query) {
             $query->selectRaw('COALESCE(SUM(debitAmount),0) as debitSum,COALESCE(SUM(creditAmount),0) as creditSum,jvMasterAutoId');
             $query->groupBy('jvMasterAutoId');
         } ,'company'=> function ($query) {
@@ -93,51 +99,56 @@ class JvMasterRepository extends BaseRepository
             if($input['createdBy'] && !is_null($input['createdBy']))
             {
                 $createdBy = collect($input['createdBy'])->pluck('id')->toArray();
-                $invMaster->whereIn('createdUserSystemID', $createdBy);
+                $jvMaster->whereIn('createdUserSystemID', $createdBy);
             }
-
         }
 
         if (array_key_exists('jvType', $input)) {
             if (($input['jvType'] == 0 || $input['jvType'] == 1 || $input['jvType'] == 2 || $input['jvType'] == 3 || $input['jvType'] == 4 || $input['jvType'] == 5) && !is_null($input['jvType'])) {
-                $invMaster->where('jvType', $input['jvType']);
+                $jvMaster->where('jvType', $input['jvType']);
             }
         }
 
         if (array_key_exists('confirmedYN', $input)) {
             if (($input['confirmedYN'] == 0 || $input['confirmedYN'] == 1) && !is_null($input['confirmedYN'])) {
-                $invMaster->where('confirmedYN', $input['confirmedYN']);
+                $jvMaster->where('confirmedYN', $input['confirmedYN']);
             }
         }
 
         if (array_key_exists('approved', $input)) {
             if (($input['approved'] == 0 || $input['approved'] == -1) && !is_null($input['approved'])) {
-                $invMaster->where('approved', $input['approved']);
+                $jvMaster->where('approved', $input['approved']);
+            }
+        }
+
+        if (array_key_exists('cancelYN', $input)) {
+            if (($input['cancelYN'] == 0 || $input['cancelYN'] == -1) && !is_null($input['cancelYN'])) {
+                $jvMaster->where('cancelYN', $input['cancelYN']);
             }
         }
 
         if (array_key_exists('month', $input)) {
             if ($input['month'] && !is_null($input['month'])) {
-                $invMaster->whereMonth('JVdate', '=', $input['month']);
+                $jvMaster->whereMonth('JVdate', '=', $input['month']);
             }
         }
 
         if (array_key_exists('year', $input)) {
             if ($input['year'] && !is_null($input['year'])) {
-                $invMaster->whereYear('JVdate', '=', $input['year']);
+                $jvMaster->whereYear('JVdate', '=', $input['year']);
             }
         }
 
 
         if ($search) {
             $search = str_replace("\\", "\\\\", $search);
-            $invMaster = $invMaster->where(function ($query) use ($search) {
+            $jvMaster = $jvMaster->where(function ($query) use ($search) {
                 $query->where('JVcode', 'LIKE', "%{$search}%")
                     ->orWhere('JVNarration', 'LIKE', "%{$search}%");
             });
         }
 
-        return $invMaster;
+        return $jvMaster;
     }
 
     public function setExportExcelData($dataSet) {
@@ -163,8 +174,8 @@ class JvMasterRepository extends BaseRepository
                 $data[$x][trans('custom.transaction_credit_amount')] = $val->detail->count() > 0? number_format($val->detail[0]->creditSum, $val->transactioncurrency? $val->transactioncurrency->DecimalPlaces : '', ".", "") : 0;
 
 
-                $debitAmount = $val->detail->count() > 0? $val->detail[0]->debitSum : 0;
-                $creditAmount = $val->detail->count() > 0? $val->detail[0]->creditSum : 0;
+                $debitAmount = $val->cancelYN == -1 ? 0 : ($val->detail->count() > 0 ? $val->detail[0]->debitSum : 0);
+                $creditAmount = $val->cancelYN == -1 ? 0 : ($val->detail->count() > 0 ? $val->detail[0]->creditSum : 0);
 
                 $debitRptAmount = 0;
                 $creditRptAmount = 0;
@@ -395,7 +406,7 @@ class JvMasterRepository extends BaseRepository
                 $data[$x][trans('custom.reporting_debit_amount')] = $debitRptAmount > 0? number_format($debitRptAmount, $reportingCurrencyDecimal, ".", "") : 0;
                 $data[$x][trans('custom.reporting_credit_amount')] = $creditRptAmount > 0? number_format($creditRptAmount, $reportingCurrencyDecimal, ".", "") : 0;
 
-                $data[$x][trans('custom.status')] = StatusService::getStatus(NULL, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
+                $data[$x][trans('custom.status')] = StatusService::getStatus($val->cancelYN, NULL, $val->confirmedYN, $val->approved, $val->refferedBackYN);
 
                 $x++;
             }
