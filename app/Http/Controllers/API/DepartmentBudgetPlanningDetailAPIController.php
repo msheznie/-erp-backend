@@ -1926,7 +1926,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $groupedItem->amount_given_by_finance = 0;
                         $groupedItem->amount_given_by_hod = 0;
                         $groupedItem->difference_current_request = 0;
-                        $groupedItem->setRelation('departmentSegment', null);
+                        // $groupedItem->setRelation('departmentSegment', null);
                         $groupedItem->department_segment_id = null;
                         if ($item->departmentBudgetPlanning) {
                             $groupedItem->setRelation('departmentBudgetPlanning', $item->departmentBudgetPlanning);
@@ -1966,7 +1966,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $groupedItem->amount_given_by_finance = 0;
                         $groupedItem->amount_given_by_hod = 0;
                         $groupedItem->difference_current_request = 0;
-                        $groupedItem->setRelation('departmentBudgetPlanning', null);
+                        // $groupedItem->setRelation('departmentBudgetPlanning', null);
                         if ($item->departmentSegment && $item->departmentSegment->segment) {
                             $groupedItem->setRelation('departmentSegment', $item->departmentSegment);
                             if (!$groupedItem->departmentSegment->relationLoaded('segment')) {
@@ -2001,9 +2001,9 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $groupedItem->amount_given_by_finance = 0;
                         $groupedItem->amount_given_by_hod = 0;
                         $groupedItem->difference_current_request = 0;
-                        $groupedItem->setRelation('departmentSegment', null);
+                        // $groupedItem->setRelation('departmentSegment', null);
                         $groupedItem->department_segment_id = null;
-                        $groupedItem->setRelation('departmentBudgetPlanning', null);
+                        // $groupedItem->setRelation('departmentBudgetPlanning', null);
                         if (!$groupedItem->relationLoaded('budgetTemplateGl')) {
                             $groupedItem->load('budgetTemplateGl.chartOfAccount.templateCategoryDetails');
                         }
@@ -2054,9 +2054,9 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $groupedItem->amount_given_by_finance = 0;
                         $groupedItem->amount_given_by_hod = 0;
                         $groupedItem->difference_current_request = 0;
-                        $groupedItem->setRelation('departmentSegment', null);
+                        // $groupedItem->setRelation('departmentSegment', null);
                         $groupedItem->department_segment_id = null;
-                        $groupedItem->setRelation('departmentBudgetPlanning', null);
+                        // $groupedItem->setRelation('departmentBudgetPlanning', null);
                         if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
                             $groupedItem->setRelation('category', $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails);
                         }
