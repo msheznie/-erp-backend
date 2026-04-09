@@ -2084,13 +2084,21 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
             $columnSlugs = $request->input('columnSlugs');
             $isColumnSlugsArray = !empty($columnSlugs) && is_array($columnSlugs);
+            $defaultShowSegment = (($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 3);
+            $defaultShowDepartment = (($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 2);
+            $showSegmentColumn = $isColumnSlugsArray
+                ? in_array('segment', $columnSlugs, true)
+                : $defaultShowSegment;
+            $showDepartmentColumn = $isColumnSlugsArray
+                ? in_array('department', $columnSlugs, true)
+                : $defaultShowDepartment;
 
             $data = array();
             $x = 0;
-            $dataset->chunk(200)->each(function ($chunk) use (&$data, &$x, $selectedStatus, $isGLBased, $columnSlugs, $isColumnSlugsArray) {
+            $dataset->chunk(200)->each(function ($chunk) use (&$data, &$x, $columnSlugs, $isColumnSlugsArray, $showSegmentColumn, $showDepartmentColumn, $selectedStatus) {
                 foreach ($chunk as $val) {
                     $x++;
-                    $rowBySlug = $this->buildExportRowBySlug($val, $x, $selectedStatus, $isGLBased);
+                    $rowBySlug = $this->buildExportRowBySlug($val, $x, $showSegmentColumn, $showDepartmentColumn, $selectedStatus);
                     if ($isColumnSlugsArray) {
                         $data[$x] = $this->filterExportRowByColumnSlugs($rowBySlug, $columnSlugs);
                     } else {
@@ -2263,17 +2271,17 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
      * @param bool $isGLBased
      * @return array
      */
-    private function buildExportRowBySlug($val, $rowIndex, $selectedStatus, $isGLBased)
+    private function buildExportRowBySlug($val, $rowIndex, $showSegmentColumn, $showDepartmentColumn, $selectedStatus)
     {
         $row = [];
         $row['#'] = $rowIndex;
 
-        $row['segment'] = ($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 3
+        $row['segment'] = $showSegmentColumn
             ? ($val->departmentSegment && $val->departmentSegment->segment
                 ? ($val->departmentSegment->segment->ServiceLineCode . ' - ' . $val->departmentSegment->segment->ServiceLineDes)
                 : '')
             : '';
-        $row['department'] = ($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 2
+        $row['department'] = $showDepartmentColumn
             ? ($val->departmentBudgetPlanning && $val->departmentBudgetPlanning->department
                 ? $val->departmentBudgetPlanning->department->departmentDescription
                 : '')
