@@ -1740,8 +1740,9 @@ class DocumentApprove
                                 if ($input["documentSystemID"] == 3) {
                                     $sourceData = $namespacedModel::find($input["documentSystemCode"]);
                                     $masterData['supplierID'] = $sourceData->supplierID;
-                                    $jobUGRV = UnbilledGRVInsert::dispatch($masterData, $dataBase);
-                                    $jobSI = CreateGRVSupplierInvoice::dispatch($input["documentSystemCode"], $dataBase);
+                                    UnbilledGRVInsert::withChain([
+                                        new CreateGRVSupplierInvoice($input["documentSystemCode"], $dataBase),
+                                    ])->dispatch($masterData, $dataBase);
                                     WarehouseItemUpdate::dispatch($input["documentSystemCode"]);
 
                                     if ($sourceData->interCompanyTransferYN == -1) {
