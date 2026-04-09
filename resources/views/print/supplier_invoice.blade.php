@@ -942,6 +942,111 @@
             </table>
         </div>
     @endif
+
+    @if($masterdata->documentType == 0 || $masterdata->documentType == 2)
+        <div class="row" style="margin-top: 30px">
+            <table style="width:100%;" class="table table-bordered">
+                <tbody>
+                <tr>
+                    <td style="border-bottom: none !important;border-left: none !important;width: 60%;">&nbsp;</td>
+                    <td class="text-right" style="width: 20%;border-left: 1px solid rgb(127, 127, 127)!important;">
+                        <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.total') }}</span>
+                    </td>
+                    <td class="text-right"
+                        style="font-size: 11px;width: 20%;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                        <span class="font-weight-bold">
+                            {{ number_format($poGrvTotalExVat, $transDecimal) }}
+                        </span>
+                    </td>
+                </tr>
+                <tr @if(!$isVATEligible) style="display: none;" @endif>
+                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">&nbsp;</td>
+                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;">
+                        <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.vat') }}</span>
+                    </td>
+                    <td class="text-right"
+                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                        <span class="font-weight-bold">{{ number_format($poGrvVatAfterRetention, $transDecimal) }}</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">&nbsp;</td>
+                    <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;">
+                        <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.net_total') }}</span>
+                    </td>
+                    <td class="text-right"
+                        style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                        <span class="font-weight-bold">
+                            {{ number_format($poGrvNetTotalVatInclusive, $transDecimal) }}
+                        </span>
+                    </td>
+                </tr>
+                @if ($masterdata->documentType != 4)
+                    <tr>
+                        <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">&nbsp;</td>
+                        <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;">
+                            <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.retention_amount') }}</span>
+                        </td>
+                        <td class="text-right"
+                            style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                            <span class="font-weight-bold">
+                                @if($masterdata->rcmActivated)
+                                    {{ number_format((($grvTotTra + $directTotTra) * ($masterdata->retentionPercentage/100)), $transDecimal) }}
+                                @else
+                                    {{ number_format((($grvTotTra + $directTotTra) * ($masterdata->retentionPercentage/100) - $retentionVatPortion), $transDecimal) }}
+                                @endif
+                            </span>
+                        </td>
+                    </tr>
+                @endif
+                @if(($masterdata->documentType == 1 || $masterdata->documentType == 0) && ($masterdata->mol_applicable == 1 || $masterdata->mol_amount))
+                    <tr>
+                        <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">&nbsp;</td>
+                        <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;">
+                            <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.mol_contribution') }}</span>
+                        </td>
+                        <td class="text-right"
+                            style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                            <span class="font-weight-bold">{{ number_format(($masterdata->mol_amount ?? 0), $transDecimal) }}</span>
+                        </td>
+                    </tr>
+                @endif
+                @if($masterdata->whtApplicable)
+                    <tr>
+                        <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">&nbsp;</td>
+                        <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;">
+                            <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.WHT_amount') }}</span>
+                        </td>
+                        <td class="text-right"
+                            style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                            <span class="font-weight-bold">
+                                {{ number_format(($masterdata->whtPaymentMethod == 2 ? 0 : ($masterdata->whtAmount ?? 0)), $transDecimal) }}
+                            </span>
+                        </td>
+                    </tr>
+                @endif
+                @if($masterdata->documentType != 4)
+                    <tr>
+                        <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">&nbsp;</td>
+                        <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;">
+                            <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.net_amount') }}</span>
+                        </td>
+                        <td class="text-right"
+                            style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
+                            <span class="font-weight-bold">
+                                @if($masterdata->rcmActivated)
+                                    {{ number_format((($grvTotTra + $directTotTra) - (($grvTotTra + $directTotTra) * ($masterdata->retentionPercentage/100)) - ($masterdata->whtPaymentMethod == 2 ? 0 : ($masterdata->whtAmount ?? 0)) - ($masterdata->mol_amount ?? 0)), $transDecimal) }}
+                                @else
+                                    {{ number_format((($grvTotTra + $directTotTra) - (($grvTotTra + $directTotTra) * ($masterdata->retentionPercentage/100)) - ($masterdata->whtPaymentMethod == 2 ? 0 : ($masterdata->whtAmount ?? 0)) - ($masterdata->mol_amount ?? 0)), $transDecimal) }}
+                                @endif
+                            </span>
+                        </td>
+                    </tr>
+                @endif
+                </tbody>
+            </table>
+        </div>
+    @endif
 </div>
 <div class="" style="margin-top: 30px;">
     <table style="width:100%;">
