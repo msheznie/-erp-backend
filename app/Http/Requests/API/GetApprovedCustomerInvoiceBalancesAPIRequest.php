@@ -78,7 +78,7 @@ class GetApprovedCustomerInvoiceBalancesAPIRequest extends FormRequest
             'invoice_code.array' => 'invoice_code must be an array',
             'invoice_code.*.string' => 'Invoice code must be a string',
 
-            'customer_code.array' => 'Customer ode must be an array',
+            'customer_code.array' => 'Customer code must be an array',
             'customer_code.*.string' => 'Customer code must be a string',
             'company_id.required' => 'Company ID is required',
             'company_id.integer' => 'Company ID must be an integer',
