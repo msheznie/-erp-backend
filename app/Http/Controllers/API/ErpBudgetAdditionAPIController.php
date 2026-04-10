@@ -342,6 +342,9 @@ class ErpBudgetAdditionAPIController extends AppBaseController
         
         if ($erpBudgetAddition->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $debitNoteDetails = ErpBudgetAdditionDetail::where('budgetAdditionFormAutoID', $id)->get();
+            if ($debitNoteDetails->count() == 0) {
+                return $this->sendError(trans('custom.budget_addition_document_cannot_confirm_without_details'), 500, array('type' => 'confirm_error', 'data' => []));
+            }
             $checkBudgetFromReview = $this->validateBudgetFormReview($id, $erpBudgetAddition, $debitNoteDetails);
             if (!$checkBudgetFromReview['status']) {
                 return $this->sendError(trans('custom.you_cannot_confirm_this_document'), 500, array('type' => 'confirm_error_budget_review', 'data' => $checkBudgetFromReview['message']));
