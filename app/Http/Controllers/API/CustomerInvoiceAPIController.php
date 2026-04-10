@@ -338,7 +338,7 @@ class CustomerInvoiceAPIController extends AppBaseController
         $input = $request->all();
         $contentLength = intval(request()->header('content-length'));
 
-        if(($input == [] || $input == null) && $contentLength > 0) {
+        if ($contentLength > 0 && blank($input)) {
             return $this->sendError("Invalid request body", 400);
         }
 
