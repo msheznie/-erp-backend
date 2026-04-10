@@ -25,32 +25,32 @@ class GetApprovedCustomerInvoiceBalancesAPIRequest extends FormRequest
         );
     }
 
-    protected function prepareForValidation()
-    {
-        $raw = $this->input('generated_from');
+    // protected function prepareForValidation()
+    // {
+    //     $raw = $this->input('generated_from');
 
-        if ($raw === null || $raw === '') {
-            $this->merge(['generated_from' => null]);
-            return;
-        }
+    //     if ($raw === null || $raw === '') {
+    //         $this->merge(['generated_from' => null]);
+    //         return;
+    //     }
 
-        // generated_from MUST be an array when present
-        if (! is_array($raw)) {
-            return;
-        }
+    //     // generated_from MUST be an array when present
+    //     if (! is_array($raw)) {
+    //         return;
+    //     }
 
-        $normalized = [];
-        foreach ($raw as $v) {
-            if ($v === null || $v === '') {
-                continue;
-            }
-            $normalized[] = strtoupper(trim((string) $v));
-        }
+    //     $normalized = [];
+    //     foreach ($raw as $v) {
+    //         if ($v === null || $v === '') {
+    //             continue;
+    //         }
+    //         $normalized[] = strtoupper(trim((string) $v));
+    //     }
 
-        $this->merge([
-            'generated_from' => $normalized === [] ? [] : array_values(array_unique($normalized)),
-        ]);
-    }
+    //     $this->merge([
+    //         'generated_from' => $normalized === [] ? [] : array_values(array_unique($normalized)),
+    //     ]);
+    // }
 
     public function rules()
     {
