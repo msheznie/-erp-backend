@@ -8951,6 +8951,7 @@ return
     'salary_jv' => 'Salary JV',
     'allocation_jv' => 'Allocation JV',
     'po_accrual_jv' => 'PO Accrual JV',
+    'audit_jv' => 'Audit JV',
     'gratuity_accrual_jv' => 'Gratuity Accrual JV',
     'final_settlement_accrual_jv' => 'Final Settlement Accrual JV',
     'thirteenth_month_accrual_jv' => '13th Month Accrual JV',

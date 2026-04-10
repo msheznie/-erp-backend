@@ -205,7 +205,7 @@ class JournalVoucherService
         }
 
         if (isset($input['reversalJV'])) {
-            if ($input['reversalJV'] == 0 && $input['jvType'] == 0) {
+            if ($input['reversalJV'] == 0 && in_array($input['jvType'], [0, 10])) {
                 $input['reversalDate'] = null;
             }
         }
@@ -470,7 +470,7 @@ class JournalVoucherService
             }
 
             //if standard jv
-            if ($input['jvType'] == 0) {
+            if (in_array($input['jvType'], [0, 10])) {
                 $policyConfirmedUserToApprove = CompanyPolicyMaster::where('companyPolicyCategoryID', 15)
                     ->where('companySystemID', $input['companySystemID'])
                     ->first();
@@ -549,7 +549,7 @@ class JournalVoucherService
         }
 
         if (isset($input['reversalJV'])) {
-            if ($input['reversalJV'] == 0 && $input['jvType'] == 0) {
+            if ($input['reversalJV'] == 0 && in_array($input['jvType'], [0, 10])) {
                 $input['reversalDate'] = null;
             }
         }

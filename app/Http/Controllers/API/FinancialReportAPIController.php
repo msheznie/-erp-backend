@@ -3553,6 +3553,7 @@ class FinancialReportAPIController extends AppBaseController
                             WHEN 3 THEN "Salary JV"
                             WHEN 4 THEN "Allocation JV"
                             WHEN 5 THEN "PO Accrual JV"
+                            WHEN 10 THEN "Audit JV"
                             ELSE "Unknown"
                         END AS jv_type,
                         IF
