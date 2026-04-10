@@ -388,10 +388,10 @@ class CustomerInvoiceRepository extends BaseRepository
                 continue;
             }
             $byInvoice[$iid][] = [
-                'Document type' => 'receipt',
-                'Document Code' => $r->doc_code,
-                'Amount' => (float) ($r->amount ?? 0),
-                'Document status' => $this->receiptVoucherStatusLabel($r->rv_approved, $r->rv_confirmed),
+                'document_type' => 'receipt',
+                'document_code' => $r->doc_code,
+                'amount' => (float) ($r->amount ?? 0),
+                'document_status' => $this->receiptVoucherStatusLabel($r->rv_approved, $r->rv_confirmed),
             ];
         }
 
@@ -412,10 +412,10 @@ class CustomerInvoiceRepository extends BaseRepository
                 continue;
             }
             $byInvoice[$iid][] = [
-                'Document type' => 'matching',
-                'Document Code' => $r->doc_code,
-                'Amount' => (float) ($r->amount ?? 0),
-                'Document status' => $this->matchingStatusLabel($r->matching_confirmed),
+                'document_type' => 'matching',
+                'document_code' => $r->doc_code,
+                'amount' => (float) ($r->amount ?? 0),
+                'document_status' => $this->matchingStatusLabel($r->matching_confirmed),
             ];
         }
 
@@ -437,10 +437,10 @@ class CustomerInvoiceRepository extends BaseRepository
                 continue;
             }
             $byInvoice[$iid][] = [
-                'Document type' => 'sales_return',
-                'Document Code' => $r->doc_code,
-                'Amount' => (float) ($r->amount ?? 0),
-                'Document status' => $this->salesReturnStatusLabel($r->sr_approved, $r->sr_confirmed),
+                'document_type' => 'sales_return',
+                'document_code' => $r->doc_code,
+                'amount' => (float) ($r->amount ?? 0),
+                'document_status' => $this->salesReturnStatusLabel($r->sr_approved, $r->sr_confirmed),
             ];
         }
 
@@ -453,25 +453,25 @@ class CustomerInvoiceRepository extends BaseRepository
         $dt = isset($invoice->isPerforma) ? (int) $invoice->isPerforma : -1;
 
         return [
-            'Invoice Code' => $invoice->bookingInvCode,
-            'Customer' => optional($invoice->customer)->CustomerName,
-            'Invoice Type' => $documentTypeLabels[$dt] ?? '',
-            'Document No' => $invoice->customerInvoiceNo,
-            'Invoice Date' => $invoice->bookingDate,
-            'Warehouse' => optional($invoice->warehouse)->wareHouseDescription,
-            'Transaction Currency' => optional($invoice->currency)->CurrencyCode,
-            'Due Date' => $invoice->invoiceDueDate,
-            'Invoice Amount' => (float) ($invoice->invoice_amount ?? 0),
-            'Balance Amount' => (float) ($invoice->balance_amount ?? 0),
-            'Status' => [
+            'invoice_code' => $invoice->bookingInvCode,
+            'customer' => optional($invoice->customer)->CustomerName,
+            'invoice_type' => $documentTypeLabels[$dt] ?? '',
+            'document_no' => $invoice->customerInvoiceNo,
+            'invoice_date' => $invoice->bookingDate,
+            'warehouse' => optional($invoice->warehouse)->wareHouseDescription,
+            'transaction_currency' => optional($invoice->currency)->CurrencyCode,
+            'due_date' => $invoice->invoiceDueDate,
+            'invoice_amount' => (float) ($invoice->invoice_amount ?? 0),
+            'balance_amount' => (float) ($invoice->balance_amount ?? 0),
+            'status' => [
                 'status' => $invoice->balance_payment_status ?? '',
                 'docs' => $docsByInvoice[$iid] ?? [],
             ],
-            'Created Date & Time' => $invoice->createdDateAndTime,
-            'Created By' => optional($invoice->createduser)->empName,
-            'Last Updated Date & Time' => $invoice->timestamp,
-            'Last Updated By' => optional($invoice->modified_by)->empName,
-            'Generated From' => $invoice->generated_from_display ?: null,
+            'created_date_time' => $invoice->createdDateAndTime,
+            'created_by' => optional($invoice->createduser)->empName,
+            'last_updated_date_time' => $invoice->timestamp,
+            'last_updated_by' => optional($invoice->modified_by)->empName,
+            'generated_from' => $invoice->generated_from_display ?: '',
         ];
     }
 

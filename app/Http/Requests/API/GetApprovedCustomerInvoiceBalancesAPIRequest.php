@@ -83,7 +83,7 @@ class GetApprovedCustomerInvoiceBalancesAPIRequest extends FormRequest
             'company_id.required' => 'Company ID is required',
             'company_id.integer' => 'Company ID must be an integer',
             'invoice_type.string' => 'Invoice type must be a string',
-            'generated_from.array' => 'generated_from must be an array (e.g. ["RPOS"] or ["RPOS","TESTW"])',
+            'generated_from.array' => "generated_from must be an array (e.g. ['RPOS'] or ['RPOS','TESTW'])",
             'generated_from.*.string' => 'Each generated_from value must be a string',
             'page.integer' => 'page must be an integer',
             'page.min' => 'page must be at least 1',
