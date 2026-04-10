@@ -217,7 +217,7 @@ class EmployeeTaskingNotificationService
         $isExtension = $this->masterDet['isExtension'] ?? false;
         $extText = $isExtension ? 'Extension ' : '';
 
-        return "Employee Tasking {$extText}Created";
+        return "Employee Tasking {$extText} Created";
     }
 
     public function emailBody()
@@ -232,7 +232,7 @@ class EmployeeTaskingNotificationService
         $isExtension = $this->masterDet['isExtension'] ?? false;
         $extText = $isExtension ? 'Extension ' : '';
 
-        $body = 'This is to inform you that the following Employee Tasking '.$extText.'Request has been created in the system.<br/><br/>';
+        $body = 'This is to inform you that the following Employee Tasking '.$extText.' Request has been created in the system.<br/><br/>';
         $body .= '<b>Employee Tasking '.$extText.'Details:</b><br/>';
         $body .= 'Employee Name: ' . $empName . '<br/>';
         $body .= 'Assigned to: ' . $assignee . '<br/>';
