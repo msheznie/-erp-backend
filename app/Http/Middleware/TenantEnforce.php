@@ -235,6 +235,7 @@ class TenantEnforce
             'api/v1/integrations/customers/search',
             'api/v1/integrations/chart-of-accounts/search',
             'api/v1/integrations/pos/shifts',
+            'api/v1/integrations/customer-invoices/balances',
         ];
     }
 
