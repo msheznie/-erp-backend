@@ -955,18 +955,18 @@
                     <td class="text-right"
                         style="font-size: 11px;width: 20%;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                         <span class="font-weight-bold">
-                            {{ number_format($poGrvTotalExVat, $transDecimal) }}
+                            {{ number_format(($poGrvTotalDisplay ?? $poGrvTotalExVat), $transDecimal) }}
                         </span>
                     </td>
                 </tr>
-                <tr @if(!$isVATEligible) style="display: none;" @endif>
+                <tr>
                     <td style="border-bottom: none !important;border-top: none !important;border-left: none !important;">&nbsp;</td>
                     <td class="text-right" style="border-left: 1px solid rgb(127, 127, 127)!important;">
                         <span class="font-weight-bold" style="font-size: 11px">{{ __('custom.vat') }}</span>
                     </td>
                     <td class="text-right"
                         style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
-                        <span class="font-weight-bold">{{ number_format($poGrvVatAfterRetention, $transDecimal) }}</span>
+                        <span class="font-weight-bold">{{ number_format(($poGrvVatDisplay ?? $poGrvVatAfterRetention), $transDecimal) }}</span>
                     </td>
                 </tr>
                 <tr>
@@ -977,7 +977,7 @@
                     <td class="text-right"
                         style="font-size: 11px;border-left: 1px solid rgb(127, 127, 127) !important;border-right: 1px solid rgb(127, 127, 127) !important;">
                         <span class="font-weight-bold">
-                            {{ number_format($poGrvNetTotalVatInclusive, $transDecimal) }}
+                            {{ number_format(($poGrvNetTotalDisplay ?? $poGrvNetTotalVatInclusive), $transDecimal) }}
                         </span>
                     </td>
                 </tr>
