@@ -9886,7 +9886,7 @@ return
     'is_bank_input_value_is_incorrect' => 'قيمة خيار بنك غير صحيحة',
     'per_page_cannot_exceed_50' => 'العدد لكل صفحة لا يمكن أن يتجاوز 50',
     'budget_planning_export_ready' => 'تم تصدير بند الميزانية المخصص للشركة بنجاح',
-    
+
     // Employee Activity Audit Report Validation Messages
     'screens_accessed_required' => 'الشاشات التي تم الوصول إليها مطلوبة',
     'screens_accessed_must_be_array' => 'يجب أن تكون الشاشات التي تم الوصول إليها مصفوفة',

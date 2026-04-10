@@ -10001,7 +10001,7 @@ return
     'is_bank_input_value_is_incorrect' => 'Is Bank input value is incorrect',
     'per_page_cannot_exceed_50' => 'Per page cannot exceed 50',
     'budget_planning_export_ready' => 'Budget Planning Export Ready',
-    
+
     // Employee Activity Audit Report Validation Messages
     'screens_accessed_required' => 'Screens accessed is required',
     'screens_accessed_must_be_array' => 'Screens accessed must be an array',

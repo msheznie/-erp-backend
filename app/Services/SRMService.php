@@ -5060,6 +5060,7 @@ class SRMService
     public function getBidSubmittedData($request)
     {
         $tenderId = $request->input('extra.tenderId');
+        $bidMasterId = (int)$request->input('extra.bidMasterId');
         $tenderNegotiation = $request->input('extra.tender_negotiation');
         $tenderNegotiationData = $request->input('extra.tender_negotiation_data') ?? [];
         $supplierRegId = self::getSupplierRegIdByUUID($request->input('supplier_uuid'));
@@ -5137,6 +5138,9 @@ class SRMService
 
         $bidSubmitted = $bidSubmitted->where('tender_id', $tenderId)
             ->where('supplier_registration_id', $supplierRegId)
+            ->when($bidMasterId > 0, function ($q) use ($bidMasterId) {
+                $q->where('id', $bidMasterId);
+            })
             ->orderBy('id', 'ASC')
             ->get();
 

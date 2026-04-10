@@ -732,7 +732,7 @@ class TenderMaster extends Model
 
     public static function getTenderBidSubmissionDates($tenderId)
     {
-        return TenderMaster::select('id','bid_submission_opening_date', 'bid_submission_closing_date')
+        return TenderMaster::select('id', 'title', 'description', 'bid_submission_opening_date', 'bid_submission_closing_date')
             ->where('id', $tenderId)
             ->first();
     }
