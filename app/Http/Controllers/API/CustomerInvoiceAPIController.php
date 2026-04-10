@@ -334,8 +334,14 @@ class CustomerInvoiceAPIController extends AppBaseController
 
     public function getApprovedCustomerInvoiceBalancesAPI(GetApprovedCustomerInvoiceBalancesAPIRequest $request)
     {
-
+        
         $input = $request->all();
+        $contentLength = intval(request()->header('content-length'));
+
+        if ($contentLength > 0 && blank($input)) {
+            return $this->sendError("Invalid request body", 400);
+        }
+
         $response = $this->customerInvoiceBalanceAPIService->getApprovedBalances($input);
         if (! $response->isSuccess()) {
             return $this->sendError($response->getMessage(), $response->getStatusCode());
