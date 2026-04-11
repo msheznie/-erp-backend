@@ -314,10 +314,10 @@ class PoPaymentTermsAPIController extends AppBaseController
         $input = $request->all();
         $purchaseOrderID = $input['purchaseOrderID'];
         $supplierID = $input['supplierID'];
+        $companySystemID = $input['companySystemID'];
 
-        $assignedTemplateId = PaymentTermTemplateAssigned::where('supplierID', $supplierID)->value('templateID');
-        $isActiveTemplate = PaymentTermTemplate::where('id', $assignedTemplateId)->value('isActive');
-
+        $assignedTemplateId = PaymentTermTemplateAssigned::where('supplierID', $supplierID)->where('companySystemID', $companySystemID)->value('templateID');
+        $isActiveTemplate = PaymentTermTemplate::where('id', $assignedTemplateId)->where('companySystemID', $companySystemID)->value('isActive');
         $approvedPoConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)
             ->where(function ($query) {
                 $query->where('isApproved', true)
@@ -345,7 +345,7 @@ class PoPaymentTermsAPIController extends AppBaseController
                 $purchaseOrderPaymentTermConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('templateID', $poDefaultConfigUpdate->templateID)
                     ->where('isDefaultAssign', true)->orderBy('sortOrder')->get();
             } else {
-                $defaultTemplateID = PaymentTermTemplate::where('isDefault', true)->value('id');
+                $defaultTemplateID = PaymentTermTemplate::where('isDefault', true)->where('companySystemID', $companySystemID)->value('id');
                 $poDefaultTemplateConfigs = PoWisePaymentTermConfig::where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->first();
                 if (!$poDefaultTemplateConfigs) {
                     $paymentTermConfigs = PaymentTermConfig::where('templateId', $defaultTemplateID)->get();

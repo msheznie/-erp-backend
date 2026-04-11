@@ -127,7 +127,7 @@ class PaymentTermTemplateAssignedAPIController extends AppBaseController
         $assignSuppliers = [];
         foreach ($input['supplierID'] as $supplier) {
             // Check if the supplier has already been assigned to a template
-            $existingAssignment = PaymentTermTemplateAssigned::where('supplierID', $supplier['id'])->first();
+            $existingAssignment = PaymentTermTemplateAssigned::where('supplierID', $supplier['id'])->where('companySystemID', $input['companySystemID'])->first();
 
             if ($existingAssignment) {
                 $errorMsg[] = trans('custom.supplier_already_assigned_to_template', [
