@@ -424,6 +424,10 @@ class CreditNoteAPIController extends AppBaseController
         $input['FYPeriodDateTo'] = $companyfinanceperiod->dateTo;
 
 
+        $checkErChange = isset($input['erChangeCheck']) ? $input['erChangeCheck'] : true;
+        $isConfirming = isset($input['confirmedYN']) && $input['confirmedYN'] === 1;
+        $usePreviousExchangeRates = !$checkErChange && $isConfirming;
+
         if(isset($input['customerCurrencyID']) && isset($input['companySystemID'])){
             $companyCurrencyConversion = Helper::currencyConversion($input['companySystemID'], $input['customerCurrencyID'], $input['customerCurrencyID'], 0);
             $policy = CompanyPolicyMaster::where('companySystemID', $input['companySystemID'])
@@ -432,12 +436,17 @@ class CreditNoteAPIController extends AppBaseController
                 ->first();
             $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-            if($policy == false) {
+            if($policy == false && !$usePreviousExchangeRates) {
                 if ($companyCurrencyConversion) {
                     $input['companyReportingER'] = $companyCurrencyConversion['trasToRptER'];
                     $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
                 }
             }
+        }
+
+        if ($usePreviousExchangeRates) {
+            $input['localCurrencyER'] = $creditNote->localCurrencyER;
+            $input['companyReportingER'] = $creditNote->companyReportingER;
         }
         if ($input['secondaryLogoCompanySystemID'] != $creditNote->secondaryLogoCompanySystemID) {
             if ($input['secondaryLogoCompanySystemID'] != '') {
@@ -496,6 +505,19 @@ class CreditNoteAPIController extends AppBaseController
 
         $message = null;
 
+        if(($creditNote->localCurrencyER != $input['localCurrencyER'] && $input['localCurrencyID'] == $creditNote->localCurrencyID) || ($creditNote->companyReportingER != $input['companyReportingER'] && $creditNote->companyReportingCurrencyID == $input['companyReportingCurrencyID'])){
+           
+            if($checkErChange && $input['confirmedYN'] == 1){
+                
+                $erMessage = trans('custom.credit_note_exchange_rates_updated_message', [
+                    'local_er' => $creditNote->localCurrencyER,
+                    'reporting_er' => $creditNote->companyReportingER,
+                    'current_local_er' => $input['localCurrencyER'],
+                    'current_reporting_er' => $input['companyReportingER']
+                ]);
+                return $this->sendError($erMessage,500,['type' => 'erChange']);
+            }
+        }
         if ($creditNote->confirmedYN == 0 && $input['confirmedYN'] == 1) {
             $messages = [
                 'customerCurrencyID.required' => trans('custom.currency_is_required'),
