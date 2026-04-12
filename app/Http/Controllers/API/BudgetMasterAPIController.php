@@ -2647,7 +2647,22 @@ class BudgetMasterAPIController extends AppBaseController
         $decimalPlaceLocal = !empty($localCurrency) ? $localCurrency->DecimalPlaces : 3;
         $decimalPlaceRpt = !empty($rptCurrency) ? $rptCurrency->DecimalPlaces : 2;
 
-        $result = array('reportData' => $data, 'total' => $total, 'decimalPlaceLocal' => $decimalPlaceLocal, 'decimalPlaceRpt' => $decimalPlaceRpt);
+        $detailType = (int) ($input['type'] ?? 0);
+        if (in_array($detailType, [1, 6], true)) {
+            $detailAmountLabelKey = 'actual_consumption';
+        } elseif (in_array($detailType, [3, 5], true)) {
+            $detailAmountLabelKey = 'commited_budget';
+        } else {
+            $detailAmountLabelKey = 'pending_amount';
+        }
+
+        $result = array(
+            'reportData' => $data,
+            'total' => $total,
+            'decimalPlaceLocal' => $decimalPlaceLocal,
+            'decimalPlaceRpt' => $decimalPlaceRpt,
+            'detailAmountLabelKey' => $detailAmountLabelKey,
+        );
 
         return $result;
     }
