@@ -410,8 +410,7 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.good_receipt_voucher_not_found_1'));
         }
         $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$gRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$gRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($gRVMaster, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $gRVMaster, (int)Helper::getEmployeeSystemID());
 
         if ($gRVMaster->grvCancelledYN == -1) {
             return $this->sendError(trans('custom.good_receipt_voucher_closed_you_cannot_edit'), 500);
@@ -1046,8 +1045,7 @@ class GRVMasterAPIController extends AppBaseController
         }
 
         $this->grvRoleBasedAccessService->requireReadNavigationOrFail(request(), (int)$gRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireEditNavigationOrFail(request(), (int)$gRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($gRVMaster, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail(request(), $gRVMaster, (int)Helper::getEmployeeSystemID());
 
         $gRVMaster->delete();
 
@@ -1316,8 +1314,7 @@ class GRVMasterAPIController extends AppBaseController
         }
 
         $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $grvMaster, (int)Helper::getEmployeeSystemID());
 
         //checking segment is active
 
@@ -1621,8 +1618,7 @@ class GRVMasterAPIController extends AppBaseController
             return $this->sendError(trans('custom.grv_master_not_found'));
         }
         $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMasterData->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMasterData->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMasterData, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $grvMasterData, (int)Helper::getEmployeeSystemID());
         $poIDS = GRVDetails::where('grvAutoID', $grvAutoID)
             ->groupBy('purchaseOrderMastertID')
             ->pluck('purchaseOrderMastertID');
@@ -1688,8 +1684,7 @@ class GRVMasterAPIController extends AppBaseController
             }
 
             $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMasterData->companySystemID, (int)Helper::getEmployeeSystemID());
-            $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMasterData->companySystemID, (int)Helper::getEmployeeSystemID());
-            $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMasterData, (int)Helper::getEmployeeSystemID());
+            $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $grvMasterData, (int)Helper::getEmployeeSystemID());
 
             if ($grvMasterData->RollLevForApp_curr > 1) {
                 return $this->sendError(trans('custom.you_cannot_reopen_this_grv_it_is_already_partially'));
@@ -1892,8 +1887,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         }
 
         $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMasterData->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMasterData->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMasterData, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $grvMasterData, (int)Helper::getEmployeeSystemID());
 
         if ($grvMasterData->refferedBackYN != -1) {
             return $this->sendError(trans('custom.you_cannot_refer_back_this_good_receipt_voucher'));
@@ -1962,8 +1956,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         }
         $employeeSystemID = (int)Helper::getEmployeeSystemID();
         $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, $employeeSystemID);
-        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMaster->companySystemID, $employeeSystemID);
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, $employeeSystemID);
+        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $grvMaster, $employeeSystemID);
 
         $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input);
         if ($isEligible['status'] == 1) {
@@ -1983,8 +1976,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         }
         $employeeSystemID = (int)Helper::getEmployeeSystemID();
         $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, $employeeSystemID);
-        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMaster->companySystemID, $employeeSystemID);
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, $employeeSystemID);
+        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $grvMaster, $employeeSystemID);
 
         $isEligible = $this->gRVMasterRepository->isGrvEligibleForCancellation($input, 'reversal');
 
@@ -2011,8 +2003,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         }
         $employeeSystemID = (int)Helper::getEmployeeSystemID();
         $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvForAccess->companySystemID, $employeeSystemID);
-        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvForAccess->companySystemID, $employeeSystemID);
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvForAccess, $employeeSystemID);
+        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $grvForAccess, $employeeSystemID);
 
         $employee = Helper::getEmployeeInfo();
 
@@ -2086,8 +2077,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
         }
         $employeeSystemID = (int)Helper::getEmployeeSystemID();
         $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvForAccess->companySystemID, $employeeSystemID);
-        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvForAccess->companySystemID, $employeeSystemID);
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvForAccess, $employeeSystemID);
+        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $grvForAccess, $employeeSystemID);
 
         $employee = Helper::getEmployeeInfo();
         $emails = array();
@@ -2423,8 +2413,7 @@ AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
             return $this->sendError(trans('custom.grv_not_found'));
         }
         $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $grvMaster, (int)Helper::getEmployeeSystemID());
         if ($grvMaster->isMarkupUpdated==1) {
             return $this->sendError(trans('custom.grv_markup_update_process_restricted'),500);
         }
