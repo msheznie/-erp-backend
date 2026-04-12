@@ -3754,8 +3754,8 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
         $purchaseOrderPaymentTermConfigs = [];
 
         if ($paymentTerms == 1) {
-            $assignedTemplateId = PaymentTermTemplateAssigned::where('supplierID', $supplierID)->value('templateID');
-            $isActiveTemplate = PaymentTermTemplate::where('id', $assignedTemplateId)->value('isActive');
+            $assignedTemplateId = PaymentTermTemplateAssigned::where('supplierID', $supplierID)->where('companySystemID', $procumentOrder->companySystemID)->value('templateID');
+            $isActiveTemplate = PaymentTermTemplate::where('id', $assignedTemplateId)->where('companySystemID', $procumentOrder->companySystemID)->value('isActive');
 
             $approvedPoConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)
                 ->where(function ($query) {
@@ -3783,7 +3783,7 @@ AND erp_purchaseordermaster.companySystemID IN (' . $commaSeperatedCompany . ') 
                     $purchaseOrderPaymentTermConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $poDefaultConfigUpdate->templateID)
                         ->where('isDefaultAssign', true)->where('isSelected', true)->orderBy('sortOrder')->get();
                 } else {
-                    $defaultTemplateID = PaymentTermTemplate::where('isDefault', true)->value('id');
+                    $defaultTemplateID = PaymentTermTemplate::where('isDefault', true)->where('companySystemID', $procumentOrder->companySystemID)->value('id');
                     $poDefaultTemplateConfigs = DB::table('po_wise_payment_term_config')->where('purchaseOrderID', $purchaseOrderID)->where('templateID', $defaultTemplateID)->first();
                     if (!$poDefaultTemplateConfigs) {
                         $paymentTermConfigs = PaymentTermConfig::where('templateId', $defaultTemplateID)->get();
