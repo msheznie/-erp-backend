@@ -135,7 +135,7 @@ class CreatePaymentVoucher implements ShouldQueue
                     $detailIndex++;
                 }
             }
-            else if ($details != null && $paymentVoucher['payment_type'] == 8 && $paymentVoucher['refund_type'] == 3) {
+            else if ($details != null && $paymentVoucher['payment_type'] == 8 && isset($paymentVoucher['refund_type']) && $paymentVoucher['refund_type'] == 3) {
                 foreach ($details as $detail) {
                     $datasetDetails = self::validateRefundPVDetailsData($paymentVoucher,$detail);
                   
@@ -154,7 +154,7 @@ class CreatePaymentVoucher implements ShouldQueue
 
                 }
             }
-            else if ($details != null && $paymentVoucher['payment_type'] == 8 && $paymentVoucher['refund_type'] == 1) {
+            else if ($details != null && $paymentVoucher['payment_type'] == 8 && isset($paymentVoucher['refund_type']) && $paymentVoucher['refund_type'] == 1) {
                 foreach ($details as $detail) {
                     $datasetDetails = self::validateRefundPVAdvanceDetailsData($paymentVoucher,$detail);
                   
@@ -494,6 +494,7 @@ class CreatePaymentVoucher implements ShouldQueue
                 'data' => $successDocuments,
             ];
         }
+        Log::info('returnData1111: ' . json_encode($returnData, JSON_PRETTY_PRINT));
         // Dispatch webhook job
         $webhookPayload = ['data' => $returnData, 'externalReference' => $this->externalReference];
         InitiateWebhook::dispatch(
@@ -867,6 +868,13 @@ class CreatePaymentVoucher implements ShouldQueue
             }
         }
         else if($request['payment_type'] == 8) {
+            if (array_key_exists('supplier', $request)) {
+                $errorData[] = [
+                    'field' => 'supplier',
+                    'message' => ['For invoice receipt refund vouchers, only customer selection is allowed.']
+                ];
+            }
+
             if (isset($request['customer'])) {
                 $customer = CustomerMaster::where('CutomerCode', $request['customer'])
                     ->first();
@@ -1228,38 +1236,39 @@ class CreatePaymentVoucher implements ShouldQueue
             ];
             $errorData[] = $fieldErrors;
         }
-
-        if (isset($request['reverse_charge_mechanism'])) {
-            if (is_int($request['reverse_charge_mechanism'])) {
-                if (in_array($request['reverse_charge_mechanism'], [1,2])) {
-                    if ($request['reverse_charge_mechanism'] == 1) {
-                        $reverseChargeMechanism = 1;
+        $reverseChargeMechanism = 0;
+        if($request['payment_type'] != 8){
+            if (isset($request['reverse_charge_mechanism'])) {
+                if (is_int($request['reverse_charge_mechanism'])) {
+                    if (in_array($request['reverse_charge_mechanism'], [1,2])) {
+                        if ($request['reverse_charge_mechanism'] == 1) {
+                            $reverseChargeMechanism = 1;
+                        }
+                        else {
+                            $reverseChargeMechanism = 0;
+                        }
                     }
                     else {
-                        $reverseChargeMechanism = 0;
+                        $errorData[] = [
+                            'field' => "reverse_charge_mechanism",
+                            'message' => ["Invalid RCM Type selected. Please choose the correct type."]
+                        ];
                     }
                 }
                 else {
                     $errorData[] = [
                         'field' => "reverse_charge_mechanism",
-                        'message' => ["Invalid RCM Type selected. Please choose the correct type."]
+                        'message' => ["reverse_charge_mechanism must be an integer."]
                     ];
                 }
             }
             else {
                 $errorData[] = [
                     'field' => "reverse_charge_mechanism",
-                    'message' => ["reverse_charge_mechanism must be an integer."]
+                    'message' => ["reverse_charge_mechanism field is required"]
                 ];
             }
         }
-        else {
-            $errorData[] = [
-                'field' => "reverse_charge_mechanism",
-                'message' => ["reverse_charge_mechanism field is required"]
-            ];
-        }
-
         $details = $request['details'] ?? null;
 
         $totalAmount = 0;
@@ -1334,7 +1343,7 @@ class CreatePaymentVoucher implements ShouldQueue
                 'data' => [
                     'invoiceType' => $paymentType,
                     'paymentMode' => $paymentMode,
-                    'payeeType' => $request['payee_type'],
+                    'payeeType' => isset($request['payee_type']) ? $request['payee_type'] : null,
                     'supplierTransCurrencyID' => $currency->currencyID,
                     'BPVbank' => $bank->bankmasterAutoID,
                     'BPVAccount' => $bankAccount->bankAccountAutoID,
@@ -1976,7 +1985,7 @@ class CreatePaymentVoucher implements ShouldQueue
                             'message' => ["Selected Credit note already full paid"]
                         ];
                     }
-
+                    
                     if (!is_null($paymentAmount) && $paymentAmount > $balance) {
                         $errorData[] = [
                             'field' => "payment_amount",
@@ -1995,7 +2004,7 @@ class CreatePaymentVoucher implements ShouldQueue
                         ->first();
 
                     if ($linkedPv) {
-                        $docId = $linkedPv->BPVcode ?? $linkedPv->PayMasterAutoId;
+                        $docId = $linkedPv->BPVcode ? $linkedPv->BPVcode : "Payment Voucher";
                         $errorData[] = [
                             'field' => "credit_note",
                             'message' => ["The selected Credit note already pulled to (" . $docId . ")"]
@@ -2013,7 +2022,20 @@ class CreatePaymentVoucher implements ShouldQueue
                         $docId = $draftMatching->matchDocID ?? $draftMatching->matchingDocID ?? $draftMatching->id ?? $creditNote->creditNoteCode;
                         $errorData[] = [
                             'field' => "credit_note",
-                            'message' => ["The selected Credit note already pulled to (" . $docId . ")"]
+                            'message' => ["The selected Credit note already pulled to Receipt Voucher Matching"]
+                        ];
+                    }
+                }
+
+                $pvDocDate = $masterData['pay_invoice_date'] ?? null;
+                if ($pvDocDate && !empty($creditNote->creditNoteDate)) {
+                    $pvCarbon = Carbon::parse($pvDocDate)->startOfDay();
+                    $cnCarbon = Carbon::parse($creditNote->creditNoteDate)->startOfDay();
+
+                    if ($cnCarbon->greaterThan($pvCarbon)) {
+                        $errorData[] = [
+                            'field' => 'credit_note',
+                            'message' => ['The credit note date should be less than payment voucher document date -'],
                         ];
                     }
                 }
