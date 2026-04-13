@@ -3482,6 +3482,7 @@ WHERE
         })->whereHas('asset_by', function ($q) use ($request) {
             $q->assetType($request->typeID);
             $q->isApproved();
+            $q->where('DIPOSED', 0);
         })
         ->where(function($query) use ($financeYear, $financePeriod) {
             $query->whereDate('depForFYperiodStartDate', '>=', $financeYear->bigginingDate)
@@ -3597,7 +3598,7 @@ WHERE
 
             if ($request->subType == 2) { //charge
                 $output = FixedAssetDepreciationPeriod::selectRaw('' . $currencyColumnDep . ' as amount,faID')->with(['asset_by' => function ($q) {
-                    $q->with(['category_by', 'sub_category_by']);
+                    $q->with(['category_by', 'sub_category_by'])->where('DIPOSED', 0);
                 }])->whereHas('master_by', function ($q) use ($financeYear, $financePeriod) {
                     //$q->whereBetween(DB::raw('DATE(depDate)'), [$financeYear->bigginingDate, $financePeriod->dateTo]);
                     $q->where('approved', -1);
@@ -3611,6 +3612,7 @@ WHERE
                           ->orWhereNull('depForFYperiodEndDate');
                 })
                 ->whereHas('asset_by', function ($q) use ($request) {
+                    $q->where('DIPOSED', 0);
                     $q->assetType($request->typeID);
                     $q->isApproved();
                     $search = $request->input('search.value');
