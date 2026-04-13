@@ -22,7 +22,7 @@ class AppBaseController extends BaseController
         return Response::json(ResponseUtil::makeResponse($message, $result), $code);
     }
     
-    public function sendError($error, $code = HttpResponse::HTTP_NOT_FOUND, $errorType = [])
+    public function sendError($error, $code = HttpResponse::HTTP_NOT_FOUND, $errorType = array('type' => ''))
     {
         return Response::json(ResponseUtil::makeError($error,$errorType), $code);
     }
