@@ -282,9 +282,9 @@ class CompanyDocumentAttachmentAPIController extends AppBaseController
                 'approver'          => ['view' => true,  'edit' => true],
                 'reporting_manager' => ['view' => true,  'edit' => true],
                 'hod'               => ['view' => true,  'edit' => true],
-                'segment_owner'     => ['view' => false, 'edit' => true],
-                'warehouse_owner'   => ['view' => false, 'edit' => true],
-                'admin'             => ['view' => true,  'edit' => true],
+                'segment_owner'     => ['view' => false, 'edit' => false],
+                'warehouse_owner'   => ['view' => false, 'edit' => false],
+                'admin'             => ['view' => false, 'edit' => false],
             ];
 
             $persisted = [];
