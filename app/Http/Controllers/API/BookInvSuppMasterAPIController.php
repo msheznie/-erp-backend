@@ -2464,7 +2464,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             ->orderby('year', 'desc')
             ->get();
 
-        $supplier = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"))
+        $supplier = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName,creditPeriod"))
             ->where('companySystemID', $companyId)
             ->where('isActive', 1)
             ->where('isAssigned', -1)
@@ -2572,7 +2572,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
     {
         $companyId = $request['companyId'];
 
-        $supplierData = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName"));
+        $supplierData = SupplierAssigned::select(DB::raw("supplierCodeSytem,CONCAT(primarySupplierCode, ' | ' ,supplierName) as supplierName,creditPeriod"));
         $supplierData = $supplierData->where('companySystemID', $companyId);
         if (isset($request['invoiceType']) && $request['invoiceType'] == 1) {
             $supplierData = $supplierData->where('isActive', 1);
