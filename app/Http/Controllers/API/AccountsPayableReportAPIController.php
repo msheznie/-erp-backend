@@ -63,6 +63,7 @@ use App\Models\SystemGlCodeScenario;
 use App\Models\SystemGlCodeScenarioDetail;
 use App\Models\UnbilledGrvGroupBy;
 use App\Models\Year;
+use App\Services\AccountPayableLedger\Report\AccountsPayableReportSortingService;
 use App\Services\AccountPayableLedger\Report\SupplierAgingReportService;
 use App\Services\AccountPayableLedger\Report\UnbilledGrvReportService;
 use App\Services\Currency\CurrencyService;
@@ -78,6 +79,16 @@ use App\helper\email as Email;
 
 class AccountsPayableReportAPIController extends AppBaseController
 {
+    /**
+     * @var AccountsPayableReportSortingService
+     */
+    private $accountsPayableReportSortingService;
+
+    public function __construct(AccountsPayableReportSortingService $accountsPayableReportSortingService)
+    {
+        $this->accountsPayableReportSortingService = $accountsPayableReportSortingService;
+    }
+
     public function getAPFilterData(Request $request)
     {
         $selectedCompanyId = $request['selectedCompanyId'];
@@ -644,6 +655,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $val->advanceUnallocatedAmount = $val->documentSystemID == Document::DEBIT_NOTE ? 0 : $val->unAllocatedAmount;
                             $val->debitNoteUnallocatedAmount = $val->documentSystemID == Document::DEBIT_NOTE ? $val->unAllocatedAmount : 0;
                         }
+                        $output['data'] = $this->accountsPayableReportSortingService->sortAgingDataRows($output['data'], $request);
                     }
 
                     $outputArr = array();
@@ -709,6 +721,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             $val->advanceUnallocatedAmount = $advanceTotal;
                             $val->debitNoteUnallocatedAmount = $debitNoteTotal;
                         }
+                        $output['data'] = $this->accountsPayableReportSortingService->sortAgingDataRows($output['data'], $request);
                     }
 
                     $outputArr = array();
@@ -751,6 +764,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingDetailAdvanceQRY($request);
+                    if ($output['data']) {
+                        $output['data'] = $this->accountsPayableReportSortingService->sortAgingDataRows($output['data'], $request);
+                    }
 
                     $outputArr = array();
                     $grandTotalArr = array();
@@ -784,6 +800,9 @@ class AccountsPayableReportAPIController extends AppBaseController
                     $request = (object)$this->convertArrayToSelectedValue($request->all(), array('currencyID'));
                     $checkIsGroup = Company::find($request->companySystemID);
                     $output = $this->getSupplierAgingSummaryAdvanceQRY($request);
+                    if ($output['data']) {
+                        $output['data'] = $this->accountsPayableReportSortingService->sortAgingDataRows($output['data'], $request);
+                    }
 
                     $outputArr = array();
                     $grandTotalArr = array();
@@ -1012,6 +1031,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         return [$outputArr, $decimalPlace, $selectedCurrecny];
     }
+
     public function exportReport(Request $request, SupplierAgingReportService $supplierAgingReportService, ExportReportToExcelService $exportReportToExcelService, UnbilledGrvReportService $unbilledGrvReportService, InvoiceToPaymentReportService $invoiceToPaymentReportService)
     {
         try {
@@ -1966,6 +1986,7 @@ class AccountsPayableReportAPIController extends AppBaseController
             $invoiceAmountQry = "IFNULL(finalAgingDetail.documentAmountRpt, 0) AS invoiceAmount";
             $decimalPlaceQry = "finalAgingDetail.documentRptDecimalPlaces AS balanceDecimalPlaces";
         }
+        $orderByClause = $this->accountsPayableReportSortingService->getSupplierLedgerOrderByClause($request);
 
         $query = 'SELECT
                     finalAgingDetail.companySystemID,
@@ -2139,10 +2160,11 @@ class AccountsPayableReportAPIController extends AppBaseController
                 LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
                 LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID
                  LEFT JOIN companymaster ON companymaster.companySystemID = MAINQUERY.companySystemID
-                 GROUP BY MAINQUERY.supplierCodeSystem, MAINQUERY.chartOfAccountSystemID ) as finalAgingDetail ORDER BY documentDate,suppliername';
+                 GROUP BY MAINQUERY.supplierCodeSystem, MAINQUERY.chartOfAccountSystemID ) as finalAgingDetail ' . $orderByClause;
 
         return \DB::select($query);
     }
+
     public function exchangeGainLoss($results, $currency) {
 
         foreach ($results as $index => $result){
@@ -2200,12 +2222,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $currency = $request->currencyID;
 
-        $path = $request->fromPath;
-
-        $filterOrderBy = 'documentDate';
-        if ($path == 'pdf') {
-            $filterOrderBy = 'companySystemID';
-        }
+        $orderByClause = $this->accountsPayableReportSortingService->getSupplierStatementOrderByClause($request);
 
         $currencyQry = '';
         $invoiceAmountQry = '';
@@ -2491,7 +2508,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             LEFT JOIN chartofaccounts ON chartofaccounts.chartOfAccountSystemID = MAINQUERY.chartOfAccountSystemID
                             LEFT JOIN currencymaster as transCurrencyDet ON transCurrencyDet.currencyID=MAINQUERY.documentTransCurrencyID
                             LEFT JOIN currencymaster as localCurrencyDet ON localCurrencyDet.currencyID=MAINQUERY.documentLocalCurrencyID
-                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ORDER BY ' . $filterOrderBy . ' ASC;');
+                            LEFT JOIN currencymaster as rptCurrencyDet ON rptCurrencyDet.currencyID=MAINQUERY.documentRptCurrencyID) as finalAgingDetail WHERE ' . $whereQry . ' <> 0 ' . $orderByClause . ';');
 
         $data =  $this->exchangeGainLoss($results, $currency);
         return $data;
@@ -6024,6 +6041,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $supplierSystemID = collect($suppliers)->pluck('supplierCodeSytem')->toArray();
 
         $controlAccountsSystemID = $request->controlAccountsSystemID;
+        $orderByClause = $this->accountsPayableReportSortingService->getSupplierBalanceReconcileOrderByClause($request);
 
         $qry = 'SELECT
                               finalAgingDetail.companySystemID,
@@ -6315,8 +6333,7 @@ OR (
 		) <> 0
 	)
 )
-ORDER BY
-	documentDate ASC';
+ ' . $orderByClause;
 
         $results = \DB::select($qry);
 
