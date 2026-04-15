@@ -98,6 +98,7 @@ Route::group([], function () {
     Route::post('creditNoteMasterDataTable', 'CreditNoteAPIController@creditNoteMasterDataTable')->name("Credit Note Master Data Table");
     Route::post('addcreditNoteDetails', 'CreditNoteDetailsAPIController@addcreditNoteDetails')->name("Add Credit Note Details");
     Route::post('updateCreditNote', 'CreditNoteDetailsAPIController@updateCreditNote')->name("Update Credit Note");
+    Route::post('creditNoteCancel', 'CreditNoteAPIController@creditNoteCancel')->name("Credit Note Cancel");
     Route::post('creditNoteReopen', 'CreditNoteAPIController@creditNoteReopen')->name("Credit Note Reopen");
     Route::post('amendCreditNote', 'CreditNoteAPIController@amendCreditNote')->name("Amend Credit Note");
     Route::post('amendCreditNoteReview', 'CreditNoteAPIController@amendCreditNoteReview')->name("Amend Credit Note Review");

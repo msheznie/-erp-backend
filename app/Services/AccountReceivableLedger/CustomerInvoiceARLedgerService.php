@@ -97,13 +97,14 @@ class CustomerInvoiceARLedgerService
     
             if ($masterData->isPerforma == 3 || $masterData->isPerforma == 4 || $masterData->isPerforma == 5) { // item sales invoice
                 if (in_array($masterData->isPerforma, [4, 5], true) && $masterData->isSegmentPolicyOn) {
-                    $segmentTotals = CustomerInvoiceItemDetails::selectRaw('serviceLineSystemID, SUM(sellingTotal) as sellingTotal')
+                    $segmentTotals = CustomerInvoiceItemDetails::selectRaw('serviceLineSystemID, SUM(sellingTotal) as sellingTotal, SUM(qtyIssued * VATAmount) as vatAmount')
                         ->where('custInvoiceDirectAutoID', $masterModel['autoID'])
                         ->whereNotNull('serviceLineSystemID')
                         ->groupBy('serviceLineSystemID')
                         ->get();
 
                     $totalSelling = (float) $segmentTotals->sum('sellingTotal');
+                    $totalVatTransFromLines = (float) $segmentTotals->sum('vatAmount');
 
                     $remainingTaxTrans = (float) $taxTrans;
                     $remainingTaxLocal = (float) $taxLocal;
@@ -117,9 +118,13 @@ class CustomerInvoiceARLedgerService
 
                         $segmentShare = $totalSelling > 0 ? ((float) $row->sellingTotal / $totalSelling) : 0.0;
 
-                        $allocatedTaxTrans = $index === ($segmentTotals->count() - 1) ? $remainingTaxTrans : ($taxTrans * $segmentShare);
-                        $allocatedTaxLocal = $index === ($segmentTotals->count() - 1) ? $remainingTaxLocal : ($taxLocal * $segmentShare);
-                        $allocatedTaxRpt = $index === ($segmentTotals->count() - 1) ? $remainingTaxRpt : ($taxRpt * $segmentShare);
+                        // Allocate VAT by actual VAT per segment (not by net share) to avoid incorrect equal-splitting
+                        // when invoice lines have different VAT%.
+                        $vatShare = $totalVatTransFromLines > 0 ? ((float) $row->vatAmount / $totalVatTransFromLines) : $segmentShare;
+
+                        $allocatedTaxTrans = $index === ($segmentTotals->count() - 1) ? $remainingTaxTrans : ($taxTrans * $vatShare);
+                        $allocatedTaxLocal = $index === ($segmentTotals->count() - 1) ? $remainingTaxLocal : ($taxLocal * $vatShare);
+                        $allocatedTaxRpt = $index === ($segmentTotals->count() - 1) ? $remainingTaxRpt : ($taxRpt * $vatShare);
 
                         $remainingTaxTrans -= $allocatedTaxTrans;
                         $remainingTaxLocal -= $allocatedTaxLocal;
@@ -130,7 +135,9 @@ class CustomerInvoiceARLedgerService
                         $segmentBookingLocal = $totalSelling > 0 ? ($masterData->bookingAmountLocal * $segmentShare) : 0.0;
                         $segmentBookingRpt = $totalSelling > 0 ? ($masterData->bookingAmountRpt * $segmentShare) : 0.0;
 
-                        $segmentData['custInvoiceAmount'] = abs($segmentBookingTrans + $allocatedTaxTrans);
+                        // For transaction currency, prefer line net total + allocated VAT so each segment reflects true VAT split.
+                        $segmentNetTrans = (float) $row->sellingTotal;
+                        $segmentData['custInvoiceAmount'] = abs($segmentNetTrans + $allocatedTaxTrans);
                         $segmentData['localAmount'] = Helper::roundValue(abs($segmentBookingLocal + $allocatedTaxLocal));
                         $segmentData['comRptAmount'] = Helper::roundValue(abs($segmentBookingRpt + $allocatedTaxRpt));
 

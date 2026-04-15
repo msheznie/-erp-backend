@@ -156,6 +156,10 @@ class ReportTemplateLinksAPIController extends AppBaseController
                     array_push($finalError['already_gl_linked'], $val['AccountCode'] . ' | ' . $val['AccountDescription']);
                     $error_count++;
                 }
+
+                if($val['is_retained_earnings'] == 1 && $input['reportID'] == 1) {
+                    return $this->sendError("is Retained earning enable GL cannot link under this category.", 500, ['type' => 'is_retained_earnings']);
+                }
             }
 
             $confirm_error = array('type' => 'already_gl_linked', 'data' => $finalError);

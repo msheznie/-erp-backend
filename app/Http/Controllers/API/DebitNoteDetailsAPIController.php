@@ -139,6 +139,10 @@ class DebitNoteDetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
+        if (($debitNote->cancelYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.debit_note_cannot_modify_cancelled'));
+        }
+
   
         $validator = \Validator::make($debitNote->toArray(), [
             'supplierID' => ['required_if:type,1|numeric|min:1'],
@@ -373,6 +377,10 @@ class DebitNoteDetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.debit_note_not_found'));
         }
 
+        if (($debitNote->cancelYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.debit_note_cannot_modify_cancelled'));
+        }
+
         if(isset($input['detail_project_id'])){
             $input['detail_project_id'] = $input['detail_project_id'];
         } else {
@@ -552,6 +560,11 @@ class DebitNoteDetailsAPIController extends AppBaseController
 
         if (empty($debitNoteDetails)) {
             return $this->sendError(trans('custom.debit_note_details_not_found'));
+        }
+
+        $debitNote = DebitNote::find($debitNoteDetails->debitNoteAutoID);
+        if ($debitNote && ($debitNote->cancelYN ?? 0) == -1) {
+            return $this->sendError(trans('custom.debit_note_cannot_modify_cancelled'));
         }
 
         $debitNoteDetails->delete();
