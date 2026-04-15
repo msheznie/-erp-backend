@@ -732,11 +732,12 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                 $total = 0;
             }
 
-            
+            $companyCurrency = Helper::companyCurrency($input['companySystemID']); 
 
             return response()->json([
                 'data' => $data,
                 'total' => $total,
+                'decimalPlaces' => $companyCurrency->localcurrency->DecimalPlaces,
                 'page' => $page,
                 'pageSize' => $pageSize,
                 'lastPage' => ceil($total / $pageSize)
@@ -1926,7 +1927,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $groupedItem->amount_given_by_finance = 0;
                         $groupedItem->amount_given_by_hod = 0;
                         $groupedItem->difference_current_request = 0;
-                        $groupedItem->setRelation('departmentSegment', null);
+                        // $groupedItem->setRelation('departmentSegment', null);
                         $groupedItem->department_segment_id = null;
                         if ($item->departmentBudgetPlanning) {
                             $groupedItem->setRelation('departmentBudgetPlanning', $item->departmentBudgetPlanning);
@@ -1966,7 +1967,7 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $groupedItem->amount_given_by_finance = 0;
                         $groupedItem->amount_given_by_hod = 0;
                         $groupedItem->difference_current_request = 0;
-                        $groupedItem->setRelation('departmentBudgetPlanning', null);
+                        // $groupedItem->setRelation('departmentBudgetPlanning', null);
                         if ($item->departmentSegment && $item->departmentSegment->segment) {
                             $groupedItem->setRelation('departmentSegment', $item->departmentSegment);
                             if (!$groupedItem->departmentSegment->relationLoaded('segment')) {
@@ -2001,9 +2002,9 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $groupedItem->amount_given_by_finance = 0;
                         $groupedItem->amount_given_by_hod = 0;
                         $groupedItem->difference_current_request = 0;
-                        $groupedItem->setRelation('departmentSegment', null);
+                        // $groupedItem->setRelation('departmentSegment', null);
                         $groupedItem->department_segment_id = null;
-                        $groupedItem->setRelation('departmentBudgetPlanning', null);
+                        // $groupedItem->setRelation('departmentBudgetPlanning', null);
                         if (!$groupedItem->relationLoaded('budgetTemplateGl')) {
                             $groupedItem->load('budgetTemplateGl.chartOfAccount.templateCategoryDetails');
                         }
@@ -2054,9 +2055,9 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
                         $groupedItem->amount_given_by_finance = 0;
                         $groupedItem->amount_given_by_hod = 0;
                         $groupedItem->difference_current_request = 0;
-                        $groupedItem->setRelation('departmentSegment', null);
+                        // $groupedItem->setRelation('departmentSegment', null);
                         $groupedItem->department_segment_id = null;
-                        $groupedItem->setRelation('departmentBudgetPlanning', null);
+                        // $groupedItem->setRelation('departmentBudgetPlanning', null);
                         if ($item->budgetTemplateGl && $item->budgetTemplateGl->chartOfAccount && $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails) {
                             $groupedItem->setRelation('category', $item->budgetTemplateGl->chartOfAccount->templateCategoryDetails);
                         }
@@ -2084,13 +2085,25 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
 
             $columnSlugs = $request->input('columnSlugs');
             $isColumnSlugsArray = !empty($columnSlugs) && is_array($columnSlugs);
+            $defaultShowSegment = (($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 3);
+            $defaultShowDepartment = (($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 2);
+            $showSegmentColumn = $isColumnSlugsArray
+                ? in_array('segment', $columnSlugs, true)
+                : $defaultShowSegment;
+            $showDepartmentColumn = $isColumnSlugsArray
+                ? in_array('department', $columnSlugs, true)
+                : $defaultShowDepartment;
 
             $data = array();
             $x = 0;
-            $dataset->chunk(200)->each(function ($chunk) use (&$data, &$x, $selectedStatus, $isGLBased, $columnSlugs, $isColumnSlugsArray) {
+            $companyMaster = Company::find($request->input('companySystemID'));
+
+            $decimalPlaces = $companyMaster->localcurrency->DecimalPlaces;
+            
+            $dataset->chunk(200)->each(function ($chunk) use (&$data, &$x, $columnSlugs, $isColumnSlugsArray, $showSegmentColumn, $showDepartmentColumn, $selectedStatus, $decimalPlaces) {
                 foreach ($chunk as $val) {
                     $x++;
-                    $rowBySlug = $this->buildExportRowBySlug($val, $x, $selectedStatus, $isGLBased);
+                    $rowBySlug = $this->buildExportRowBySlug($val, $x, $showSegmentColumn, $showDepartmentColumn, $selectedStatus, $decimalPlaces);
                     if ($isColumnSlugsArray) {
                         $data[$x] = $this->filterExportRowByColumnSlugs($rowBySlug, $columnSlugs);
                     } else {
@@ -2115,7 +2128,6 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
             // Re-index array to start from 0 (CreateExcel expects $data[0] to exist)
             $data = array_values($data);
 
-            $companyMaster = Company::find($request->input('companySystemID'));
             $companyCode = $companyMaster->CompanyID ?? 'common';
             $detail_array = array(
                 'company_code' => $companyCode,
@@ -2263,17 +2275,17 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
      * @param bool $isGLBased
      * @return array
      */
-    private function buildExportRowBySlug($val, $rowIndex, $selectedStatus, $isGLBased)
+    private function buildExportRowBySlug($val, $rowIndex, $showSegmentColumn, $showDepartmentColumn, $selectedStatus, $decimalPlaces)
     {
         $row = [];
         $row['#'] = $rowIndex;
 
-        $row['segment'] = ($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 3
+        $row['segment'] = $showSegmentColumn
             ? ($val->departmentSegment && $val->departmentSegment->segment
                 ? ($val->departmentSegment->segment->ServiceLineCode . ' - ' . $val->departmentSegment->segment->ServiceLineDes)
                 : '')
             : '';
-        $row['department'] = ($selectedStatus == 1 && !$isGLBased) || $selectedStatus == 2
+        $row['department'] = $showDepartmentColumn
             ? ($val->departmentBudgetPlanning && $val->departmentBudgetPlanning->department
                 ? $val->departmentBudgetPlanning->department->departmentDescription
                 : '')
@@ -2308,14 +2320,14 @@ class DepartmentBudgetPlanningDetailAPIController extends AppBaseController
         }
 
         $row['responsible_person'] = $val->responsiblePerson ? $val->responsiblePerson->empName : '';
-        $row['request_amount'] = number_format($val->request_amount ?? 0, 2);
+        $row['request_amount'] = number_format($val->request_amount ?? 0, $decimalPlaces);
         $row['time_for_submission'] = $val->time_for_submission ? Carbon::parse($val->time_for_submission)->format('d/m/Y') : '';
-        $row['previous_year_budget'] = number_format($val->previous_year_budget ?? 0, 2);
-        $row['current_year_budget'] = number_format($val->current_year_budget ?? 0, 2);
-        $row['difference_last_year_and_current_year'] = $val->difference_last_current_year ?? '';
-        $row['amount_given_by_finance'] = number_format($val->amount_given_by_finance ?? 0, 2);
-        $row['amount_given_by_hod'] = number_format($val->amount_given_by_hod ?? 0, 2);
-        $row['difference_from_current_year_and_request_amount'] = $val->difference_current_request ?? '';
+        $row['previous_year_budget'] = number_format($val->previous_year_budget ?? 0, $decimalPlaces);
+        $row['current_year_budget'] = number_format($val->current_year_budget ?? 0, $decimalPlaces);
+        $row['difference_last_year_and_current_year'] = number_format($val->difference_last_current_year ?? 0, $decimalPlaces);
+        $row['amount_given_by_finance'] = number_format($val->amount_given_by_finance ?? 0, $decimalPlaces);
+        $row['amount_given_by_hod'] = number_format($val->amount_given_by_hod ?? 0, $decimalPlaces);
+        $row['difference_from_current_year_and_request_amount'] = number_format($val->difference_current_request ?? 0, $decimalPlaces);
 
         return $row;
     }

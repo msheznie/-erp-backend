@@ -25,32 +25,32 @@ class GetApprovedCustomerInvoiceBalancesAPIRequest extends FormRequest
         );
     }
 
-    protected function prepareForValidation()
-    {
-        $raw = $this->input('generated_from');
+    // protected function prepareForValidation()
+    // {
+    //     $raw = $this->input('generated_from');
 
-        if ($raw === null || $raw === '') {
-            $this->merge(['generated_from' => null]);
-            return;
-        }
+    //     if ($raw === null || $raw === '') {
+    //         $this->merge(['generated_from' => null]);
+    //         return;
+    //     }
 
-        // generated_from MUST be an array when present
-        if (! is_array($raw)) {
-            return;
-        }
+    //     // generated_from MUST be an array when present
+    //     if (! is_array($raw)) {
+    //         return;
+    //     }
 
-        $normalized = [];
-        foreach ($raw as $v) {
-            if ($v === null || $v === '') {
-                continue;
-            }
-            $normalized[] = strtoupper(trim((string) $v));
-        }
+    //     $normalized = [];
+    //     foreach ($raw as $v) {
+    //         if ($v === null || $v === '') {
+    //             continue;
+    //         }
+    //         $normalized[] = strtoupper(trim((string) $v));
+    //     }
 
-        $this->merge([
-            'generated_from' => $normalized === [] ? null : array_values(array_unique($normalized)),
-        ]);
-    }
+    //     $this->merge([
+    //         'generated_from' => $normalized === [] ? [] : array_values(array_unique($normalized)),
+    //     ]);
+    // }
 
     public function rules()
     {
@@ -66,7 +66,7 @@ class GetApprovedCustomerInvoiceBalancesAPIRequest extends FormRequest
             'invoice_type' => ['bail', 'nullable', 'string'],
 
             'generated_from' => ['bail', 'nullable', 'array'],
-            'generated_from.*' => ['bail', 'in:POS,CLUB'],
+            'generated_from.*' => ['bail', 'string'],
             'page' => ['bail', 'sometimes', 'integer', 'min:1'],
             'per_page' => ['bail', 'sometimes', 'integer', 'min:1', 'max:500'],
         ];
@@ -78,13 +78,13 @@ class GetApprovedCustomerInvoiceBalancesAPIRequest extends FormRequest
             'invoice_code.array' => 'invoice_code must be an array',
             'invoice_code.*.string' => 'Invoice code must be a string',
 
-            'customer_code.array' => 'Customer ode must be an array',
+            'customer_code.array' => 'Customer code must be an array',
             'customer_code.*.string' => 'Customer code must be a string',
             'company_id.required' => 'Company ID is required',
             'company_id.integer' => 'Company ID must be an integer',
             'invoice_type.string' => 'Invoice type must be a string',
-            'generated_from.array' => 'generated_from must be an array (e.g. ["POS"] or ["POS","CLUB"])',
-            'generated_from.*.in' => 'Generated from not match with system',
+            'generated_from.array' => "generated_from must be an array (e.g. ['RPOS'] or ['RPOS','TESTW'])",
+            'generated_from.*.string' => 'Each generated_from value must be a string',
             'page.integer' => 'page must be an integer',
             'page.min' => 'page must be at least 1',
             'per_page.integer' => 'per_page must be an integer',

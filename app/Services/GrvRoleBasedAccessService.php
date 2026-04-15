@@ -182,17 +182,28 @@ class GrvRoleBasedAccessService
      */
     private function getHodEmployeesForCurrentEmployee(int $companySystemID, int $hodEmployeeSystemID): array
     {
-        $departmentIDs = $this->repository->getDepartmentIDsForEmployee(
+        $legacyDepartmentIDs = $this->repository->getDepartmentIDsForEmployee(
             $companySystemID,
             $hodEmployeeSystemID,
             self::GRV_DOCUMENT_SYSTEM_ID
         );
 
-        return $this->repository->getActiveDepartmentEmployeeIDs(
+        $legacyEmployeeIDs = $this->repository->getActiveDepartmentEmployeeIDs(
             $companySystemID,
             self::GRV_DOCUMENT_SYSTEM_ID,
-            $departmentIDs
+            $legacyDepartmentIDs
         );
+
+        $companyDepartmentIDs = $this->repository->getHodDepartmentIDsForEmployeeFromCompanyDepartment(
+            $companySystemID,
+            $hodEmployeeSystemID
+        );
+        $companyDepartmentEmployeeIDs = $this->repository->getActiveDepartmentEmployeeIDsFromCompanyDepartment(
+            $companySystemID,
+            $companyDepartmentIDs
+        );
+
+        return array_values(array_unique(array_merge($legacyEmployeeIDs, $companyDepartmentEmployeeIDs)));
     }
 
     private function isAdminAssignedForType(int $documentAccessRoleID, int $employeeSystemID, int $accessType): bool

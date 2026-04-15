@@ -61,6 +61,7 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
 use App\Services\DecimalPrecisionService;
+use App\Services\GrvRoleBasedAccessService;
 use App\Services\POReceivedQtyUpdateService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -83,6 +84,8 @@ class GRVDetailsAPIController extends AppBaseController
     private $decimalPrecisionService;
     /** @var POReceivedQtyUpdateService */
     private $poReceivedQtyUpdateService;
+    /** @var GrvRoleBasedAccessService */
+    private $grvRoleBasedAccessService;
 
     public function __construct(
         GRVDetailsRepository $gRVDetailsRepo,
@@ -90,7 +93,8 @@ class GRVDetailsAPIController extends AppBaseController
         GRVMasterRepository $gRVMasterRepository,
         ExpenseAssetAllocationRepository $expenseAssetAllocationRepo,
         DecimalPrecisionService $decimalPrecisionService,
-        POReceivedQtyUpdateService $poReceivedQtyUpdateService
+        POReceivedQtyUpdateService $poReceivedQtyUpdateService,
+        GrvRoleBasedAccessService $grvRoleBasedAccessService
     )
     {
         $this->gRVDetailsRepository = $gRVDetailsRepo;
@@ -99,6 +103,7 @@ class GRVDetailsAPIController extends AppBaseController
         $this->expenseAssetAllocationRepo = $expenseAssetAllocationRepo;
         $this->decimalPrecisionService = $decimalPrecisionService;
         $this->poReceivedQtyUpdateService = $poReceivedQtyUpdateService;
+        $this->grvRoleBasedAccessService = $grvRoleBasedAccessService;
     }
 
     /**
