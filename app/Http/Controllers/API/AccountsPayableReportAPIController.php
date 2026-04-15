@@ -1584,15 +1584,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                             }
                         }
                         $data = $supplierAgingReportService->getSupplierAgingExportToExcelData($output, $typeAging);
-                        
-                        $data = array_filter($data, function ($row, $index) {
-                            if ($index === 0) {
-                                return true;
-                            }
-                        
-                            return isset($row['companyID']) && !empty($row['companyID']);
-                        }, ARRAY_FILTER_USE_BOTH); 
-                                                
+
                         $objSupplierAgingDetail = new SupplierAgingDetailReport();
                         $excelColumnFormat = $objSupplierAgingDetail->getCloumnFormat();
                     }
@@ -1661,15 +1653,6 @@ class AccountsPayableReportAPIController extends AppBaseController
                         $data = $supplierAgingReportService->getSupplierAgingSummaryAdvanceExportToExcelData($output, $typeAging);
                         $objSupplierAgingDetail = new SupplierAgingSummaryAdvanceReport();
                         $excelColumnFormat = $objSupplierAgingDetail->getCloumnFormat();
-                    }
-
-                    if ($typeAging == 2) {
-                        foreach ($data as $index => $item) {
-                            if (array_key_exists('supplierGroupName', $item) && is_null($item['supplierGroupName'])) {
-                                unset($data[$index]['supplierGroupName']);
-                            }
-
-                        }
                     }
 
                     $companyCode = isset($company->CompanyID) ? $company->CompanyID : 'common';
