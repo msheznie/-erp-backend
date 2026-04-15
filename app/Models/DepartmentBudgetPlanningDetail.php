@@ -169,7 +169,7 @@ class DepartmentBudgetPlanningDetail extends Model
     public function calculateDifferences()
     {
         // Calculate difference between last year and current year
-        $this->difference_last_current_year = $this->current_year_budget - $this->previous_year_budget;
+        $this->difference_last_current_year = $this->previous_year_budget - $this->current_year_budget;
         
         // Calculate difference between current year and request amount
         $this->difference_current_request = $this->current_year_budget - $this->request_amount;
