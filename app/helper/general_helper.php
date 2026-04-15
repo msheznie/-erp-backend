@@ -4071,17 +4071,23 @@ class Helper
             $query->with('tax');
         }])->find($bookingSuppMasInvAutoID);
 
+        if (empty($bookInvSuppMaster)) {
+            return;
+        }
+
         $percentage = 0;
-        if(isset($bookInvSuppMaster->supplier->tax))
-        {
+        if (isset($bookInvSuppMaster->supplier) && isset($bookInvSuppMaster->supplier->tax)) {
             $percentage = $bookInvSuppMaster->supplier->tax->whtPercentage;
         }
         if($bookInvSuppMaster['documentType'] == 0 ||  $bookInvSuppMaster['documentType'] == 2)
         {
-            $isWHTApplicableSupplier = $bookInvSuppMaster->supplier->whtApplicableYN == 1?true:false;
-            if( $bookInvSuppMaster->supplier->whtApplicableYN == 1)
-            {
-                $isWHTApplicableSupplier = $bookInvSuppMaster->whtApplicableYN == 1?true:false;
+            $isWHTApplicableSupplier = false;
+            if (isset($bookInvSuppMaster->supplier)) {
+                $isWHTApplicableSupplier = $bookInvSuppMaster->supplier->whtApplicableYN == 1?true:false;
+                if( $bookInvSuppMaster->supplier->whtApplicableYN == 1)
+                {
+                    $isWHTApplicableSupplier = $bookInvSuppMaster->whtApplicableYN == 1?true:false;
+                }
             }
             $isDetailVat = false;
             $WhtTotalAmount = 0 ;

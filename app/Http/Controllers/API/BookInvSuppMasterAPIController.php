@@ -357,7 +357,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         },'employee' => function($query){
             $query->selectRaw('CONCAT(empID," | ",empName) as employeeName,employeeSystemID');
         },'transactioncurrency'=> function($query){
-            $query->selectRaw('CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName,currencyID');
+            $query->selectRaw('currencyID,DecimalPlaces,CONCAT(CurrencyCode," | ",CurrencyName) as CurrencyName');
         },'direct_customer_invoice' => function($query) {
             $query->select('custInvoiceDirectAutoID','bookingInvCode');
         },'vrfDocument' => function($query) {
@@ -2417,6 +2417,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $poGrvTotalOrderAmount = 0;
         $poGrvDisplayRcmActivated = 0;
         $poGrvNetTotalDisplay = 0;
+       $poGrvDisplay = [];
 
        switch ($output->documentType)
        {
@@ -2486,10 +2487,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
         $output['poGrvVatDisplay'] = $output['poGrvVatAfterRetention'];
         $output['poGrvNetTotalDisplay'] = $output['poGrvNetTotalVatInclusive'];
         if (in_array((int)$output->documentType, [0, 2], true)) {
-            // Backward-compatible edit payload mapping for existing UI bindings.
             $output['rcmActivated'] = $poGrvDisplayRcmActivated;
             $output['vatAmountAfterRetention'] = $output['poGrvVatAfterRetention'];
+            $output['poGrvRetentionVatPortion'] = $poGrvRetentionVatPortion;
         }
+        $output['mol_amount'] = $this->resolveMolDisplayAmount($output, $poGrvDisplay);
 
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
@@ -3271,6 +3273,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
             $grvTotTra = SupplierInvoiceDirectItem::selectRaw('SUM(netAmount + (VATAmount * noQty)) as total')->where('bookingSuppMasInvAutoID', $id)->first()->total;
         }
         $poGrvDisplay = $this->getPoGrvDisplayValues($bookInvSuppMasterRecord);
+        $bookInvSuppMasterRecord->mol_amount = $this->resolveMolDisplayAmount($bookInvSuppMasterRecord, $poGrvDisplay);
         if ($bookInvSuppMasterRecord->documentType == 0 || $bookInvSuppMasterRecord->documentType == 2) {
             $poGrvDisplayRcmActivated = $poGrvDisplay['poGrvDisplayRcmActivated'];
         }
@@ -3963,6 +3966,28 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
             'poGrvNetTotalDisplay' => $poGrvNetTotalDisplay,
             'poGrvInvoiceAmount' => $poGrvInvoiceAmount,
         ];
+    }
+
+    private function resolveMolDisplayAmount(BookInvSuppMaster $masterData, array $poGrvDisplay = []): float
+    {
+        if ((int)($masterData->mol_applicable ?? 0) !== 1 || !isset($masterData->mol_rate)) {
+            return (float)($masterData->mol_amount ?? 0);
+        }
+
+        $documentType = (int)($masterData->documentType ?? -1);
+        $baseAmount = null;
+
+        if (($documentType === 0 || $documentType === 2) && isset($poGrvDisplay['poGrvTotalDisplay'])) {
+            $baseAmount = (float)$poGrvDisplay['poGrvTotalDisplay'];
+        } elseif ($documentType === 1) {
+            $baseAmount = (float)$masterData->directdetail->sum('DIAmount');
+        }
+
+        if ($baseAmount === null) {
+            return (float)($masterData->mol_amount ?? 0);
+        }
+
+        return ($baseAmount * (float)$masterData->mol_rate) / 100;
     }
 
     private function checkMolApplicable($bookInvSuppMaster)
