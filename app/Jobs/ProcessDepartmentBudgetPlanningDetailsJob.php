@@ -277,7 +277,7 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
 
 
         // Calculate difference
-        $difference = $currentYearBudget - $previousYearBudget;
+        $difference = $previousYearBudget - $currentYearBudget;
 
         return [
             'previous_year' => $previousYearBudget,
