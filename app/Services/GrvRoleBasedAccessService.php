@@ -413,7 +413,9 @@ class GrvRoleBasedAccessService
 
         $docVisible = $this->canViewGrv($grvMaster, $employeeSystemID);
         $canView = $rights['R'] === true && $docVisible;
-        $canEdit = $canView && $rights['E'] === true && $this->canEditGrv($grvMaster, $employeeSystemID);
+        $docCanEdit = $this->canEditGrv($grvMaster, $employeeSystemID);
+        $rbacOn = $this->isRoleBasedAccessEnabledForCompany((int)$grvMaster->companySystemID);
+        $canEdit = $canView && $docCanEdit && ($rbacOn || $rights['E'] === true);
 
         $accessMode = 'none';
         if ($canView) {
@@ -425,6 +427,15 @@ class GrvRoleBasedAccessService
             'canEdit' => $canEdit,
             'accessMode' => $accessMode,
         ];
+    }
+
+    public function requireGrvDocumentEditAuthorizationOrFail(Request $request, GRVMaster $grvMaster, int $employeeSystemID): void
+    {
+        $companySystemID = (int)$grvMaster->companySystemID;
+        if (!$this->isRoleBasedAccessEnabledForCompany($companySystemID)) {
+            $this->requireEditNavigationOrFail($request, $companySystemID, $employeeSystemID);
+        }
+        $this->requireCanEditOrFail($grvMaster, $employeeSystemID);
     }
 
     public function requireCanViewOrFail(GRVMaster $grvMaster, int $employeeSystemID): void

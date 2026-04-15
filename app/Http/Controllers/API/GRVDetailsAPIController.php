@@ -193,8 +193,7 @@ class GRVDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.grv_not_found'));
             }
             $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-            $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-            $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
+            $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $grvMaster, (int)Helper::getEmployeeSystemID());
 
             if (is_null($input['noQty'])) {
                 $input['noQty'] = 0;
@@ -446,8 +445,7 @@ class GRVDetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.grv_master_not_found'));
         }
         $this->grvRoleBasedAccessService->requireReadNavigationOrFail(request(), (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireEditNavigationOrFail(request(), (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail(request(), $grvMaster, (int)Helper::getEmployeeSystemID());
 
         if($grvMaster->grvTypeID == 2 && $grvMaster->pullType != 2) {
             $allowPartialGRVPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 23)
@@ -868,8 +866,7 @@ class GRVDetailsAPIController extends AppBaseController
                 return $this->sendError(trans('custom.grv_master_not_found'));
             }
             $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$existingMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-            $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$existingMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-            $this->grvRoleBasedAccessService->requireCanEditOrFail($existingMaster, (int)Helper::getEmployeeSystemID());
+            $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $existingMaster, (int)Helper::getEmployeeSystemID());
 
         $GRVMaster = GRVMaster::where('grvAutoID', $grvAutoID)
             ->first();
@@ -1847,8 +1844,7 @@ class GRVDetailsAPIController extends AppBaseController
             return $this->sendError(trans('custom.grv_not_found'));
         }
         $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $grvMaster, (int)Helper::getEmployeeSystemID());
 
         if ($grvMaster->isMarkupUpdated==1) {
             return $this->sendError('GRV markup update process restricted',500);
@@ -1888,8 +1884,7 @@ class GRVDetailsAPIController extends AppBaseController
             $this->sendError(trans('custom.grv_not_found'),500);
         }
         $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$GRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireEditNavigationOrFail($request, (int)$GRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireCanEditOrFail($GRVMaster, (int)Helper::getEmployeeSystemID());
+        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $GRVMaster, (int)Helper::getEmployeeSystemID());
 
         $PRMaster = PurchaseReturn::find($input['purhaseReturnAutoID']);
 
