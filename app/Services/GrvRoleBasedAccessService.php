@@ -135,8 +135,8 @@ class GrvRoleBasedAccessService
         $admin = $ownerMap['admin'] ?? null;
         $creator = $ownerMap['creator'] ?? null;
         $approver = $ownerMap['approver'] ?? null;
-        $segment = $ownerMap['segment'] ?? null;
-        $warehouse = $ownerMap['warehouse'] ?? null;
+        $segment = $ownerMap['segment_owner'] ?? null;
+        $warehouse = $ownerMap['warehouse_owner'] ?? null;
 
         return [
             'reporting_manager_view' => $rm ? (bool)$rm['view'] : $this->isEnabledValue($documentAccessRole->reportingManager_view ?? 0),
@@ -149,10 +149,10 @@ class GrvRoleBasedAccessService
             'creator_edit' => $creator ? (bool)$creator['edit'] : true,
             'approver_view' => $approver ? (bool)$approver['view'] : true,
             'approver_edit' => $approver ? (bool)$approver['edit'] : true,
-            'segment_view' => $segment ? (bool)$segment['view'] : true,
-            'segment_edit' => $segment ? (bool)$segment['edit'] : true,
-            'warehouse_view' => $warehouse ? (bool)$warehouse['view'] : true,
-            'warehouse_edit' => $warehouse ? (bool)$warehouse['edit'] : true,
+            'segment_view' => $segment ? (bool)$segment['view'] : false,
+            'segment_edit' => $segment ? (bool)$segment['edit'] : false,
+            'warehouse_view' => $warehouse ? (bool)$warehouse['view'] : false,
+            'warehouse_edit' => $warehouse ? (bool)$warehouse['edit'] : false,
             'document_access_role_id' => (int)$documentAccessRole->id,
         ];
     }
