@@ -4990,6 +4990,10 @@ class BudgetMasterAPIController extends AppBaseController
             $budgetMaster->confirmedByEmpID = null;
             $budgetMaster->confirmedDate = null;
             $budgetMaster->RollLevForApp_curr = 1;
+            $budgetMaster->approvedYN = 0;
+            $budgetMaster->approvedByUserID = null;
+            $budgetMaster->approvedByUserSystemID = null;
+            $budgetMaster->approvedDate = null;
             $budgetMaster->save();
 
             AuditTrial::createAuditTrial($budgetMaster->documentSystemID, $budgetMasterID, $referBackComments, 'Referred Back');
