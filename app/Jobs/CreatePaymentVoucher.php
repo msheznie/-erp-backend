@@ -2140,7 +2140,7 @@ class CreatePaymentVoucher implements ShouldQueue
                 if ($balance <= 0) {
                     $errorData[] = [
                         'field' => 'advance_voucher_code',
-                        'message' => ['Selected advance has been fully utilized.'],
+                        'message' => ['Selected advance receipt voucher has been fully utilized.'],
                     ];
                 }
 
