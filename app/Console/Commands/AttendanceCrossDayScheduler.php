@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Jobs\AttendanceCrossDayPulling;
+use App\Jobs\AttendanceCrossDayPullingInitiate;
 use Illuminate\Console\Command;
 use App\helper\CommonJobService;
 use Illuminate\Support\Facades\Log;
@@ -42,7 +42,7 @@ class AttendanceCrossDayScheduler extends Command
     public function handle()
     {
 
-        $attDate = Carbon::now()->timezone('Asia/Muscat');
+        $attDate = Carbon::now()->timezone('Asia/Muscat')->format('Y-m-d');
 
         $tenants = CommonJobService::tenant_list();
         if(count($tenants) == 0){
@@ -58,7 +58,7 @@ class AttendanceCrossDayScheduler extends Command
             $msg = "{$dispatchDb} DB added to the queue for cross day attendance pulling initiate";
             $msg .= " ( {$attDate} ).";
 
-            AttendanceCrossDayPulling::dispatch($dispatchDb, $this->signature, $attDate);
+            AttendanceCrossDayPullingInitiate::dispatch($dispatchDb, $this->signature, $attDate);
         }
     }
 }
