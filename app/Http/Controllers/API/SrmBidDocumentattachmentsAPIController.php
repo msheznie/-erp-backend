@@ -16,6 +16,8 @@ use App\Models\Company;
 use App\Models\CustomerInvoiceDirect;
 use App\Models\CompanyPolicyMaster;
 use App\Models\DocumentMaster;
+use App\Models\TenderNegotiation;
+use App\Models\TenderMaster;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\Finder\SplFileInfo;
 use Illuminate\Support\Facades\DB;
@@ -72,8 +74,22 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
         $this->srmBidDocumentattachmentsRepository->pushCriteria(new LimitOffsetCriteria($request));
         $this->srmBidDocumentattachmentsRepository->pushCriteria(new FilterTenderDocumentCriteria($request));
         $srmBidDocumentattachments = $this->srmBidDocumentattachmentsRepository->all();
+        $response = $srmBidDocumentattachments->toArray();
 
-        return $this->sendResponse($srmBidDocumentattachments->toArray(), 'Srm Bid Documentattachments retrieved successfully');
+        if ((int)$request->get('isNegotiation', 0) === 1) {
+            $payload = $this->srmBidDocumentattachmentsRepository->getNegotiationPayload(
+                (int)$request->get('documentSystemCode'),
+                (int)$request->get('companySystemID'),
+                (int)$request->get('documentSystemID'),
+                (int)$request->get('type')
+            );
+            $response = [
+                'attachments' => $response,
+                'history' => $payload['history'],
+                'current_round_comment' => $payload['current_round_comment'],
+            ];
+        }
+        return $this->sendResponse($response, 'Srm Bid Documentattachments retrieved successfully');
     }
 
     /**
@@ -318,11 +334,19 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
             $documentSystemID = $input['documentSystemID'];
             $documentSystemCode = $input['documentSystemCode'];
 
-            $isExist = SrmBidDocumentattachments::where('companySystemID',$companySystemID)
+            $isExistQuery = SrmBidDocumentattachments::where('companySystemID',$companySystemID)
                 ->where('documentSystemID',$documentSystemID)
                 ->where('documentSystemCode',$documentSystemCode)
-                ->where('attachmentDescription',$attachmentDescription)
-                ->count();
+                ->where('attachmentDescription',$attachmentDescription);
+            if ((int)($input['isNegotiation'] ?? 0) === 1) {
+                $roundNo = isset($input['round_no']) ? (int)$input['round_no'] : null;
+                if ($roundNo) {
+                    $isExistQuery->where('round_no', $roundNo);
+                }
+            } else {
+                $isExistQuery->whereNull('round_no');
+            }
+            $isExist = $isExistQuery->count();
             if($isExist >= 1){
                 return ['status' => false, 'message' => trans('srm_ranking.document_attachments_saved_successfully')];
             }else {
@@ -374,6 +398,21 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
 
 
                 $input['tender_id'] = $documentSystemCode;
+                if ((int)($input['isNegotiation'] ?? 0) === 1) {
+                    $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations((int)$documentSystemCode);
+                    if ($latestNegotiation) {
+                        $input['negotiation_id'] = $latestNegotiation->id;
+                        $input['round_no'] = $latestNegotiation->version;
+                    } else if (isset($input['round_no'])) {
+                        $input['round_no'] = (int)$input['round_no'];
+                    }
+                    $tender = TenderMaster::select('negotiation_code')->where('id', (int)$documentSystemCode)->first();
+                    $input['negotiation_code'] = $tender->negotiation_code ?? null;
+                } else {
+                    $input['negotiation_id'] = null;
+                    $input['negotiation_code'] = null;
+                    $input['round_no'] = null;
+                }
                 $documentAttachments = $this->srmBidDocumentattachmentsRepository->create($input);
 
                 $file = $request->request->get('file');
@@ -411,7 +450,6 @@ class SrmBidDocumentattachmentsAPIController extends AppBaseController
 
 
     }
-
 
     public function downloadFile(Request $request)
     {

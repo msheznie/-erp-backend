@@ -31,7 +31,20 @@ class FilterTenderDocumentCriteria implements CriteriaInterface
      */
     public function apply($model, RepositoryInterface $repository)
     {
-        return  $model->where('documentSystemID',$this->request['documentSystemID'])
-        ->where('tender_id',$this->request['documentSystemCode'])->where('type',$this->request['type']);
+        $query = $model->where('documentSystemID', $this->request['documentSystemID'])
+            ->where('tender_id', $this->request['documentSystemCode'])
+            ->where('type', $this->request['type']);
+
+        $isNegotiation = (int)($this->request['isNegotiation'] ?? 0);
+        if ($isNegotiation === 1) {
+            $roundNo = $this->request['round_no'] ?? null;
+            if ($roundNo !== null && $roundNo !== '') {
+                $query->where('round_no', (int)$roundNo);
+            }
+        } else {
+            $query->whereNull('round_no');
+        }
+
+        return $query;
     }
 }

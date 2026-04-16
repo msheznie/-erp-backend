@@ -86,4 +86,22 @@ class TenderConfirmationDetail extends Model
             ->unique('reference_id')
             ->keyBy('reference_id');
     }
+
+    public static function getLatestByTenderModuleReference(int $tenderId, int $module, int $referenceId)
+    {
+        return self::where('tender_id', $tenderId)
+            ->where('module', $module)
+            ->where('reference_id', $referenceId)
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    public static function getByTenderModuleReferences(int $tenderId, int $module, array $referenceIds)
+    {
+        return self::where('tender_id', $tenderId)
+            ->where('module', $module)
+            ->whereIn('reference_id', $referenceIds)
+            ->orderBy('id', 'asc')
+            ->get();
+    }
 }
