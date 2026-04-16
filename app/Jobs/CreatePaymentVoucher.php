@@ -2109,7 +2109,7 @@ class CreatePaymentVoucher implements ShouldQueue
                 if ((int) $advance->matchInvoice === 2) {
                     $errorData[] = [
                         'field' => 'advance_voucher_code',
-                        'message' => ['This advance voucher cannot be used for this payment.Its matched to a payment voucher.'],
+                        'message' => ['This advance voucher cannot be used for this payment.Its fully matched.'],
                     ];
                 }
 
@@ -2140,7 +2140,7 @@ class CreatePaymentVoucher implements ShouldQueue
                 if ($balance <= 0) {
                     $errorData[] = [
                         'field' => 'advance_voucher_code',
-                        'message' => ['Selected advance already fully paid.'],
+                        'message' => ['Selected advance receipt voucher has been fully utilized.'],
                     ];
                 }
 
