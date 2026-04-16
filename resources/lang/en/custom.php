@@ -10129,4 +10129,6 @@ return
     'company_id_must_be_an_integer' => 'Company ID must be an integer',
     'no_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'No active Type-based approval setup found for this Payment Voucher Type',
     'multiple_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'Multiple active Type-based approval setups found for this Payment Voucher Type. Please contact system administrator.',
+    'approval_level_exists' => 'Approval level exists',
+    'approval_level_does_not_exist' => 'Approval level does not exist'
 ];
