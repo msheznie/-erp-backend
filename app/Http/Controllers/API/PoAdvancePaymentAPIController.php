@@ -48,7 +48,6 @@ use App\helper\Helper;
 use App\helper\CreateExcel;
 use App\Models\Company;
 use Illuminate\Support\Arr;
-use App\Services\AccountPayableLedger\Report\AccountsPayableReportSortingService;
 /**
  * Class PoAdvancePaymentController
  * @package App\Http\Controllers\API
@@ -59,17 +58,10 @@ class PoAdvancePaymentAPIController extends AppBaseController
     private $poAdvancePaymentRepository;
     private $userRepository;
 
-    /** @var AccountsPayableReportSortingService */
-    private $accountsPayableReportSortingService;
-
-    public function __construct(
-        PoAdvancePaymentRepository $poAdvancePaymentRepo,
-        UserRepository $userRepo,
-        AccountsPayableReportSortingService $accountsPayableReportSortingService
-    ) {
+    public function __construct(PoAdvancePaymentRepository $poAdvancePaymentRepo, UserRepository $userRepo)
+    {
         $this->poAdvancePaymentRepository = $poAdvancePaymentRepo;
         $this->userRepository = $userRepo;
-        $this->accountsPayableReportSortingService = $accountsPayableReportSortingService;
     }
 
     /**
@@ -661,90 +653,94 @@ ORDER BY
 
         
         $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
 
         $search = $request->input('search.value');
 
-        $advancePaymentRequest = $this->advancePaymentRequestReportQry($input, $search);
-        $advancePaymentRequest = $this->accountsPayableReportSortingService->sortAdvancePaymentRequestRows($advancePaymentRequest, $input);
-
-        $orderCondition = isset($input['sortDir']) && strtolower((string) $input['sortDir']) === 'asc' ? 'asc' : 'desc';
+        $advancePaymentRequest = $this->advancePaymentRequestReportQry($input,$search);
 
         return \DataTables::of($advancePaymentRequest)
             ->addColumn('Actions', 'Actions', "Actions")
+            ->order(function ($query) use ($input) {
+                if (request()->has('order')) {
+                    if ($input['order'][0]['column'] == 0) {
+                        // $query->orderBy('poAdvPaymentID', $input['order'][0]['dir']);
+                    }
+                }
+            })
             ->addIndexColumn()
-            ->with('orderCondition', $orderCondition)
+            ->with('orderCondition', $sort)
             ->make(true);
     }
 
-    /**
-     * Single query for advance payment request report + optional status filter.
-     *
-     * @param  array|\Illuminate\Http\Request  $request
-     * @param  string|null  $search
-     * @return array
-     */
-    public function advancePaymentRequestReportQry($request, $search)
-    {
-        $input = is_array($request) ? $request : $request->all();
+    public function advancePaymentRequestReportQry($request,$search){
 
+        $input = $request;
         $selectedCompanyId = $input['companyId'];
-        $subCompanies = Helper::checkIsCompanyGroup($selectedCompanyId)
-            ? Helper::getGroupCompany($selectedCompanyId)
-            : [$selectedCompanyId];
+        $isGroup = Helper::checkIsCompanyGroup($selectedCompanyId);
 
+        if ($isGroup) {
+            $subCompanies = Helper::getGroupCompany($selectedCompanyId);
+        } else {
+            $subCompanies = [$selectedCompanyId];
+        }
         $asOfDate = (new Carbon($input['asOfDate']))->format('Y-m-d');
-
-        $reportTypeId = $input['reportTypeID'] ?? 'APRD';
-        if (is_array($reportTypeId)) {
-            $reportTypeId = $reportTypeId[0] ?? 'APRD';
-        }
-
-        $currencyId = $input['currencyID'] ?? 1;
-        if (is_array($currencyId)) {
-            $currencyId = $currencyId[0] ?? 1;
-        }
-        $currencyId = (int) $currencyId;
 
         $detailsSumColumn = 'paymentAmount';
         $caseColumn = 'reqAmount';
-        if ($currencyId === 2) {
+        if ($input['currencyID'] == 2) {
             $caseColumn = 'reqAmountInPOLocalCur';
             $detailsSumColumn = 'localAmount';
-        } elseif ($currencyId === 3) {
+        } else if ($input['currencyID'] == 3) {
             $caseColumn = 'reqAmountInPORptCur';
             $detailsSumColumn = 'comRptAmount';
         }
 
-        $agingSelectFragment = $reportTypeId === 'APRA'
-            ? $this->buildAdvancePaymentAgingBucketSelectSql($asOfDate, $caseColumn)
-            : '';
+        $agingField = '';
+        if($input['reportTypeID'] == 'APRA') {
+            $aging = ['0-30', '31-60', '61-90', '91-120', '121-150', '151-180', '181-210', '211-240', '241-365', '> 365'];
+            $condition = 'DATEDIFF("' . $asOfDate . '",DATE(erp_purchaseorderadvpayment.reqDate))';
+            if (!empty($aging)) { /*calculate aging range in query*/
+                $count = count($aging);
+                $c = 1;
+                foreach ($aging as $val) {
+                    if ($count == $c) {
+                        $agingField .= "if(" . $condition . "   > " . 365 . "," . $caseColumn . ",0) as `case" . $c . "`,";
+                    } else {
+                        $list = explode("-", $val);
+                        $agingField .= "if(" . $condition . " >= " . $list[0] . " AND " . $condition . " <= " . $list[1] . "," . $caseColumn . ",0) as `case" . $c . "`,";
+                    }
+                    $c++;
+                }
+            }
+        }
 
-        $detailsJoinSql = $this->buildAdvancePaymentDetailsJoinSubquerySql($detailsSumColumn);
-
-        $query = DB::table('erp_purchaseorderadvpayment')
-            ->selectRaw(
-                'erp_purchaseorderadvpayment.*,' . $agingSelectFragment . '
-                erp_purchaseordermaster.localCurrencyID,erp_purchaseordermaster.companyReportingCurrencyID,erp_purchaseordermaster.supplierTransactionCurrencyID,
-                erp_purchaseordermaster.poTotalSupplierTransactionCurrency,erp_purchaseordermaster.poTotalLocalCurrency,
-                erp_purchaseordermaster.poTotalComRptCurrency,
-                suppliermaster.primarySupplierCode,suppliermaster.supplierName,
-                trns.CurrencyCode as trnsCurrencyCode,trns.DecimalPlaces as trnsDecimalPlaces,
-                potrns.CurrencyCode as potrnsCurrencyCode,potrns.DecimalPlaces as potrnsDecimalPlaces,
-                local.CurrencyCode as localCurrencyCode,local.DecimalPlaces as localDecimalPlaces,
-                rpt.CurrencyCode as rptCurrencyCode,rpt.DecimalPlaces as rptDecimalPlaces,
-                companymaster.CompanyName,
-                details.PayMasterAutoId,details.SumOfpaymentAmount,erp_paysupplierinvoicemaster.approved as pay_approved,
-                (If(round(reqAmount - details.SumOfpaymentAmount)=0 And erp_paysupplierinvoicemaster.approved=-1,2,
-                If((selectedToPayment=-1 Or selectedToPayment=0) And round(reqAmount - details.SumOfpaymentAmount)<>0 And erp_paysupplierinvoicemaster.approved=-1,1,
-                If(selectedToPayment=-1 And erp_paysupplierinvoicemaster.approved=0,3,0)))) as status,
-                DATEDIFF("' . $asOfDate . '",DATE(erp_purchaseorderadvpayment.reqDate)) as ageDays'
-            )
+        $advancePaymentRequest = DB::table('erp_purchaseorderadvpayment')
+            ->selectRaw('erp_purchaseorderadvpayment.*,'.$agingField.'
+                                        erp_purchaseordermaster.localCurrencyID,erp_purchaseordermaster.companyReportingCurrencyID,erp_purchaseordermaster.supplierTransactionCurrencyID,
+                                        erp_purchaseordermaster.poTotalSupplierTransactionCurrency,erp_purchaseordermaster.poTotalLocalCurrency,
+                                        erp_purchaseordermaster.poTotalComRptCurrency,
+                                        suppliermaster.primarySupplierCode,suppliermaster.supplierName,
+                                        trns.CurrencyCode as trnsCurrencyCode,trns.DecimalPlaces as trnsDecimalPlaces,
+                                        potrns.CurrencyCode as potrnsCurrencyCode,potrns.DecimalPlaces as potrnsDecimalPlaces,
+                                        local.CurrencyCode as localCurrencyCode,local.DecimalPlaces as localDecimalPlaces,
+                                        rpt.CurrencyCode as rptCurrencyCode,rpt.DecimalPlaces as rptDecimalPlaces,
+                                        companymaster.CompanyName,
+                                        details.PayMasterAutoId,details.SumOfpaymentAmount,erp_paysupplierinvoicemaster.approved as pay_approved,
+                                        (If(round(reqAmount - details.SumOfpaymentAmount)=0 And erp_paysupplierinvoicemaster.approved=-1,2,
+                                        If((selectedToPayment=-1 Or selectedToPayment=0) And round(reqAmount - details.SumOfpaymentAmount)<>0 And erp_paysupplierinvoicemaster.approved=-1,1,
+                                        If(selectedToPayment=-1 And erp_paysupplierinvoicemaster.approved=0,3,0)))) as status,
+                                        DATEDIFF("' . $asOfDate . '",DATE(erp_purchaseorderadvpayment.reqDate)) as ageDays')
             ->whereIn('erp_purchaseorderadvpayment.companySystemID', $subCompanies)
             ->where('erp_purchaseordermaster.poConfirmedYN', 1)
             ->where('erp_purchaseordermaster.approved', -1)
             ->where('erp_purchaseordermaster.poCancelledYN', 0)
             ->where('erp_purchaseorderadvpayment.cancelledYN', 0)
-            ->whereDate('erp_purchaseorderadvpayment.reqDate', '<=', $asOfDate)
+            ->whereDate('erp_purchaseorderadvpayment.reqDate','<=', $asOfDate)
             ->leftJoin('erp_purchaseordermaster', 'erp_purchaseorderadvpayment.poID', 'erp_purchaseordermaster.purchaseOrderID')
             ->leftJoin('suppliermaster', 'erp_purchaseorderadvpayment.supplierID', 'suppliermaster.supplierCodeSystem')
             ->leftJoin('currencymaster as trns', 'erp_purchaseorderadvpayment.currencyID', 'trns.currencyID')
@@ -752,75 +748,34 @@ ORDER BY
             ->leftJoin('currencymaster as local', 'erp_purchaseordermaster.localCurrencyID', 'local.currencyID')
             ->leftJoin('currencymaster as rpt', 'erp_purchaseordermaster.companyReportingCurrencyID', 'rpt.currencyID')
             ->leftJoin('companymaster', 'erp_purchaseorderadvpayment.companySystemID', 'companymaster.companySystemID')
-            ->leftJoin(DB::raw($detailsJoinSql), function ($join) {
-                $join->on('erp_purchaseorderadvpayment.poAdvPaymentID', '=', 'details.poAdvPaymentID');
+            ->leftJoin(DB::raw('(SELECT poAdvPaymentID, SumOfpaymentAmount,PayMasterAutoId FROM (SELECT * FROM
+                ( SELECT MAX( PayMasterAutoId ) AS PayMasterAutoId,poAdvPaymentID as poAdvPaymentIDs FROM erp_advancepaymentdetails GROUP BY poAdvPaymentID ) a
+                INNER JOIN ( SELECT erp_advancepaymentdetails.poAdvPaymentID, Sum( erp_advancepaymentdetails.'.$detailsSumColumn.' ) AS SumOfpaymentAmount FROM erp_advancepaymentdetails GROUP BY poAdvPaymentID) AS maximum ON maximum.poAdvPaymentID = a.poAdvPaymentIDs 
+                ) b) as details'), function ($query)
+            {
+                $query->on('erp_purchaseorderadvpayment.poAdvPaymentID', '=', 'details.poAdvPaymentID');
             })
             ->leftJoin('erp_paysupplierinvoicemaster', 'details.PayMasterAutoId', 'erp_paysupplierinvoicemaster.PayMasterAutoId');
 
+        
         if ($search) {
-            $search = str_replace('\\', '\\\\', $search);
-            $query->where(function ($q) use ($search) {
-                $q->where('poCode', 'LIKE', "%{$search}%")
+            $search = str_replace("\\", "\\\\", $search);
+            $advancePaymentRequest = $advancePaymentRequest->where(function ($query) use ($search) {
+                $query->where('poCode', 'LIKE', "%{$search}%")
                     ->orWhere('primarySupplierCode', 'LIKE', "%{$search}%")
                     ->orWhere('erp_purchaseorderadvpayment.narration', 'LIKE', "%{$search}%");
             });
         }
 
-        $rows = $query->get();
+        $advancePaymentRequest = $advancePaymentRequest->get();
 
-        return $this->filterAdvancePaymentRequestRowsByInvoiceStatus($rows, $input);
-    }
+        if (array_key_exists('invoiceType', $input) && !is_null($input['invoiceType'])) {
+            $invoiceID = collect($input['invoiceType']);
+           $getInvoiceID = $invoiceID->pluck('id')->toArray();
+           $advancePaymentRequest = collect($advancePaymentRequest)->whereIn('status', $getInvoiceID)->all();
+       }
 
-    /**
-     * Aging buckets (APRA only) — same IF logic as legacy report.
-     */
-    private function buildAdvancePaymentAgingBucketSelectSql(string $asOfDate, string $caseColumn): string
-    {
-        $aging = ['0-30', '31-60', '61-90', '91-120', '121-150', '151-180', '181-210', '211-240', '241-365', '> 365'];
-        $condition = 'DATEDIFF("' . $asOfDate . '",DATE(erp_purchaseorderadvpayment.reqDate))';
-        $parts = [];
-        $count = count($aging);
-        $c = 1;
-        foreach ($aging as $val) {
-            if ($count == $c) {
-                $parts[] = 'if(' . $condition . ' > 365,' . $caseColumn . ',0) as `case' . $c . '`';
-            } else {
-                $list = explode('-', $val);
-                $parts[] = 'if(' . $condition . ' >= ' . $list[0] . ' AND ' . $condition . ' <= ' . $list[1] . ',' . $caseColumn . ',0) as `case' . $c . '`';
-            }
-            $c++;
-        }
-
-        return implode(',', $parts) . ',';
-    }
-
-    /**
-     * Aggregated advance payment detail amounts per poAdvPaymentID (legacy SQL).
-     */
-    private function buildAdvancePaymentDetailsJoinSubquerySql(string $detailsSumColumn): string
-    {
-        return '(SELECT poAdvPaymentID, SumOfpaymentAmount,PayMasterAutoId FROM (SELECT * FROM
-                ( SELECT MAX( PayMasterAutoId ) AS PayMasterAutoId,poAdvPaymentID as poAdvPaymentIDs FROM erp_advancepaymentdetails GROUP BY poAdvPaymentID ) a
-                INNER JOIN ( SELECT erp_advancepaymentdetails.poAdvPaymentID, Sum( erp_advancepaymentdetails.' . $detailsSumColumn . ' ) AS SumOfpaymentAmount FROM erp_advancepaymentdetails GROUP BY poAdvPaymentID) AS maximum ON maximum.poAdvPaymentID = a.poAdvPaymentIDs
-                ) b) as details';
-    }
-
-    /**
-     * @param  \Illuminate\Support\Collection|\object[]  $rows
-     * @return array
-     */
-    private function filterAdvancePaymentRequestRowsByInvoiceStatus($rows, array $input)
-    {
-        if (! array_key_exists('invoiceType', $input) || $input['invoiceType'] === null) {
-            return $rows instanceof \Illuminate\Support\Collection ? $rows->all() : (array) $rows;
-        }
-
-        $invoiceIds = collect($input['invoiceType'])->pluck('id')->toArray();
-        if (empty($invoiceIds)) {
-            return $rows instanceof \Illuminate\Support\Collection ? $rows->all() : (array) $rows;
-        }
-
-        return collect($rows)->whereIn('status', $invoiceIds)->values()->all();
+       return $advancePaymentRequest;
     }
 
 
@@ -849,10 +804,14 @@ ORDER BY
         $input = $request->all();
         $input = $this->convertArrayToSelectedValue($input, array('currencyID'));
 
+        if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
+            $sort = 'asc';
+        } else {
+            $sort = 'desc';
+        }
         $data = array();
             $search = $request->input('search.value');
-            $advancePaymentRequest = $this->advancePaymentRequestReportQry($input, $search);
-            $advancePaymentRequest = $this->accountsPayableReportSortingService->sortAdvancePaymentRequestRows($advancePaymentRequest, $input);
+            $advancePaymentRequest = $this->advancePaymentRequestReportQry($input,$search);
             $type = $request->type;
 
             if ($advancePaymentRequest) {
