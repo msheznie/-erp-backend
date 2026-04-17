@@ -46,6 +46,7 @@ use App\Models\SegmentAllocatedItem;
 use App\Models\SupplierMaster;
 use App\Repositories\UserRepository;
 use App\Repositories\PurchaseOrderDetailsRepository;
+use App\Services\GrvPoLineCostAdjustmentEligibilityService;
 use App\Services\Sales\DeliveryOrderService;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AppBaseController;
@@ -1581,9 +1582,13 @@ class PurchaseOrderDetailsAPIController extends AppBaseController
             ->where('manuallyClosed', 0)
             ->get();
 
+        $grvCostEligibility = app(GrvPoLineCostAdjustmentEligibilityService::class);
         foreach ($details as $detail) {
             $unit = $detail->unit;
             $unitID = $unit ? $unit->UnitID : $detail->unitOfMeasure;
+
+            $detail['isCostAdjustmentCandidate'] = $grvCostEligibility->isEligibleFinanceCategory((int) ($detail->itemFinanceCategoryID ?? 0))
+                && abs((float) ($detail->poQty ?? 0) - 1.0) < 1e-6;
 
             if ($detail['receivedQty'] > 0) {
                 $currentGrvAmountRaw = ($detail['netAmount'] / $detail['poQty']) * $detail['receivedQty'];
