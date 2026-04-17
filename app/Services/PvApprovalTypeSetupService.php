@@ -123,19 +123,6 @@ class PvApprovalTypeSetupService
                     return ServiceResponse::failure($result['message']);
                 }
             }
-            else {
-                $companySystemId = $validatedData['company_system_id'];
-                $activeLevel = ApprovalLevel::where('companySystemID', $companySystemId)
-                    ->where('documentSystemID', 4)
-                    ->where('pvTypeWise', 1)
-                    ->where('pvTypeSetupID', $id)
-                    ->where('isActive', -1)
-                    ->first();
-
-                if ($activeLevel) {
-                    return ServiceResponse::failure(trans('custom.there_is_an_approval_level_created_for_this_docume'));
-                }
-            }
         }
 
         $setup->fill($validatedData);
@@ -166,9 +153,25 @@ class PvApprovalTypeSetupService
         return ServiceResponse::success($setup, trans('custom.pv_approval_type_setup_deleted_successfully'));
     }
 
-    private function checkApprovalLevelConflict($validatedData, $setup) {
+    private function checkApprovalLevelConflict($validatedData, $setup): array {
         $companySystemId = $validatedData['company_system_id'];
         $documentAttachmentId = $validatedData['document_attachment_id'];
+
+        if ($validatedData['is_amount_approval'] || $validatedData['is_general_approval']) {
+            $activeLevel = ApprovalLevel::where('companySystemID', $companySystemId)
+                ->where('documentSystemID', 4)
+                ->where('pvTypeWise', 1)
+                ->where('pvTypeSetupID', $setup->id)
+                ->where('isActive', -1)
+                ->first();
+
+            if ($activeLevel) {
+                return [
+                    'status' => false,
+                    'message' => trans('custom.there_is_an_approval_level_created_for_this_docume'),
+                ];
+            }
+        }
 
         $typeValues = $this->getPvTypeFlagValues($validatedData, $setup);
         $query = PvApprovalTypeSetup::where('company_system_id', $companySystemId)
@@ -197,8 +200,7 @@ class PvApprovalTypeSetupService
         }
     }
 
-    private function getPvTypeFlagValues($data, $fallbackSetup = null): array
-    {
+    private function getPvTypeFlagValues($data, $fallbackSetup = null): array {
         $values = [];
 
         foreach (PvApprovalTypeSetup::TYPE_FINGERPRINT_COLUMNS as $column) {
@@ -216,7 +218,7 @@ class PvApprovalTypeSetupService
         return $values;
     }
 
-    public static function getPVDocumentTypeForApproval($masterRec) {
+    public static function getPVDocumentTypeForApproval($masterRec): array {
         $invoiceType = $masterRec->invoiceType ?? null;
         $expenseClaimOrPettyCash = $masterRec->expenseClaimOrPettyCash ?? null;
 
@@ -286,6 +288,29 @@ class PvApprovalTypeSetupService
             'invoiceTypeColumnName' => $invoiceTypeColumnName,
             'expenseClaimOrPettyCashColumnName' => $expenseClaimOrPettyCashColumnName,
         ];
+    }
+
+    public static function checkApprovalLevelExists($data): ServiceResponse {
+        $companySystemId = $data['company_system_id'];
+        $levelType = $data['level_type'];
+
+        $query = ApprovalLevel::where('companySystemID', $companySystemId)
+            ->where('documentSystemID', 4)
+            ->where('isActive', -1)
+            ->when($levelType == 'common_setup', function ($query) {
+                $query->where('pvTypeWise', 0);
+            })
+            ->when($levelType == 'type_based_setup', function ($query) {
+                $query->where('pvTypeWise', 1);
+            })
+            ->exists();
+
+        if ($query) {
+            return ServiceResponse::failure(trans('custom.there_is_an_approval_level_created_for_this_docume'));
+        }
+        else {
+            return ServiceResponse::success(null, trans('custom.approval_level_does_not_exist'));
+        }
     }
 }
 
