@@ -116,5 +116,17 @@ class PvApprovalTypeSetupAPIController extends AppBaseController
 
         return $this->sendResponse($response->getData(), $response->getMessage());
     }
+
+    public function checkApprovalLevelExists(Request $request) {
+        $input = $request->all();
+
+        $response = $this->pvApprovalTypeSetupService->checkApprovalLevelExists($input);
+
+        if (!$response->isSuccess()) {
+            return $this->sendError($response->getMessage());
+        }
+
+        return $this->sendResponse(null, $response->getMessage());
+    }
 }
 

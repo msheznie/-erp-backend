@@ -124,6 +124,7 @@ Route::group([], function() {
     Route::get('getPVTypeBaseApprovals', 'PvApprovalTypeSetupAPIController@getPVTypeBaseApprovals')->name('Get PV type base approvals');
     Route::post('updatePVTypeBaseApprovalRow', 'PvApprovalTypeSetupAPIController@updatePVTypeBaseApprovalRow')->name('Update PV type base approval row');
     Route::resource('pv_approval_type_setups', 'PvApprovalTypeSetupAPIController');
+    Route::post('checkApprovalLevelExists', 'PvApprovalTypeSetupAPIController@checkApprovalLevelExists')->name('Check approval level exists');
 });
 
 

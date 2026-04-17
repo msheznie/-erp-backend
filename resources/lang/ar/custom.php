@@ -10004,4 +10004,6 @@ return
     'company_id_must_be_an_integer' => 'معرف الشركة يجب أن يكون رقمًا صحيحًا',
     'no_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'لم يتم العثور على إعداد موافقة نشط قائم على النوع لهذا النوع من سندات الصرف',
     'multiple_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'تم العثور على أكثر من إعداد موافقة نشط قائم على النوع لهذا النوع من سندات الصرف. يرجى الاتصال بمدير النظام.',
+    'approval_level_exists' => 'مستوى الإعتماد موجود بالفعل',
+    'approval_level_does_not_exist' => 'مستوى الإعتماد غير موجود'
 ];
