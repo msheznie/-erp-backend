@@ -494,7 +494,7 @@ class CreatePaymentVoucher implements ShouldQueue
                 'data' => $successDocuments,
             ];
         }
-       
+        Log::info('CreatePaymentVoucher returnData: '.json_encode($returnData,JSON_PRETTY_PRINT));
         // Dispatch webhook job
         $webhookPayload = ['data' => $returnData, 'externalReference' => $this->externalReference];
         InitiateWebhook::dispatch(
@@ -2135,9 +2135,18 @@ class CreatePaymentVoucher implements ShouldQueue
                     }
                 }
 
+                $balancePayedAmount = self::computeAdvanceReceiptPayedAmount($advance, $companyId);
+
+                if ($balancePayedAmount <= 0) {
+                    $errorData[] = [
+                        'field' => 'advance_voucher_code',
+                        'message' => ['Selected advance receipt voucher is already fully paid.'],
+                    ];
+                }
+
                 $balance = self::computeAdvanceReceiptBalanceRemaining($advance, $companyId);
 
-                if ($balance <= 0) {
+                if ($balance <= 0 && $balancePayedAmount != 0 && (int) $advance->matchInvoice !== 2) {
                     $errorData[] = [
                         'field' => 'advance_voucher_code',
                         'message' => ['Selected advance receipt voucher has been fully utilized.'],
@@ -2284,5 +2293,18 @@ class CreatePaymentVoucher implements ShouldQueue
             ->where('documentSystemID', 21)
             ->where('matchingConfirmedYN', 0)
             ->exists();
+    }
+
+    private static function computeAdvanceReceiptPayedAmount(CustomerReceivePayment $advance, int $companySystemID): float
+    {   
+        $id = (int) $advance->custReceivePaymentAutoID;
+        $advanceTransAbs = abs((float) ($advance->receivedAmount ?? 0));
+        $paidPv = (float) DB::table('erp_pay_advance_receipt_details')
+                        ->where('advanceReceiptAutoID', $id)
+                        ->where('companySystemID', $companySystemID)
+                        ->selectRaw('COALESCE(SUM(ABS(advanceReceiptAmount)), 0) as s')
+                        ->value('s');
+
+        return $advanceTransAbs - $paidPv;
     }
 }
