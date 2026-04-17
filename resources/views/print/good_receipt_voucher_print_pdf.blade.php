@@ -394,7 +394,7 @@
                     <td>{{$det->itemDescription}}</td>
                     <td>{{$det->supplierPartNumber}}</td>
                     <td class="text-right">{{ $det->unit ? number_format($det->noQty, $det->unit->displayRoundOff ?? $det->unit->decimalPrecision ?? 5, '.', '') : number_format($det->noQty, 5, '.', '') }}</td>
-                    <td class="text-right">{{ $grvData->currency_by ? number_format($det->unitCost, $grvData->currency_by->DecimalPlaces, '.', '') : number_format($det->unitCost, 2, '.', '') }}</td>
+                    <td class="text-right">{{ $grvData->currency_by ? number_format($det->poDisplayUnitCostSupTransCur ?? $det->unitCost, $grvData->currency_by->DecimalPlaces, '.', '') : number_format($det->poDisplayUnitCostSupTransCur ?? $det->unitCost, 2, '.', '') }}</td>
                     <td class="text-right">{{ $grvData->currency_by ? number_format($det->discountAmount, $grvData->currency_by->DecimalPlaces, '.', '') : number_format($det->discountAmount, 2, '.', '') }}</td>
                     <td class="text-right">{{ $grvData->currency_by ? number_format($det->netAmount, $grvData->currency_by->DecimalPlaces, '.', '') : number_format($det->netAmount, 2, '.', '') }}</td>
                 </tr>

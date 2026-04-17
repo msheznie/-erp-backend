@@ -61,7 +61,8 @@ use App\Criteria\LimitOffsetCriteria;
 use Prettus\Repository\Criteria\RequestCriteria;
 use App\Repositories\UserRepository;
 use App\Services\DecimalPrecisionService;
-use App\Services\GrvRoleBasedAccessService;
+use App\Services\GrvPoDetailCostAdjustmentService;
+use App\Services\GrvPoLineCostAdjustmentEligibilityService;
 use App\Services\POReceivedQtyUpdateService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -84,8 +85,10 @@ class GRVDetailsAPIController extends AppBaseController
     private $decimalPrecisionService;
     /** @var POReceivedQtyUpdateService */
     private $poReceivedQtyUpdateService;
-    /** @var GrvRoleBasedAccessService */
-    private $grvRoleBasedAccessService;
+    /** @var GrvPoLineCostAdjustmentEligibilityService */
+    private $grvPoLineCostAdjustmentEligibilityService;
+    /** @var GrvPoDetailCostAdjustmentService */
+    private $grvPoDetailCostAdjustmentService;
 
     public function __construct(
         GRVDetailsRepository $gRVDetailsRepo,
@@ -94,7 +97,8 @@ class GRVDetailsAPIController extends AppBaseController
         ExpenseAssetAllocationRepository $expenseAssetAllocationRepo,
         DecimalPrecisionService $decimalPrecisionService,
         POReceivedQtyUpdateService $poReceivedQtyUpdateService,
-        GrvRoleBasedAccessService $grvRoleBasedAccessService
+        GrvPoLineCostAdjustmentEligibilityService $grvPoLineCostAdjustmentEligibilityService,
+        GrvPoDetailCostAdjustmentService $grvPoDetailCostAdjustmentService
     )
     {
         $this->gRVDetailsRepository = $gRVDetailsRepo;
@@ -103,7 +107,8 @@ class GRVDetailsAPIController extends AppBaseController
         $this->expenseAssetAllocationRepo = $expenseAssetAllocationRepo;
         $this->decimalPrecisionService = $decimalPrecisionService;
         $this->poReceivedQtyUpdateService = $poReceivedQtyUpdateService;
-        $this->grvRoleBasedAccessService = $grvRoleBasedAccessService;
+        $this->grvPoLineCostAdjustmentEligibilityService = $grvPoLineCostAdjustmentEligibilityService;
+        $this->grvPoDetailCostAdjustmentService = $grvPoDetailCostAdjustmentService;
     }
 
     /**
@@ -192,8 +197,6 @@ class GRVDetailsAPIController extends AppBaseController
             if (empty($grvMaster)) {
                 return $this->sendError(trans('custom.grv_not_found'));
             }
-            $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-            $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $grvMaster, (int)Helper::getEmployeeSystemID());
 
             if (is_null($input['noQty'])) {
                 $input['noQty'] = 0;
@@ -206,6 +209,35 @@ class GRVDetailsAPIController extends AppBaseController
             $itemTracking = ItemTracking::validateTrackingQuantity($input['noQty'], $id, $grvMaster->documentSystemID);
             if (!$itemTracking['status']) {
                 return $this->sendError($itemTracking['message']);
+            }
+
+            if (($gRVDetails->costAdjustmentAppliedYN ?? 0) && (int) $grvMaster->pullType === 1 && !empty($input['purchaseOrderDetailsID'])) {
+                $poDet = PurchaseOrderDetails::find($input['purchaseOrderDetailsID']);
+                if ($poDet) {
+                    $currencyIDRebuild = $grvMaster->supplierTransactionCurrencyID ?? null;
+                    $unitIDRebuild = $input['unitOfMeasure'] ?? null;
+                    $noQtyRoundedRebuild = $this->decimalPrecisionService->roundQuantityToUnitPrecision((float) $input['noQty'], $unitIDRebuild);
+                    $netRoundedRebuild = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $input['netAmount'], $currencyIDRebuild);
+                    $capError = $this->grvPoDetailCostAdjustmentService->validateCumulativeGrvNetAmountForPoLine(
+                        (int) $input['purchaseOrderDetailsID'],
+                        $netRoundedRebuild,
+                        (int) $id,
+                        $currencyIDRebuild
+                    );
+                    if ($capError !== null) {
+                        DB::rollBack();
+                        return $this->sendError($capError, 422);
+                    }
+                    $this->grvPoDetailCostAdjustmentService->rebuildFromPoBaselineForUpdate(
+                        $input,
+                        $poDet,
+                        $gRVDetails,
+                        $noQtyRoundedRebuild,
+                        $netRoundedRebuild,
+                        $currencyIDRebuild,
+                        (int) $grvMaster->companySystemID
+                    );
+                }
             }
 
             $markupUpdatedBy=isset($input['by'])?$input['by']:'';
@@ -441,11 +473,6 @@ class GRVDetailsAPIController extends AppBaseController
         }
 
         $grvMaster = GRVMaster::find($gRVDetails->grvAutoID);
-        if (empty($grvMaster)) {
-            return $this->sendError(trans('custom.grv_master_not_found'));
-        }
-        $this->grvRoleBasedAccessService->requireReadNavigationOrFail(request(), (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail(request(), $grvMaster, (int)Helper::getEmployeeSystemID());
 
         if($grvMaster->grvTypeID == 2 && $grvMaster->pullType != 2) {
             $allowPartialGRVPolicy = CompanyPolicyMaster::where('companyPolicyCategoryID', 23)
@@ -656,7 +683,12 @@ class GRVDetailsAPIController extends AppBaseController
         {
             $currencyID = ($item->supplierItemCurrencyID) ?? 3;
             $decimal = CurrencyMaster::find($currencyID)->DecimalPlaces;
-            $item->netAmount = round(round($item->unitCost,$decimal) * $item->noQty,$decimal);
+            if (!empty($item->costAdjustmentAppliedYN)) {
+                $item->unitCostDisplay = $item->poDisplayUnitCostSupTransCur;
+                $item->effectiveUnitCostSupTransCur = $item->effectiveUnitCostSupTransCur ?? $item->GRVcostPerUnitSupTransCur;
+            } else {
+                $item->netAmount = round(round($item->unitCost,$decimal) * $item->noQty,$decimal);
+            }
         }
 
         return $this->sendResponse($items->toArray(), trans('custom.grv_details_retrieved_successfully'));
@@ -861,12 +893,6 @@ class GRVDetailsAPIController extends AppBaseController
             } else {
                 $grvAutoID = $input['grvAutoID'];
             }
-            $existingMaster = GRVMaster::find($grvAutoID);
-            if (empty($existingMaster)) {
-                return $this->sendError(trans('custom.grv_master_not_found'));
-            }
-            $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$existingMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-            $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $existingMaster, (int)Helper::getEmployeeSystemID());
 
         $GRVMaster = GRVMaster::where('grvAutoID', $grvAutoID)
             ->first();
@@ -946,6 +972,31 @@ class GRVDetailsAPIController extends AppBaseController
 
                     if ($noQtyRounded > $balanceQtyRounded + 1e-6) {
                         return $this->sendError(trans('custom.quantity_greater_received_qty_item', ['item' => $new['itemPrimaryCode'], 'description' => $new['itemDescription']]), 422);
+                    }
+
+                    $isAmountBasedEntry = !empty($new['isAmountBasedEntry']);
+                    $rawQtyForAdjustment = $this->grvPoLineCostAdjustmentEligibilityService->computeRawQtyFromGrvAmount($new, (float) ($new['grvAmount'] ?? 0));
+                    $applyPoCostAdjustment = $this->grvPoLineCostAdjustmentEligibilityService->shouldApplyAmountFirstAdjustment(
+                        $new,
+                        $isAmountBasedEntry,
+                        $rawQtyForAdjustment,
+                        $noQtyRounded,
+                        $unitID,
+                        $this->decimalPrecisionService
+                    );
+                    if ($applyPoCostAdjustment) {
+                        $enteredNet = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) ($new['grvAmount'] ?? 0), $currencyID);
+                        $capError = $this->grvPoDetailCostAdjustmentService->validateCumulativeGrvNetAmountForPoLine(
+                            (int) $new['purchaseOrderDetailsID'],
+                            $enteredNet,
+                            null,
+                            $currencyID
+                        );
+                        if ($capError !== null) {
+                            DB::rollBack();
+                            return $this->sendError($capError, 422);
+                        }
+                        $this->grvPoDetailCostAdjustmentService->applyToNewLine($new, $noQtyRounded, $currencyID, (int) $GRVMaster->companySystemID);
                     }
 
                     if ($allowMultiplePO->isYesNO == 0) {
@@ -1090,7 +1141,14 @@ class GRVDetailsAPIController extends AppBaseController
                         $GRVDetail_arr['unitCost'] = $unitCostRounded;
                         $GRVDetail_arr['discountPercentage'] = $new['discountPercentage'];
                         $GRVDetail_arr['discountAmount'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) ($new['discountAmount'] ?? 0), $currencyID);
-                        $GRVDetail_arr['netAmount'] = $totalNetcost;
+                        if (!empty($new['costAdjustmentAppliedYN'])) {
+                            $GRVDetail_arr['netAmount'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) ($new['grvAmount'] ?? 0), $currencyID);
+                        } else {
+                            $GRVDetail_arr['netAmount'] = $totalNetcost;
+                        }
+                        $GRVDetail_arr['poDisplayUnitCostSupTransCur'] = $new['poDisplayUnitCostSupTransCur'] ?? null;
+                        $GRVDetail_arr['effectiveUnitCostSupTransCur'] = $new['effectiveUnitCostSupTransCur'] ?? null;
+                        $GRVDetail_arr['costAdjustmentAppliedYN'] = !empty($new['costAdjustmentAppliedYN']) ? (int) $new['costAdjustmentAppliedYN'] : 0;
                         $GRVDetail_arr['comment'] = $new['comment'];
                         $GRVDetail_arr['supplierDefaultCurrencyID'] = $new['supplierDefaultCurrencyID'];
                         $GRVDetail_arr['supplierDefaultER'] = $new['supplierDefaultER'];
@@ -1140,7 +1198,7 @@ class GRVDetailsAPIController extends AppBaseController
                             ->update(['GRVSelectedYN' => $GRVSelectedYN, 'goodsRecievedYN' => $goodsRecievedYN, 'receivedQty' => $totalAddedQty]);
 
 
-                        $this->checkPrnAndUpdateAsReturnedUsed($new['purchaseOrderDetailsID'], $new['noQty'], $item->grvDetailsID);
+                        $this->checkPrnAndUpdateAsReturnedUsed($new['purchaseOrderDetailsID'], $noQtyRounded, $item->grvDetailsID);
                     }
                 }
 
@@ -1530,6 +1588,36 @@ class GRVDetailsAPIController extends AppBaseController
                 $GRVDetail_arr['exempt_vat_portion'] = (isset($input['exempt_vat_portion']) && $subcategoryVAT && $subcategoryVAT->subCatgeoryType == 1) ? $input['exempt_vat_portion'] : 0;
             }
 
+            $currencyID = $grvMaster->supplierTransactionCurrencyID ?? null;
+            $unitID = $input['unitOfMeasure'] ?? null;
+            $noQtyRounded = $this->decimalPrecisionService->roundQuantityToUnitPrecision((float) $input['noQty'], $unitID);
+            $existingDetail = GRVDetails::find($id);
+            if ($existingDetail && ($existingDetail->costAdjustmentAppliedYN ?? 0) && $existingDetail->purchaseOrderDetailsID > 0) {
+                $poDet = PurchaseOrderDetails::find($existingDetail->purchaseOrderDetailsID);
+                if ($poDet) {
+                    $netRounded = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $input['netAmount'], $currencyID);
+                    $capError = $this->grvPoDetailCostAdjustmentService->validateCumulativeGrvNetAmountForPoLine(
+                        (int) $existingDetail->purchaseOrderDetailsID,
+                        $netRounded,
+                        (int) $id,
+                        $currencyID
+                    );
+                    if ($capError !== null) {
+                        DB::rollBack();
+                        return $this->sendError($capError, 422);
+                    }
+                    $this->grvPoDetailCostAdjustmentService->rebuildFromPoBaselineForUpdate(
+                        $input,
+                        $poDet,
+                        $existingDetail,
+                        $noQtyRounded,
+                        $netRounded,
+                        $currencyID,
+                        (int) $grvMaster->companySystemID
+                    );
+                }
+            }
+
             $input['VATAmount'] = isset($input['VATAmount']) ? $input['VATAmount'] : 0;
             $GRVDetail_arr['VATPercentage'] = isset($input['VATPercentage']) ? $input['VATPercentage'] : 0;
 
@@ -1549,45 +1637,59 @@ class GRVDetailsAPIController extends AppBaseController
             $financeCategorySub = FinanceItemCategorySub::find($itemAssign->financeCategorySub);
 
             // checking the qty request is matching with sum total (round to unit/currency precision)
-            $currencyID = $grvMaster->supplierTransactionCurrencyID ?? null;
-            $unitID = $input['unitOfMeasure'] ?? null;
-            $noQtyRounded = $this->decimalPrecisionService->roundQuantityToUnitPrecision((float) $input['noQty'], $unitID);
             $wasteQtyRounded = $this->decimalPrecisionService->roundQuantityToUnitPrecision((float) ($input['wasteQty'] ?? 0), $unitID);
             $unitCostRounded = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $input['unitCost'], $currencyID);
             $GRVDetail_arr['grvAutoID'] = $grvAutoID;
             $GRVDetail_arr['noQty'] = $noQtyRounded;
             $GRVDetail_arr['wasteQty'] = $wasteQtyRounded;
-            $totalNetcost = $this->decimalPrecisionService->roundAmountToCurrencyPrecision(($unitCostRounded + (float) ($input['VATAmount'] ?? 0)) * $noQtyRounded, $currencyID);
-            $GRVDetail_arr['unitCost'] = $unitCostRounded;
-            $GRVDetail_arr['netAmount'] = $totalNetcost;
             $GRVDetail_arr['comment'] = $input['comment'];
 
-            $calculateItemDiscount = $input['unitCost'];
-            if (!$grvMaster->vatRegisteredYN) {
-                $calculateItemDiscount = $input['unitCost'];
+            if ($existingDetail && ($existingDetail->costAdjustmentAppliedYN ?? 0)) {
+                $GRVDetail_arr['unitCost'] = $unitCostRounded;
+                $GRVDetail_arr['netAmount'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) $input['netAmount'], $currencyID);
+                $GRVDetail_arr['discountAmount'] = $this->decimalPrecisionService->roundAmountToCurrencyPrecision((float) ($input['discountAmount'] ?? 0), $currencyID);
+                $GRVDetail_arr['GRVcostPerUnitLocalCur'] = Helper::roundValue($input['GRVcostPerUnitLocalCur']);
+                $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = Helper::roundValue($input['GRVcostPerUnitSupDefaultCur']);
+                $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = Helper::roundValue($input['GRVcostPerUnitSupTransCur']);
+                $GRVDetail_arr['GRVcostPerUnitComRptCur'] = Helper::roundValue($input['GRVcostPerUnitComRptCur']);
+                $GRVDetail_arr['landingCost_LocalCur'] = Helper::roundValue($input['landingCost_LocalCur']);
+                $GRVDetail_arr['landingCost_TransCur'] = Helper::roundValue($input['landingCost_TransCur']);
+                $GRVDetail_arr['landingCost_RptCur'] = Helper::roundValue($input['landingCost_RptCur']);
+                $GRVDetail_arr['poDisplayUnitCostSupTransCur'] = $input['poDisplayUnitCostSupTransCur'] ?? null;
+                $GRVDetail_arr['effectiveUnitCostSupTransCur'] = $input['effectiveUnitCostSupTransCur'] ?? null;
+                $GRVDetail_arr['costAdjustmentAppliedYN'] = (int) ($input['costAdjustmentAppliedYN'] ?? 1);
             } else {
-                $checkVATCategory = TaxVatCategories::with(['type'])->find($GRVDetail_arr['vatSubCategoryID']);
-                if ($checkVATCategory) {
-                    if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 1 && $GRVDetail_arr['exempt_vat_portion'] > 0 && $GRVDetail_arr['VATAmount'] > 0) {
-                       $exemptVAT = $GRVDetail_arr['VATAmount'] * ($GRVDetail_arr['exempt_vat_portion'] / 100);
+                $totalNetcost = $this->decimalPrecisionService->roundAmountToCurrencyPrecision(($unitCostRounded + (float) ($input['VATAmount'] ?? 0)) * $noQtyRounded, $currencyID);
+                $GRVDetail_arr['unitCost'] = $unitCostRounded;
+                $GRVDetail_arr['netAmount'] = $totalNetcost;
 
-                       $calculateItemDiscount = $calculateItemDiscount + $exemptVAT;
-                    } else if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 3) {
-                        $calculateItemDiscount = $calculateItemDiscount + $GRVDetail_arr['VATAmount'];
+                $calculateItemDiscount = $input['unitCost'];
+                if (!$grvMaster->vatRegisteredYN) {
+                    $calculateItemDiscount = $input['unitCost'];
+                } else {
+                    $checkVATCategory = TaxVatCategories::with(['type'])->find($GRVDetail_arr['vatSubCategoryID']);
+                    if ($checkVATCategory) {
+                        if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 1 && $GRVDetail_arr['exempt_vat_portion'] > 0 && $GRVDetail_arr['VATAmount'] > 0) {
+                           $exemptVAT = $GRVDetail_arr['VATAmount'] * ($GRVDetail_arr['exempt_vat_portion'] / 100);
+
+                           $calculateItemDiscount = $calculateItemDiscount + $exemptVAT;
+                        } else if (isset($checkVATCategory->type->id) && $checkVATCategory->type->id == 3) {
+                            $calculateItemDiscount = $calculateItemDiscount + $GRVDetail_arr['VATAmount'];
+                        }
                     }
                 }
+
+                $currency = Helper::convertAmountToLocalRpt($grvMaster->documentSystemID,$grvAutoID,$calculateItemDiscount);
+
+                $GRVDetail_arr['GRVcostPerUnitLocalCur'] = Helper::roundValue($currency['localAmount']);
+                $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = Helper::roundValue($currency['defaultAmount']);
+                $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = Helper::roundValue($calculateItemDiscount);
+                $GRVDetail_arr['GRVcostPerUnitComRptCur'] = Helper::roundValue($currency['reportingAmount']);
+
+                $GRVDetail_arr['landingCost_LocalCur'] = Helper::roundValue($currency['localAmount']);
+                $GRVDetail_arr['landingCost_TransCur'] = Helper::roundValue($calculateItemDiscount);
+                $GRVDetail_arr['landingCost_RptCur'] = Helper::roundValue($currency['reportingAmount']);
             }
-
-            $currency = Helper::convertAmountToLocalRpt($grvMaster->documentSystemID,$grvAutoID,$calculateItemDiscount);
-
-            $GRVDetail_arr['GRVcostPerUnitLocalCur'] = Helper::roundValue($currency['localAmount']);
-            $GRVDetail_arr['GRVcostPerUnitSupDefaultCur'] = Helper::roundValue($currency['defaultAmount']);
-            $GRVDetail_arr['GRVcostPerUnitSupTransCur'] = Helper::roundValue($calculateItemDiscount);
-            $GRVDetail_arr['GRVcostPerUnitComRptCur'] = Helper::roundValue($currency['reportingAmount']);
-            
-            $GRVDetail_arr['landingCost_LocalCur'] = Helper::roundValue($currency['localAmount']);
-            $GRVDetail_arr['landingCost_TransCur'] = Helper::roundValue($calculateItemDiscount);
-            $GRVDetail_arr['landingCost_RptCur'] = Helper::roundValue($currency['reportingAmount']);
             $GRVDetail_arr['modifiedPc'] = gethostname();
             $GRVDetail_arr['modifiedUser'] = $user->empID;
             $GRVDetail_arr['detail_project_id'] = $input['detail_project_id'];
@@ -1843,8 +1945,6 @@ class GRVDetailsAPIController extends AppBaseController
         if (empty($grvMaster)) {
             return $this->sendError(trans('custom.grv_not_found'));
         }
-        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$grvMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $grvMaster, (int)Helper::getEmployeeSystemID());
 
         if ($grvMaster->isMarkupUpdated==1) {
             return $this->sendError('GRV markup update process restricted',500);
@@ -1883,8 +1983,6 @@ class GRVDetailsAPIController extends AppBaseController
         if(empty($GRVMaster)){
             $this->sendError(trans('custom.grv_not_found'),500);
         }
-        $this->grvRoleBasedAccessService->requireReadNavigationOrFail($request, (int)$GRVMaster->companySystemID, (int)Helper::getEmployeeSystemID());
-        $this->grvRoleBasedAccessService->requireGrvDocumentEditAuthorizationOrFail($request, $GRVMaster, (int)Helper::getEmployeeSystemID());
 
         $PRMaster = PurchaseReturn::find($input['purhaseReturnAutoID']);
 

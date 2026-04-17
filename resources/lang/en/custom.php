@@ -7372,6 +7372,8 @@ return
     // PO to Payment Report Excel Headers
     'po_approved_date' => 'PO Approved Date',
     'grv_amount' => 'GRV Amount',
+    'cumulative_grv_amount_exceeds_po_line' => 'Cumulative GRV amount for this purchase order line cannot exceed the PO line amount.',
+    'effective_unit_cost_tooltip' => 'Effective unit cost',
     'payment_posted_date' => 'Payment Posted Date',
 
     // PO to Payment Report Title
