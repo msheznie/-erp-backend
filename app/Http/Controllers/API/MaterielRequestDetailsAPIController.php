@@ -290,8 +290,12 @@ class MaterielRequestDetailsAPIController extends AppBaseController
             $input['partNumber'] = null;
             $input['itemFinanceCategoryID'] = null;
             $input['itemFinanceCategorySubID'] = null;
-            $input['unitOfMeasure'] = null;
-            $input['unitOfMeasureIssued'] = null;
+            $selectedUnit = $input['unitOfMeasureIssued'] ?? $input['unitOfMeasure'] ?? null;
+            if ($selectedUnit && !Unit::where('UnitID', $selectedUnit)->exists()) {
+                return $this->sendError(trans('custom.invalid_input'), 422);
+            }
+            $input['unitOfMeasure'] = $selectedUnit;
+            $input['unitOfMeasureIssued'] = $selectedUnit;
             $input['maxQty'] = 0;
             $input['minQty'] = 0;
             $input['quantityOnOrder'] = 0;
@@ -300,12 +304,43 @@ class MaterielRequestDetailsAPIController extends AppBaseController
         }
 
         $input['estimatedCost'] = 0;
-        $input['quantityRequested'] = 0;
+        $input['quantityRequested'] = (array_key_exists('quantityRequested', $input) && $input['quantityRequested'] !== '' && $input['quantityRequested'] !== null)
+            ? $input['quantityRequested'] : 0;
+
+        $unitIDForInputPrecision = $input['unitOfMeasureIssued'] ?? $input['unitOfMeasure'] ?? null;
+        $allowedDecimals = $this->decimalPrecisionService->getUnitInputPrecision($unitIDForInputPrecision);
+        if (!is_numeric($input['quantityRequested']) ||
+            !$this->decimalPrecisionService->hasValidScale($input['quantityRequested'], $allowedDecimals) ||
+            $input['quantityRequested'] > 999999999) {
+            return $this->sendError(trans('custom.invalid_input'), 422);
+        }
+
+        if ($input['unitOfMeasure'] && $input['unitOfMeasureIssued']) {
+            if ($input['unitOfMeasure'] != $input['unitOfMeasureIssued']) {
+                $unitConvention = UnitConversion::where('masterUnitID', $input['unitOfMeasure'])
+                    ->where('subUnitID', $input['unitOfMeasureIssued'])
+                    ->first();
+                if (empty($unitConvention)) {
+                    return $this->sendError(trans('custom.unit_conversion_not_valid'), 500);
+                }
+                $convention = $unitConvention->conversion;
+                $input['convertionMeasureVal'] = $convention;
+                if ($convention > 0) {
+                    $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'] / $convention;
+                } else {
+                    $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'] * $convention;
+                }
+            } else {
+                $input['qtyIssuedDefaultMeasure'] = $input['quantityRequested'];
+            }
+        }
         
         $input['ClosedYN'] = 0;
         $input['selectedForIssue'] = 0;
         $input['comments'] = null;
-        $input['convertionMeasureVal'] = 1;
+        if (!isset($input['convertionMeasureVal'])) {
+            $input['convertionMeasureVal'] = 1;
+        }
 
         $input['allowCreatePR']      = 0;
         $input['selectedToCreatePR'] = 0;
