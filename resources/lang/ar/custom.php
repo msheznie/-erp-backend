@@ -7272,6 +7272,8 @@ return
     // PO to Payment Report Excel Headers
     'po_approved_date' => 'تاريخ إعتماد أمر الشراء',
     'grv_amount' => 'مبلغ استلام المواد',
+    'cumulative_grv_amount_exceeds_po_line' => 'لا يجوز أن يتجاوز إجمالي مبلغ استلام المواد لمخطط أمر الشراء هذا مبلغ مخطط أمر الشراء.',
+    'effective_unit_cost_tooltip' => 'تكلفة الوحدة الفعلية',
     'payment_posted_date' => 'تاريخ ترحيل الدفع',
 
     // PO to Payment Report Title
