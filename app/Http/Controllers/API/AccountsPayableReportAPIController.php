@@ -905,6 +905,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                 if ($reportTypeID == 'UGRVD' || $reportTypeID == 'UGRVS') { //Unbilled Detail
 
                     $output = $this->getUnbilledDetailQRY($request);
+                    $output = $this->accountsPayableReportSortingService->sortUnbilledRows($output, $request);
 
                     if ($reportTypeID == 'UGRVD') {
                         if ($output) {
@@ -918,6 +919,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
                 } else if ($reportTypeID == 'UGRVAD') {
                     $output = $this->getUnbilledGRVDetailAgingQRY($request);
+                    $output = $this->accountsPayableReportSortingService->sortUnbilledRows($output, $request);
                     if ($reportTypeID == 'UGRVAD' && $output) {
                         foreach ($output as $val) {
                             $outputArr[$val->supplierName][] = $val;
@@ -925,10 +927,12 @@ class AccountsPayableReportAPIController extends AppBaseController
                     }
                 } else if ($reportTypeID == 'UGRVAS') {
                     $output = $this->getUnbilledGRVSummaryAgingQRY($request);
+                    $output = $this->accountsPayableReportSortingService->sortUnbilledRows($output, $request);
                     $outputArr = $output;
                 }
                 else if ($reportTypeID == 'ULD') {
                     $output = $this->getUnbilledLogisticsDetailQRY($request);
+                    $output = $this->accountsPayableReportSortingService->sortUnbilledRows($output, $request);
                     $outputArr = $output;
 
                     $grandTotalArr['LogisticAmountRpt'] = array_sum(collect($output)->pluck('LogisticAmountRpt')->toArray());
@@ -2832,6 +2836,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 
         $reportSD = $request->reportSD;
         $reportTypeID = $request->reportTypeID;
+        $orderByClause = $this->accountsPayableReportSortingService->getApPaymentsByYearOrderByClause($request);
 
         if ($reportTypeID == 'APPSY') {
             if ($reportSD == 'detail') {
@@ -2908,7 +2913,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                     AND erp_generalledger.contraYN = 0
                                 ) AS MAINQUERY
                                 ) AS paymentsBySupplierSummary
-                                ORDER BY paymentsBySupplierSummary.documentRptAmount DESC');
+                                ' . $orderByClause . ';');
             } else {
                 $output = \DB::select('SELECT
                                 paymentsBySupplierSummary.companySystemID,
@@ -3014,7 +3019,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                 GROUP BY
                                 paymentsBySupplierSummary.companySystemID,
                                 paymentsBySupplierSummary.supplierCodeSystem
-                                ORDER BY Total DESC;');
+                                ' . $orderByClause . ';');
 
             }
         } else if ($reportTypeID == 'APDPY') {
@@ -3094,7 +3099,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                         AND erp_generalledger.documentTransAmount > 0 -- hard code this filter
                                         
                                         ) AS MAINQUERY 
-                                        ) AS directPaymentsSummary;');
+                                        ) AS directPaymentsSummary ' . $orderByClause . ';');
 
             } else {
 
@@ -3198,7 +3203,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                                         ) AS directPaymentsSummary 
                                     GROUP BY
                                     directPaymentsSummary.companySystemID,
-                                    directPaymentsSummary.chartOfAccountSystemID ORDER BY Total DESC;');
+                                    directPaymentsSummary.chartOfAccountSystemID
+                                    ' . $orderByClause . ';');
             }
         } else if ($reportTypeID == 'APAPY') {
 
@@ -3412,7 +3418,7 @@ class AccountsPayableReportAPIController extends AppBaseController
                                     directPaymentsSummary.chartOfAccountSystemID';
 
 
-            $finalQry = 'SELECT * FROM (' . $bySupplierQry . ' UNION ALL ' . $directQry . ') as main ORDER BY Total DESC';
+            $finalQry = 'SELECT * FROM (' . $bySupplierQry . ' UNION ALL ' . $directQry . ') as main ' . $orderByClause;
 
             $output = \DB::select($finalQry);
 
@@ -3465,7 +3471,7 @@ class AccountsPayableReportAPIController extends AppBaseController
 	                LEFT JOIN erp_bankaccount bankAct ON erp_paysupplierinvoicemaster.BPVAccount = bankAct.bankAccountAutoID
                     		WHERE 	erp_paysupplierinvoicemaster.companySystemID IN (' . join(',', $companyID) . ')
                     		AND  DATE_FORMAT(erp_paysupplierinvoicemaster.BPVdate,"%Y-%m-%d") BETWEEN "' . $fromDate . '" AND "' . $toDate . '" 
-                    		AND erp_paysupplierinvoicemaster.confirmedYN=1';
+            		AND erp_paysupplierinvoicemaster.confirmedYN=1 ' . $orderByClause;
             $output = \DB::select($qry);
         } else {
             $output = array();
@@ -3495,6 +3501,7 @@ class AccountsPayableReportAPIController extends AppBaseController
         $controlAccountsSystemID = collect($controlAccountsSystemIDs)->pluck('id')->toArray();
 
         $currency = $request->currencyID;
+        $orderByClause = $this->accountsPayableReportSortingService->getSupplierBalanceSummaryOrderByClause($request);
         $currencyQry = '';
         $invoiceAmountQry = '';
         $decimalPlaceQry = '';
@@ -3538,7 +3545,8 @@ class AccountsPayableReportAPIController extends AppBaseController
                     GROUP BY
                         erp_generalledger.companySystemID,
                         erp_generalledger.chartOfAccountSystemID,
-                        erp_generalledger.supplierCodeSystem;';
+                        erp_generalledger.supplierCodeSystem
+                    ' . $orderByClause . ';';
 
         return \DB::select($query);
     }
@@ -6832,6 +6840,8 @@ OR (
         }
 
 
+        $orderByClause = $this->accountsPayableReportSortingService->getInvoiceToPaymentOrderByClause($request);
+
         return \DB::select('SELECT
 	erp_generalledger.documentCode,
 	suppliermaster.supplierName,
@@ -6906,7 +6916,6 @@ WHERE
                                 AND erp_generalledger.companySystemID IN (' . join(',', $companyID) . ')
                                 AND erp_generalledger.supplierCodeSystem IN (' . join(',', $supplierSystemID) . ')
                                 AND DATE(erp_generalledger.documentDate) <= "' . $asOfDate . '"
-                            ORDER BY
-                                erp_generalledger.documentDate ASC');
+                            ' . $orderByClause . ';');
     }
 }
