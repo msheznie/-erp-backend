@@ -334,21 +334,7 @@ class CustomerInvoiceAPIController extends AppBaseController
 
     public function getApprovedCustomerInvoiceBalancesAPI(GetApprovedCustomerInvoiceBalancesAPIRequest $request)
     {
-        
         $input = $request->all();
-        $contentLength = intval(request()->header('content-length'));
-
-        $isKeyExists = true;
-        $requiredFilterKeys = ['invoice_code', 'invoice_type', 'customer_code', 'generated_from','page','per_page'];
-        foreach ($requiredFilterKeys as $key) {
-            if (array_key_exists($key, $input)) {
-                $isKeyExists = false;
-                break;
-            }
-        }
-        if ($isKeyExists) {
-            return $this->sendError("Invalid request body", 400);
-        }
 
         $response = $this->customerInvoiceBalanceAPIService->getApprovedBalances($input);
         if (! $response->isSuccess()) {
