@@ -25,32 +25,31 @@ class GetApprovedCustomerInvoiceBalancesAPIRequest extends FormRequest
         );
     }
 
-    // protected function prepareForValidation()
-    // {
-    //     $raw = $this->input('generated_from');
+    /**
+     * Reject syntactically invalid JSON when the client sends a non-empty body.
+     * Empty body (or whitespace-only) is allowed so the endpoint can run with only middleware-provided fields.
+     */
+    protected function prepareForValidation()
+    {
+        if (! $this->isJson()) {
+            return;
+        }
 
-    //     if ($raw === null || $raw === '') {
-    //         $this->merge(['generated_from' => null]);
-    //         return;
-    //     }
+        $raw = $this->getContent();
+        if (trim($raw) === '') {
+            return;
+        }
 
-    //     // generated_from MUST be an array when present
-    //     if (! is_array($raw)) {
-    //         return;
-    //     }
-
-    //     $normalized = [];
-    //     foreach ($raw as $v) {
-    //         if ($v === null || $v === '') {
-    //             continue;
-    //         }
-    //         $normalized[] = strtoupper(trim((string) $v));
-    //     }
-
-    //     $this->merge([
-    //         'generated_from' => $normalized === [] ? [] : array_values(array_unique($normalized)),
-    //     ]);
-    // }
+        json_decode($raw, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new HttpResponseException(
+                response()->json(
+                    ResponseUtil::makeError('Invalid request body', []),
+                    HttpResponse::HTTP_BAD_REQUEST
+                )
+            );
+        }
+    }
 
     public function rules()
     {
