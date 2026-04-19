@@ -184,7 +184,7 @@ class ExportReportToExcelService implements ExportToExcelInterface
             'title'=>$this->title,
             'excelFormat' => $this->excelFormat,
             'dataType' => $this->dataType,
-            'setColumnAutoSize' => $this->setColumnAutoSize
+            'setColumnAutoSize' => $this->setColumnAutoSize,
         );
 
 
