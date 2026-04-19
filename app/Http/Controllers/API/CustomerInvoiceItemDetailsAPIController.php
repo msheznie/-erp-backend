@@ -548,9 +548,9 @@ FROM
 	INNER JOIN erp_delivery_order ON dodetail.deliveryOrderID = erp_delivery_order.deliveryOrderID
 	LEFT JOIN ( SELECT erp_customerinvoiceitemdetails.customerItemDetailID,deliveryOrderDetailID, SUM( qtyIssuedDefaultMeasure ) AS invTakenQty FROM erp_customerinvoiceitemdetails GROUP BY customerItemDetailID, itemCodeSystem ) AS invdetails ON dodetail.deliveryOrderDetailID = invdetails.deliveryOrderDetailID 
 WHERE
-	dodetail.deliveryOrderID = ' . $id . ' 
+	dodetail.deliveryOrderID = ? 
 	AND fullyReceived != 2 
-	GROUP BY dodetail.deliveryOrderDetailID');
+	GROUP BY dodetail.deliveryOrderDetailID',[$id]);
 
         return $this->sendResponse($detail, trans('custom.delivery_order_details_retrieved_successfully'));
     }

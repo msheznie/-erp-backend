@@ -2641,10 +2641,10 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
                         FROM
                             erp_custinvoicedirectdet 
                         WHERE
-                            custInvoiceDirectID = $id
+                            custInvoiceDirectID = ?
                             GROUP BY performaMasterID ) erp_custinvoicedirectdet 	INNER JOIN performatemp ON erp_custinvoicedirectdet.performaMasterID = performatemp.performaInvoiceNo 
                             AND erp_custinvoicedirectdet.companyID = performatemp.companyID
-                            WHERE sumofsumofStandbyAmount <> 0 	ORDER BY sortOrder ASC ");
+                            WHERE sumofsumofStandbyAmount <> 0 	ORDER BY sortOrder ASC ",[$id]);
         }
         $customerInvoice->is_po_in_line = false;
         $customerInvoice->isProjectBase = $isProjectBase;
@@ -3505,7 +3505,7 @@ class CustomerInvoiceDirectAPIController extends AppBaseController
 
     public function getProformaInvoiceDetailDataForProductServiceContract($id, $companyID)
     {
-        $invoiceDetails = DB::select("SELECT ClientRef, OurRef, SUM(qty) as qty, rate, SUM( qty * rate ) AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.pl3, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = $id GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = '$companyID' AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate ORDER BY  t.mitID ASC");
+        $invoiceDetails = DB::select("SELECT ClientRef, OurRef, SUM(qty) as qty, rate, SUM( qty * rate ) AS amount,assetDescription FROM ( SELECT freebilling.ContractDetailID, billProcessNo, assetDescription, freebilling.qtyServiceProduct AS qty, IFNULL( standardRate, 0 ) + IFNULL( operationRate, 0 ) AS rate, freebilling.performaInvoiceNo, freebilling.pl3, freebilling.TicketNo, freebilling.companyID,freebilling.mitID FROM ( SELECT performaMasterID FROM `erp_custinvoicedirectdet` WHERE `custInvoiceDirectID` = ? GROUP BY performaMasterID ) t INNER JOIN freebilling ON freebilling.companyID = ? AND freebilling.performaInvoiceNo = t.performaMasterID INNER JOIN ticketmaster ON freebilling.TicketNo = ticketmaster.ticketidAtuto LEFT JOIN rigmaster on ticketmaster.regName = rigmaster.idrigmaster ) t LEFT JOIN contractdetails ON contractdetails.ContractDetailID = t.ContractDetailID GROUP BY t.ContractDetailID, rate ORDER BY  t.mitID ASC",[$id,$companyID]);
 
         return $invoiceDetails;
     }
@@ -3538,7 +3538,7 @@ FROM
     AND freebilling.ContractDetailID = contractdetails.ContractDetailID 
     AND freebilling.AssetUnitID = contractdetailsassets.assetUnitID 
 WHERE
-    erp_custinvoicedirectdet.custInvoiceDirectID = $id 
+    erp_custinvoicedirectdet.custInvoiceDirectID = ?
 GROUP BY
     contractdetails.ContractDetailID,
     contractdetailsassets.assetUnitID UNION
@@ -3566,7 +3566,7 @@ FROM
     #AND contractdetails.CompanyID = freebillingmasterperforma.companyID
     LEFT JOIN mubbadrahop.otherscharges ON mubbadrahop.otherscharges.BillProcessNO = freebillingmasterperforma.billProcessNo 
 WHERE
-    erp_custinvoicedirectdet.custInvoiceDirectID = $id  
+    erp_custinvoicedirectdet.custInvoiceDirectID = ?  
 GROUP BY
     mubbadrahop.otherscharges.Description UNION
 SELECT
@@ -3590,7 +3590,7 @@ FROM
     INNER JOIN mubbadrahop.fishingengineerscharges ON mubbadrahop.fishingengineerscharges.feContractDetailID = contractdetails.ContractDetailID 
     AND mubbadrahop.fishingengineerscharges.feContractID = erp_custinvoicedirectdet.clientContractID 
 WHERE
-    erp_custinvoicedirectdet.custInvoiceDirectID = $id  
+    erp_custinvoicedirectdet.custInvoiceDirectID = ?  
 GROUP BY
     mubbadrahop.fishingengineerscharges.feContractDetailID,
     mubbadrahop.fishingengineerscharges.feDateFrom UNION
@@ -3617,7 +3617,7 @@ FROM
     LEFT JOIN mubbadrahop.mittrasportationbilling ON mubbadrahop.mittrasportationbilling.BillProcessNO = freebilling.billProcessNo
     LEFT JOIN mitmaster ON mitmaster.mitReturnMasterID = mubbadrahop.mittrasportationbilling.mitID 
 WHERE
-    erp_custinvoicedirectdet.custInvoiceDirectID = $id  
+    erp_custinvoicedirectdet.custInvoiceDirectID = ? 
     AND mitmaster.mitReturnMasterID>0
 GROUP BY
     mubbadrahop.mittrasportationbilling.mitID UNION
@@ -3644,7 +3644,7 @@ FROM
     LEFT JOIN mubbadrahop.mottrasportationbilling ON mubbadrahop.mottrasportationbilling.BillProcessNO = freebilling.billProcessNo
     LEFT JOIN motmaster ON motmaster.motID = mubbadrahop.mottrasportationbilling.motID 
 WHERE
-    erp_custinvoicedirectdet.custInvoiceDirectID = $id  
+    erp_custinvoicedirectdet.custInvoiceDirectID = ? 
     AND motmaster.motID>0
 GROUP BY
     mubbadrahop.mottrasportationbilling.motID UNION
@@ -3683,11 +3683,11 @@ FROM
     ) AS billingusagecharges ON billingusagecharges.billProcessNo = freebillingmasterperforma.BillProcessNO 
     AND billingusagecharges.companyID = freebillingmasterperforma.companyID 
 WHERE
-    erp_custinvoicedirectdet.custInvoiceDirectID = $id  
+    erp_custinvoicedirectdet.custInvoiceDirectID = ? 
 GROUP BY
     erp_custinvoicedirectdet.custInvoiceDirectID,
     erp_custinvoicedirectdet.performaMasterID,
-    billingusagecharges.usageRateTypeId");
+    billingusagecharges.usageRateTypeId",array_fill(0,6,$id));
 
         return $output;
     }

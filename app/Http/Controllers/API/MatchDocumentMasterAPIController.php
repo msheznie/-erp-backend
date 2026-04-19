@@ -3249,6 +3249,8 @@ class MatchDocumentMasterAPIController extends AppBaseController
         if (!isset($input['BPVsupplierID'])) {
             return $this->sendError(trans('custom.please_select_customer'));
         }
+        $id = $input['BPVsupplierID'];
+        $companyID = $input['companySystemID'];
 
         $invoiceMaster = [];
 
@@ -3303,10 +3305,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                            AND erp_customerreceivepayment.companySystemID = advd.companySystemID
                                         )
                                         WHERE
-                                           erp_custreceivepaymentdet.companySystemID = " . $input['companySystemID'] . "
+                                           erp_custreceivepaymentdet.companySystemID = ?
                                         AND erp_custreceivepaymentdet.bookingInvCode = '0'
                                         AND erp_customerreceivepayment.approved = -1
-                                        AND customerID = " . $input['BPVsupplierID'] . "
+                                        AND customerID = ?
                                         AND erp_customerreceivepayment.matchInvoice < 2
                                         GROUP BY
                                            erp_custreceivepaymentdet.custReceivePaymentAutoID,
@@ -3319,7 +3321,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                                    BalanceAmt,
                                                    1
                                                ) > 0
-                                           )");
+                                           )",[$companyID,$id]);
         } 
         elseif ($input['matchType'] == 2) {
             $invoiceMaster = DB::select("SELECT
@@ -3415,10 +3417,10 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             AND erp_creditnote.type = 3
                                         )
                                         WHERE
-                                            erp_creditnote.companySystemID = " . $input['companySystemID'] . "
+                                            erp_creditnote.companySystemID = ?
                                         AND erp_creditnote.approved = - 1
                                         AND erp_creditnote.matchInvoice <> 2
-                                        AND erp_creditnote.customerID = " . $input['BPVsupplierID'] . "
+                                        AND erp_creditnote.customerID = ?
                                         GROUP BY
                                             erp_creditnotedetails.serviceLineSystemID,
                                             erp_creditnote.creditNoteAutoID,
@@ -3428,7 +3430,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                         HAVING
                                             (
                                                 ROUND(BalanceAmt, DecimalPlaces) > 0
-                                            ) ORDER BY erp_creditnote.creditNoteDate");
+                                            ) ORDER BY erp_creditnote.creditNoteDate",[$companyID,$id]);
         } else if ($input['matchType'] == 3) {
             $invoiceMaster = DB::select("SELECT *  FROM
                                         (SELECT
@@ -3466,7 +3468,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             COALESCE ( SUM( erp_matchdocumentmaster.matchingAmount ), 0 ) AS SumOfmatchingAmount 
                                         FROM
                                             erp_matchdocumentmaster 
-                                            where companySystemID = " . $input['companySystemID'] . " 
+                                            where companySystemID = ?
                                         GROUP BY
                                             erp_matchdocumentmaster.PayMasterAutoId,
                                             erp_matchdocumentmaster.documentSystemID,
@@ -3481,16 +3483,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                         FROM
                                             erp_pay_advance_receipt_details
                                         WHERE
-                                            companySystemID = " . $input['companySystemID'] . "
+                                            companySystemID = ?
                                         GROUP BY
                                             advanceReceiptAutoID,
                                             companySystemID
                                             ) AS payAdvance ON ( erp_customerreceivepayment.custReceivePaymentAutoID = payAdvance.advanceReceiptAutoID AND erp_customerreceivepayment.companySystemID = payAdvance.companySystemID )
                                         WHERE
-                                            erp_directreceiptdetails.companySystemID = " . $input['companySystemID'] . "
+                                            erp_directreceiptdetails.companySystemID = ?
                                             AND erp_customerreceivepayment.documentType = 15 
                                             AND erp_customerreceivepayment.approved = - 1 
-                                            AND customerID = " . $input['BPVsupplierID'] . "
+                                            AND customerID = ?
                                             AND erp_customerreceivepayment.matchInvoice < 2 
                                         GROUP BY
                                             erp_directreceiptdetails.serviceLineSystemID,
@@ -3538,7 +3540,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             COALESCE ( SUM( erp_matchdocumentmaster.matchingAmount ), 0 ) AS SumOfmatchingAmount 
                                         FROM
                                             erp_matchdocumentmaster 
-                                            where companySystemID = " . $input['companySystemID'] . "
+                                            where companySystemID = ?
                                         GROUP BY
                                             erp_matchdocumentmaster.PayMasterAutoId,
                                             erp_matchdocumentmaster.documentSystemID,
@@ -3553,16 +3555,16 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                         FROM
                                             erp_pay_advance_receipt_details
                                         WHERE
-                                            companySystemID = " . $input['companySystemID'] . "
+                                            companySystemID = ?
                                         GROUP BY
                                             advanceReceiptAutoID,
                                             companySystemID
                                             ) AS payAdvance ON ( erp_customerreceivepayment.custReceivePaymentAutoID = payAdvance.advanceReceiptAutoID AND erp_customerreceivepayment.companySystemID = payAdvance.companySystemID )
                                         WHERE
-                                            erp_advancereceiptdetails.companySystemID = " . $input['companySystemID'] . "
+                                            erp_advancereceiptdetails.companySystemID = ?
                                             AND erp_customerreceivepayment.documentType = 15 
                                             AND erp_customerreceivepayment.approved = - 1 
-                                            AND customerID = " . $input['BPVsupplierID'] . "
+                                            AND customerID = ?
                                             AND erp_customerreceivepayment.matchInvoice < 2 
                                         GROUP BY
                                             erp_advancereceiptdetails.custReceivePaymentAutoID,
@@ -3571,7 +3573,7 @@ class MatchDocumentMasterAPIController extends AppBaseController
                                             erp_advancereceiptdetails.companySystemID,
                                             erp_customerreceivepayment.customerID 
                                         HAVING
-                                            ( ROUND( BalanceAmt, 1 ) > 0 )) as final");
+                                            ( ROUND( BalanceAmt, 1 ) > 0 )) as final",[$companyID,$companyID,$companyID,$id,$companyID,$companyID,$companyID,$id]);
         }
 
         return $this->sendResponse($invoiceMaster, trans('custom.data_retrived_successfully'));

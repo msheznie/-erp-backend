@@ -396,8 +396,8 @@ class CreditNoteDetailsAPIController extends AppBaseController
         $customerID = $input['customerID'];
         $companySystemID = $input['companySystemID'];
 
-        $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE companySystemID = $companySystemID AND clientID = $customerID";
-        $contract = DB::select($qry);
+        $qry = "SELECT contractUID, ContractNumber FROM contractmaster WHERE companySystemID = ? AND clientID = ?";
+        $contract = DB::select($qry,[$companySystemID,$customerID]);
 
         return $this->sendResponse($contract, trans('custom.retrieve', ['attribute' => trans('custom.record')]));
     }
