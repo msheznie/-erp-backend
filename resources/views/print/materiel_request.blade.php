@@ -354,7 +354,7 @@
                             {{$item->uom_issuing->UnitShortCode}}
                         @endif
                     </td>
-                    <td style="text-align: right; padding-right:5px;">{{$item->quantityRequested}}</td>
+                    <td style="text-align: right; padding-right:5px;">{{!is_null($item->uom_issuing) && !is_null($item->uom_issuing->displayRoundOff) ? number_format($item->quantityRequested, $item->uom_issuing->displayRoundOff, '.', '') : number_format($item->quantityRequested, 5, '.', '')}}</td>
                     <td style="text-align: left; padding-left:5px;">
                         {{$item->comments}}
                     </td>
