@@ -94,6 +94,13 @@ class TenderNegotiation extends Model
             ->first();
     }
 
+    public static function getRoundsByTender($tenderId)
+    {
+        return self::where('srm_tender_master_id', $tenderId)
+            ->orderBy('version', 'asc')
+            ->get(['id', 'version']);
+    }
+
     public static function tenderBidNegotiationList($tenderId, $isNegotiation)
     {
         if($isNegotiation){

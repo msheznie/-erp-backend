@@ -3019,6 +3019,20 @@ class TenderMasterAPIController extends AppBaseController
 
             $results = TenderMaster::where('id', $id)->update($bid_sub_data, $id);
 
+            if ((int)$isNegotiation === 1) {
+                $latestNegotiation = TenderNegotiation::getTenderLatestNegotiations($id);
+                if ($latestNegotiation) {
+                    TenderConfirmationService::saveConfirmationDetails(
+                        (int) $id,
+                        (int) $latestNegotiation->id,
+                        TenderConfirmationDetail::MODULE_BID_OPENING_APPROVAL,
+                        null,
+                        $comments,
+                        null
+                    );
+                }
+            }
+
             DB::commit();
             return ['success' => true, 'message' => 'Successfully updated', 'data' => $results];
         } catch (\Exception $e) {

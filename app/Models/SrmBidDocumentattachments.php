@@ -136,6 +136,9 @@ class SrmBidDocumentattachments extends Model
         'documentSystemID',
         'documentID',
         'documentSystemCode',
+        'negotiation_id',
+        'negotiation_code',
+        'round_no',
         'attachmentDescription',
         'originalFileName',
         'myFileName',
@@ -157,6 +160,8 @@ class SrmBidDocumentattachments extends Model
         'documentSystemID' => 'integer',
         'documentID' => 'integer',
         'documentSystemCode' => 'integer',
+        'negotiation_id' => 'integer',
+        'round_no' => 'integer',
         'attachmentDescription' => 'string',
         'originalFileName' => 'string',
         'myFileName' => 'string',
@@ -178,5 +183,53 @@ class SrmBidDocumentattachments extends Model
         'documentSystemCode' => 'required'
     ];
 
-    
+    public static function getOriginalByContext(int $companySystemId, int $documentSystemId, int $tenderId, int $type)
+    {
+        return self::where('companySystemID', $companySystemId)
+            ->where('documentSystemID', $documentSystemId)
+            ->where('documentSystemCode', $tenderId)
+            ->where('type', $type)
+            ->whereNull('round_no')
+            ->orderByDesc('id')
+            ->first();
+    }
+
+    public static function getOriginalByContextAll(int $companySystemId, int $documentSystemId, int $tenderId, int $type)
+    {
+        return self::where('companySystemID', $companySystemId)
+            ->where('documentSystemID', $documentSystemId)
+            ->where('documentSystemCode', $tenderId)
+            ->where('type', $type)
+            ->whereNull('round_no')
+            ->orderBy('id', 'asc')
+            ->get();
+    }
+
+    public static function getLatestAttachmentByRounds(int $companySystemId, int $documentSystemId, int $tenderId, int $type)
+    {
+        return self::where('companySystemID', $companySystemId)
+            ->where('documentSystemID', $documentSystemId)
+            ->where('documentSystemCode', $tenderId)
+            ->where('type', $type)
+            ->whereNotNull('round_no')
+            ->orderBy('id', 'desc')
+            ->get()
+            ->groupBy('round_no')
+            ->map(function ($rows) {
+                return $rows->first();
+            });
+    }
+
+    public static function getAttachmentsByRounds(int $companySystemId, int $documentSystemId, int $tenderId, int $type)
+    {
+        return self::where('companySystemID', $companySystemId)
+            ->where('documentSystemID', $documentSystemId)
+            ->where('documentSystemCode', $tenderId)
+            ->where('type', $type)
+            ->whereNotNull('round_no')
+            ->orderBy('round_no', 'asc')
+            ->orderBy('id', 'asc')
+            ->get()
+            ->groupBy('round_no');
+    }
 }
