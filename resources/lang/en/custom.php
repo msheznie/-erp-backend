@@ -10132,5 +10132,7 @@ return
     'no_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'No active Type-based approval setup found for this Payment Voucher Type',
     'multiple_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'Multiple active Type-based approval setups found for this Payment Voucher Type. Please contact system administrator.',
     'approval_level_exists' => 'Approval level exists',
-    'approval_level_does_not_exist' => 'Approval level does not exist'
+    'approval_level_does_not_exist' => 'Approval level does not exist',
+    'type_based_approval_level_already_exists' => 'Type-based approval level already exists',
+    'common_approval_level_already_exists' => 'Common approval level already exists'
 ];
