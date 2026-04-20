@@ -2496,7 +2496,11 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
     public function getInvoiceMasterFormData(Request $request)
     {
-        $companyId = $request['companyId'];
+        $request->validate([
+            'companyId' => 'required|integer',
+        ]);
+        
+        $companyId = (int) $request->input('companyId');
         
         /** Yes and No Selection */
         $yesNoSelection = YesNoSelection::all();
@@ -2506,7 +2510,7 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $month = Months::all();
 
-        $taxMaster = DB::select('SELECT * FROM erp_taxmaster WHERE taxType = 2 AND companySystemID = ' . $companyId . '');
+        $taxMaster = TaxMaster::where('taxType', 2)->where('companySystemID', $companyId)->get();
 
         $years = BookInvSuppMaster::select(DB::raw("YEAR(createdDateAndTime) as year"))
             ->whereNotNull('createdDateAndTime')
@@ -3451,8 +3455,12 @@ class BookInvSuppMasterAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $companySystemID = $input['companySystemID'];
-        $bookingSuppMasInvAutoID = $input['bookingSuppMasInvAutoID'];
+        $validated = $request->validate([
+            'companySystemID' => 'required|integer',
+            'bookingSuppMasInvAutoID' => 'required|integer',
+        ]);
+        $companySystemID = (int) $validated['companySystemID'];
+        $bookingSuppMasInvAutoID = (int) $validated['bookingSuppMasInvAutoID'];
 
         $detail = DB::select('SELECT
 	erp_paysupplierinvoicedetail.payDetailAutoID,
@@ -3508,7 +3516,12 @@ FROM
 LEFT JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
 LEFT JOIN suppliermaster ON erp_paysupplierinvoicedetail.supplierCodeSystem = suppliermaster.supplierCodeSystem
 LEFT JOIN currencymaster ON erp_paysupplierinvoicedetail.supplierTransCurrencyID = currencymaster.currencyID
-LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID  WHERE bookingInvSystemCode = ' . $bookingSuppMasInvAutoID . ' AND erp_paysupplierinvoicedetail.addedDocumentSystemID = 11 AND erp_paysupplierinvoicedetail.companySystemID = ' . $companySystemID . ' ');
+LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID  
+WHERE bookingInvSystemCode = ?
+AND erp_paysupplierinvoicedetail.addedDocumentSystemID = 11
+AND erp_paysupplierinvoicedetail.companySystemID = ?',
+[$bookingSuppMasInvAutoID, $companySystemID]
+);
 
         return $this->sendResponse($detail, trans('custom.payment_status_retrieved_successfully'));
     }
@@ -3616,9 +3629,14 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
     {
         $input = $request->all();
 
-        $taxMasterAutoID = $input['taxMasterAutoID'];
+        $validated = $request->validate([
+            'taxMasterAutoID' => 'required|integer',
+        ]);
+        $taxMasterAutoID = (int) $validated['taxMasterAutoID'];
 
-        $taxMaster = DB::select('SELECT taxPercent FROM erp_taxmaster WHERE taxMasterAutoID = ' . $taxMasterAutoID . '');
+        $taxMaster = TaxMaster::select('taxPercent')
+            ->where('taxMasterAutoID', $taxMasterAutoID)
+            ->get();
 
         return $this->sendResponse($taxMaster, trans('custom.data_retrieved_successfully'));
     }

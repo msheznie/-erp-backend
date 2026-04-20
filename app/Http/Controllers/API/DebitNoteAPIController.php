@@ -2301,8 +2301,12 @@ class DebitNoteAPIController extends AppBaseController
     {
         $input = $request->all();
 
-        $companySystemID = $input['companySystemID'];
-        $debitNoteAutoID = $input['debitNoteAutoID'];
+        $validated = $request->validate([
+            'companySystemID' => 'required|integer',
+            'debitNoteAutoID' => 'required|integer',
+        ]);
+        $companySystemID = (int) $validated['companySystemID'];
+        $debitNoteAutoID = (int) $validated['debitNoteAutoID'];
 
         $debitNoteMaster = DebitNote::find($debitNoteAutoID);
         if (empty($debitNoteMaster)) {
@@ -2335,10 +2339,9 @@ FROM
 INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicedetail.PayMasterAutoId = erp_paysupplierinvoicemaster.PayMasterAutoId
 LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID = erp_matchdocumentmaster.matchDocumentMasterAutoID
 INNER JOIN currencymaster ON erp_paysupplierinvoicedetail.supplierTransCurrencyID = currencymaster.currencyID
-WHERE
-	erp_paysupplierinvoicemaster.companySystemID = ' . $companySystemID . '
-AND erp_paysupplierinvoicedetail.addedDocumentSystemID = ' . $debitNoteMaster->documentSystemID . '
-AND erp_paysupplierinvoicedetail.bookingInvSystemCode = ' . $debitNoteAutoID . '
+WHERE erp_paysupplierinvoicemaster.companySystemID = ?
+          AND erp_paysupplierinvoicedetail.addedDocumentSystemID = ?
+          AND erp_paysupplierinvoicedetail.bookingInvSystemCode = ?
 UNION ALL
 	SELECT
 		erp_matchdocumentmaster.PayMasterAutoId,
@@ -2354,10 +2357,18 @@ UNION ALL
 	FROM
 		erp_matchdocumentmaster
 	INNER JOIN currencymaster ON erp_matchdocumentmaster.supplierTransCurrencyID = currencymaster.currencyID
-	WHERE
-		erp_matchdocumentmaster.PayMasterAutoId = ' . $debitNoteAutoID . '
-	AND erp_matchdocumentmaster.companySystemID = ' . $companySystemID . '
-	AND erp_matchdocumentmaster.documentSystemID = ' . $debitNoteMaster->documentSystemID . '');
+	 WHERE erp_matchdocumentmaster.PayMasterAutoId = ?
+          AND erp_matchdocumentmaster.companySystemID = ?
+          AND erp_matchdocumentmaster.documentSystemID = ?',
+        [
+            $companySystemID,
+            $debitNoteMaster->documentSystemID,
+            $debitNoteAutoID,
+            $debitNoteAutoID,
+            $companySystemID,
+            $debitNoteMaster->documentSystemID,
+        ]
+    );
 
         return $this->sendResponse($detail, trans('custom.payment_status_retrieved_successfully'));
     }
