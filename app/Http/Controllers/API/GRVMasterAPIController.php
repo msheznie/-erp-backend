@@ -1448,7 +1448,7 @@ class GRVMasterAPIController extends AppBaseController
                     $subQuery->where('approvalgroups.isReportingManager', 1)
                         ->where('erp_documentapproved.docConfirmedByEmpSystemID', $empID);
                 });
-            });
+            })->groupBy('erp_grvmaster.grvAutoID');
 
         $search = $request->input('search.value');
 
