@@ -10007,5 +10007,7 @@ return
     'no_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'لم يتم العثور على إعداد موافقة نشط قائم على النوع لهذا النوع من سندات الصرف',
     'multiple_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'تم العثور على أكثر من إعداد موافقة نشط قائم على النوع لهذا النوع من سندات الصرف. يرجى الاتصال بمدير النظام.',
     'approval_level_exists' => 'مستوى الإعتماد موجود بالفعل',
-    'approval_level_does_not_exist' => 'مستوى الإعتماد غير موجود'
+    'approval_level_does_not_exist' => 'مستوى الإعتماد غير موجود',
+    'type_based_approval_level_already_exists' => 'مستوى الإعتماد القائم على النوع موجود بالفعل',
+    'common_approval_level_already_exists' => 'مستوى الإعتماد العام موجود بالفعل'
 ];
