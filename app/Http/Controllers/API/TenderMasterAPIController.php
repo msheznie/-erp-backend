@@ -14,6 +14,8 @@ use App\Http\Requests\DeleteAttachmentAPIRequest;
 use App\Http\Requests\SRM\UpdateTenderCalendarDaysRequest;
 use App\Http\Requests\GetItemWiseLoiLoaRequest;
 use App\Http\Requests\GetLoiLoaEmailDataRequest;
+use App\Http\Requests\GetItemWiseAwardEmailDataRequest;
+use App\Http\Requests\ResendItemWiseAwardEmailRequest;
 use App\Http\Requests\SaveItemWiseLoiLoaEmailRequest;
 use App\Http\Requests\SendItemWiseLoiLoaEmailRequest;
 use App\Http\Requests\SendScheduleWiseLoiLoaEmailRequest;
@@ -5085,7 +5087,8 @@ class TenderMasterAPIController extends AppBaseController
         }
 
         try {
-            $result = $this->itemWiseAwardingService->sendAwardEmailToSupplier($tenderId, $supplierId);
+            $userId = $request->user()->id ?? null;
+            $result = $this->itemWiseAwardingService->sendAwardEmailToSupplier($tenderId, $supplierId, $userId);
             if (isset($result['success']) && $result['success'] === false) {
                 return $this->sendError($result['message'] ?? trans('srm_tender_rfx.tender_not_found'));
             }
@@ -5095,6 +5098,43 @@ class TenderMasterAPIController extends AppBaseController
                 $tender->document_system_id,
                 $supplierId
             );
+
+            return $this->sendResponse($result['data'] ?? ['success' => true], trans('srm_tender_rfx.item_wise_award_email_sent_successfully'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    public function getItemWiseAwardEmailData(GetItemWiseAwardEmailDataRequest $request)
+    {
+        try {
+            $result = $this->itemWiseAwardingService->getItemWiseAwardEmailData(
+                (int) $request->input('tender_id'),
+                (int) $request->input('supplier_id')
+            );
+            if (!$result['success']) {
+                return $this->sendError($result['message'] ?? trans('srm_tender_rfx.item_wise_email_history_not_available'));
+            }
+            return $this->sendResponse($result['data'] ?? $result, trans('srm_tender_rfx.success'));
+        } catch (\Exception $e) {
+            Log::error($this->failed($e));
+            return $this->sendError($e->getMessage());
+        }
+    }
+
+    public function resendItemWiseAwardEmail(ResendItemWiseAwardEmailRequest $request)
+    {
+        try {
+            $userId = $request->user()->id ?? null;
+            $result = $this->itemWiseAwardingService->resendAwardEmailToSupplier(
+                (int) $request->input('tender_id'),
+                (int) $request->input('supplier_id'),
+                $userId
+            );
+            if (!$result['success']) {
+                return $this->sendError($result['message'] ?? trans('srm_tender_rfx.item_wise_email_history_not_available'));
+            }
 
             return $this->sendResponse($result['data'] ?? ['success' => true], trans('srm_tender_rfx.item_wise_award_email_sent_successfully'));
         } catch (\Exception $e) {

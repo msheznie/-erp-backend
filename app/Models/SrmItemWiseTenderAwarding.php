@@ -31,6 +31,8 @@ class SrmItemWiseTenderAwarding extends Model
         'award',
         'is_awarded',
         'award_email_sent',
+        'award_email_date',
+        'award_email_sent_by',
         'loi_loa_email_sent',
         'is_negotiation',
         'created_by',
@@ -49,6 +51,8 @@ class SrmItemWiseTenderAwarding extends Model
         'award' => 'boolean',
         'is_awarded' => 'integer',
         'award_email_sent' => 'boolean',
+        'award_email_date' => 'datetime',
+        'award_email_sent_by' => 'integer',
         'loi_loa_email_sent' => 'boolean',
         'is_negotiation' => 'integer',
         'created_by' => 'integer',
@@ -147,9 +151,23 @@ class SrmItemWiseTenderAwarding extends Model
     /**
      * Mark award_email_sent = 1 for all rows of a supplier.
      */
-    public static function markAwardEmailSentForSupplier(int $tenderId, int $isNegotiation, int $supplierId): int
+    public static function markAwardEmailSentForSupplier(
+        int $tenderId,
+        int $isNegotiation,
+        int $supplierId,
+        $sentAt = null,
+        ?int $sentBy = null
+    ): int
     {
-        return self::getAwardedRowsForTender($tenderId, $isNegotiation, $supplierId)->update(['award_email_sent' => 1]);
+        $update = ['award_email_sent' => 1];
+        if ($sentAt !== null) {
+            $update['award_email_date'] = $sentAt;
+        }
+        if ($sentBy !== null) {
+            $update['award_email_sent_by'] = $sentBy;
+        }
+
+        return self::getAwardedRowsForTender($tenderId, $isNegotiation, $supplierId)->update($update);
     }
 
     /**

@@ -357,6 +357,7 @@ return [
     'item_wise_no_awarded_items_for_supplier' => 'لم يتم العثور على بنود مرسى عليها لهذا المورد.',
     'item_wise_supplier_not_found' => 'لم يتم العثور على المورد.',
     'item_wise_supplier_has_no_email' => 'لا يوجد عنوان بريد إلكتروني للمورد.',
+    'item_wise_email_history_not_available' => 'سجل البريد الإلكتروني غير متوفر.',
     'loa_loa_already_sent' => 'تم إرسال خطاب الاعتماد/النوايا لهذا المورد مسبقاً.',
     'company_is_required'=> 'مطلوب شركة',
     // Award / Regret email popup
