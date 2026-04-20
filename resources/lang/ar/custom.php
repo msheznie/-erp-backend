@@ -10006,4 +10006,5 @@ return
     'company_id_must_be_an_integer' => 'معرف الشركة يجب أن يكون رقمًا صحيحًا',
     'no_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'لم يتم العثور على إعداد موافقة نشط قائم على النوع لهذا النوع من سندات الصرف',
     'multiple_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'تم العثور على أكثر من إعداد موافقة نشط قائم على النوع لهذا النوع من سندات الصرف. يرجى الاتصال بمدير النظام.',
+    'credit_note_exchange_rates_updated_message' => 'تم تحديث أسعار الصرف كما يلي،<br><br>الأسعار السابقة سعر الصرف المحلي :local_er | سعر صرف التقارير :reporting_er<br><br>الأسعار الحالية سعر الصرف المحلي :current_local_er | سعر صرف التقارير :current_reporting_er<br><br>هل أنت متأكد من أنك تريد المتابعة؟',
 ];

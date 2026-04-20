@@ -10131,4 +10131,5 @@ return
     'company_id_must_be_an_integer' => 'Company ID must be an integer',
     'no_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'No active Type-based approval setup found for this Payment Voucher Type',
     'multiple_active_type_based_approval_setup_found_for_this_payment_voucher_type' => 'Multiple active Type-based approval setups found for this Payment Voucher Type. Please contact system administrator.',
+    'credit_note_exchange_rates_updated_message' => 'The exchange rates are updated as follows,<br><br>Previous rates Local ER :local_er | Reporting ER :reporting_er<br><br>Current rates Local ER :current_local_er | Reporting ER :current_reporting_er<br><br>Are you sure you want to proceed?',
 ];
