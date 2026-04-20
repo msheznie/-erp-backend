@@ -633,6 +633,7 @@ return
     'budget_addition_form_detail_retrieved_successfully' => 'Budget Addition Form Detail retrieved successfully',
     'budget_addition_form_detail_saved_successfully' => 'Budget Addition Form Detail saved successfully',
     'budget_addition_form_saved_successfully' => 'Budget Addition Form saved successfully',
+    'budget_addition_document_cannot_confirm_without_details' => 'At least one detail record is required before confirmation',
     'budget_addition_not_found' => 'Budget Addition not found',
     'budget_addition_reffered_back_not_found' => 'Budget Addition Reffered Back not found',
     'budget_addition_reffered_back_retrieved_successful' => 'Budget Addition Reffered Back retrieved successfully',

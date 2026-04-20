@@ -12,6 +12,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Requests\API\CreateAuditTrailAPIRequest;
+use App\Http\Requests\API\EmployeeActivityAuditReportAPIRequest;
 use App\Http\Requests\API\UpdateAuditTrailAPIRequest;
 use App\Models\AuditTrail;
 use App\Models\Tenant;
@@ -26,6 +27,7 @@ use App\Services\VictoriaLogsService;
 use App\Services\LokiService;
 use DataTables;
 use App\helper\CommonJobService;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use App\Traits\AuditLogsTrait;
 use App\Services\AuditLog\EmployeeAuditReportService;
@@ -49,11 +51,18 @@ class AuditTrailAPIController extends AppBaseController
     private $victoriaLogsService;
     private $lokiService;
 
-    public function __construct(AuditTrailRepository $auditTrailRepo, VictoriaLogsService $victoriaLogsService, LokiService $lokiService)
-    {
+    private EmployeeAuditReportService $employeeAuditReportService;
+
+    public function __construct(
+        AuditTrailRepository $auditTrailRepo,
+        VictoriaLogsService $victoriaLogsService,
+        LokiService $lokiService,
+        EmployeeAuditReportService $employeeAuditReportService
+    ) {
         $this->auditTrailRepository = $auditTrailRepo;
         $this->victoriaLogsService = $victoriaLogsService;
         $this->lokiService = $lokiService;
+        $this->employeeAuditReportService = $employeeAuditReportService;
     }
 
     /**
@@ -1007,225 +1016,81 @@ class AuditTrailAPIController extends AppBaseController
         return $result['data'] ?? [];
     }
 
-    public function employeeActivityAuditReport(Request $request, EmployeeAuditReportService $reportService)
-    {
-        $result = $this->fetchEmployeeActivityAuditData($request, $reportService);
-        
-        if (isset($result['error'])) {
-            return $result['error'];
-        }
-
-        return $this->sendResponse($result['data'], 'Filtered data fetched successfully');
-    }
-
-    /**
-     * Fetch and process employee activity audit data
-     * 
-     * @param Request $request
-     * @param EmployeeAuditReportService $reportService
-     * @return array Returns ['data' => [...]] on success or ['error' => Response] on validation error
-     */
-    private function fetchEmployeeActivityAuditData(Request $request, EmployeeAuditReportService $reportService): array
-    {
-        // Validate all required fields
-        $validator = \Validator::make($request->all(), [
-            'screensAccessed' => 'required|array|min:1',
-            'eventTypes' => 'required|array|min:1',
-            'employees' => 'required',
-            'fromDate' => 'required|date_format:Y-m-d H:i:s',
-            'toDate' => 'required|date_format:Y-m-d H:i:s',
-            'selectedColumns' => 'required|array|min:1',
-        ], [
-            'screensAccessed.required' => trans('custom.screens_accessed_required') ?: 'Screens accessed is required',
-            'screensAccessed.array' => trans('custom.screens_accessed_must_be_array') ?: 'Screens accessed must be an array',
-            'screensAccessed.min' => trans('custom.screens_accessed_min_one') ?: 'At least one screen must be selected',
-            'eventTypes.required' => trans('custom.event_types_required') ?: 'Event types is required',
-            'eventTypes.array' => trans('custom.event_types_must_be_array') ?: 'Event types must be an array',
-            'eventTypes.min' => trans('custom.event_types_min_one') ?: 'At least one event type must be selected',
-            'employees.required' => trans('custom.employees_required') ?: 'Employees is required',
-            'fromDate.required' => trans('custom.from_date_required') ?: 'From date is required',
-            'fromDate.date_format' => trans('custom.from_date_format') ?: 'From date must be in format Y-m-d H:i:s',
-            'toDate.required' => trans('custom.to_date_required') ?: 'To date is required',
-            'toDate.date_format' => trans('custom.to_date_format') ?: 'To date must be in format Y-m-d H:i:s',
-            'selectedColumns.required' => trans('custom.selected_columns_required') ?: 'Selected columns is required',
-            'selectedColumns.array' => trans('custom.selected_columns_must_be_array') ?: 'Selected columns must be an array',
-            'selectedColumns.min' => trans('custom.selected_columns_min_one') ?: 'At least one column must be selected'
-        ]);
-
-        if ($validator->fails()) {
-            return [
-                'error' => $this->sendError(
-                    trans('custom.validation_failed') ?: 'Validation failed',
-                    $validator->errors(),
-                    422
-                )
-            ];
-        }
-
-        // Parse and validate dates
-        try {
-            $fromDate = Carbon::parse($request->fromDate);
-            $toDate = Carbon::parse($request->toDate);
-        } catch (\Exception $e) {
-            return [
-                'error' => $this->sendError(
-                    trans('custom.invalid_date_format') ?: 'Invalid date format',
-                    ['error' => $e->getMessage()],
-                    422
-                )
-            ];
-        }
-
-        // Validate date range
-        if ($fromDate->gt($toDate)) {
-            return [
-                'error' => $this->sendError(
-                    trans('custom.from_date_cannot_be_greater_than_to_date') ?: 'From date cannot be greater than to date',
-                    [],
-                    422
-                )
-            ];
-        }
-
-        $input = $request->all();
-
-        $employeeIds = collect($input['employees'])->pluck('id')->toArray();
-        $screenAccessedIds = collect($input['screensAccessed'])->pluck('id')->toArray();
-        $eventTypeIds = collect($input['eventTypes'])->pluck('id')->toArray();
-
-        $authLogs = [];
-        $navLogs = [];
-        $auditLogs = [];
-
-        if (in_array('login', $eventTypeIds) || in_array('logout', $eventTypeIds) || in_array('login_failed', $eventTypeIds)) {
-            $params = [
-                'tenant_uuid' => $input['tenant_uuid'] ?? 'local',
-                'locale' => app()->getLocale() ?? 'en',
-                'fromDate' => $input['fromDate'] ?? null,
-                'toDate' => $input['toDate'] ?? null,
-                'employeeId' => count($employeeIds) > 1 ? null : $employeeIds[0],
-                'start' => $input['start'] ?? 0,
-                'length' => $input['length'] ?? 15,
-                'search' => $input['search'] ?? [],
-            ];
-
-            if (in_array('login', $eventTypeIds)) {
-                $params['event'] = 1;
-                $resultLoginLogs = $this->victoriaLogsService->getUserAuditLogs($params);
-            } else if (in_array('logout', $eventTypeIds)) {
-                $params['event'] = 2;
-                $resultLogoutLogs = $this->victoriaLogsService->getUserAuditLogs($params);
-            } else if (in_array('login_failed', $eventTypeIds)) {
-                $params['event'] = 3;
-                $resultLoginFailedLogs = $this->victoriaLogsService->getUserAuditLogs($params);
-            }
-
-            $authLogs = array_merge($resultLoginLogs['data'] ?? [], $resultLogoutLogs['data'] ?? [], $resultLoginFailedLogs['data'] ?? []);
-        }
-
-        if (in_array('navigation-read', $eventTypeIds) || in_array('navigation-create', $eventTypeIds) || in_array('navigation-edit', $eventTypeIds)) {
-        
-            $params = [
-                'tenant_uuid' => $input['tenant_uuid'] ?? 'local',
-                'locale' => app()->getLocale() ?? 'en',
-                'fromDate' => $input['fromDate'] ?? null,
-                'companyId' => $input['companyId'] ?? null,
-                'toDate' => $input['toDate'] ?? null,
-                'employeeId' => count($employeeIds) > 1 ? null : $employeeIds[0],
-                'start' => $input['start'] ?? 0,
-                'length' => $input['length'] ?? 15,
-                'search' => $input['search'] ?? [],
-            ];
-
-            if (in_array('navigation-read', $eventTypeIds)) {
-                $params['accessType'] = '1';
-                $resultNavigationReadLogs = $this->victoriaLogsService->getNavigationAccessLogs($params);
-            } else if (in_array('navigation-create', $eventTypeIds)) {
-                $params['accessType'] = '2';
-                $resultNavigationCreateLogs = $this->victoriaLogsService->getNavigationAccessLogs($params);
-            } else if (in_array('navigation-edit', $eventTypeIds)) {
-                $params['accessType'] = '3';
-                $resultNavigationEditLogs = $this->victoriaLogsService->getNavigationAccessLogs($params);
-            }
-
-            $navLogs = array_merge($resultNavigationReadLogs['data'] ?? [], $resultNavigationCreateLogs['data'] ?? [], $resultNavigationEditLogs['data'] ?? []);
-            
-        }
-
-        if (in_array('audit-create', $eventTypeIds) || in_array('audit-update', $eventTypeIds) || in_array('audit-delete', $eventTypeIds)) {
-            $params = [
-                'tenant_uuid' => $input['tenant_uuid'] ?? 'local',
-                'locale' => app()->getLocale() ?? 'en',
-                'companyId' => $input['companyId'] ?? null,
-                'start' => $input['start'] ?? 0,
-                'length' => $input['length'] ?? 15,
-                'search' => $input['search'] ?? [],
-                'isFromTracking' => true,
-                'fromDate' => $input['fromDate'] ?? null,
-                'toDate' => $input['toDate'] ?? null,
-                'employeeId' => count($employeeIds) > 1 ? null : $employeeIds[0],
-                'accessType' => $input['accessType'] ?? null,
-            ];
-            
-            if (in_array('audit-create', $eventTypeIds)) {
-                $params['action'] = '1';
-                $resultAuditCreateLogs = $this->victoriaLogsService->getAuditLogs($params);
-            } else if (in_array('audit-update', $eventTypeIds)) {
-                $params['action'] = '2';
-                $resultAuditUpdateLogs = $this->victoriaLogsService->getAuditLogs($params);
-            } else if (in_array('audit-delete', $eventTypeIds)) {
-                $params['action'] = '3';
-                $resultAuditDeleteLogs = $this->victoriaLogsService->getAuditLogs($params);
-            }
-
-            $auditLogs = array_merge($resultAuditCreateLogs['data'] ?? [], $resultAuditUpdateLogs['data'] ?? [], $resultAuditDeleteLogs['data'] ?? []);
-        }
-
-        $data = array_merge($authLogs, $navLogs, $auditLogs);
-
-        if (count($employeeIds) > 1) {
-            $data = array_filter($data, function($item) use ($employeeIds) {
-                return in_array($item['employeeId'] ?? $item['employee_id'] ?? null, $employeeIds);
-            });
-        }
-
-        // Map data to selected column format
-        $selectedColumns = $request->selectedColumns ?? [];
-        $mappedData = $reportService->mapToSelectedColumns($data, $selectedColumns);
-
-        // Sort by amendedDateTime descending
-        usort($mappedData, function($a, $b) {
-            $dateA = $a['amendedDateTime'] ?? $a['date_time'] ?? '';
-            $dateB = $b['amendedDateTime'] ?? $b['date_time'] ?? '';
-            return strcmp($dateB, $dateA); // Descending order
-        });
-
-        return ['data' => $mappedData];
-    }
-
-    public function exportEmployeeActivityAuditReport(Request $request)
+    public function employeeActivityAuditReport(EmployeeActivityAuditReportAPIRequest $request)
     {
         try {
-            $reportService = app(EmployeeAuditReportService::class);
-            $result = $this->fetchEmployeeActivityAuditData($request, $reportService);
-            
-            if (isset($result['error'])) {
-                return $result['error'];
+            $input = $request->validated();
+            $input['locale'] = app()->getLocale() ?: 'en';
+            if (empty($input['tenant_uuid'])) {
+                $input['tenant_uuid'] = $request->input('tenant_uuid', 'local');
             }
 
-            $mappedData = $result['data'];
+            $columns = $this->employeeAuditReportService->resolveColumns($input['columns'] ?? []);
+            $result = $this->employeeAuditReportService->getPaginatedUnifiedRows($input);
+            $locale = $input['locale'];
 
-            // Check if response has data
-            if (empty($mappedData)) {
+            $formatted = collect($result['rows'])->map(function (array $row) use ($locale) {
+                return $this->formatUnifiedEmployeeActivityRow($row, $locale);
+            })->values()->all();
+
+            return $this->sendResponse([
+                'data' => $formatted,
+                'recordsTotal' => $result['total'],
+                'recordsFiltered' => $result['total'],
+                'columns' => $columns,
+            ], trans('custom.retrieve', ['attribute' => trans('custom.record')]));
+        } catch (\Exception $exception) {
+            Log::error('Error in employeeActivityAuditReport', [
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
+
+            return $this->sendError($exception->getMessage());
+        }
+    }
+
+    public function exportEmployeeActivityAuditReport(EmployeeActivityAuditReportAPIRequest $request)
+    {
+        try {
+            $input = $request->validated();
+            $input['locale'] = app()->getLocale() ?: 'en';
+            if (empty($input['tenant_uuid'])) {
+                $input['tenant_uuid'] = $request->input('tenant_uuid', 'local');
+            }
+
+            $columns = $this->employeeAuditReportService->resolveColumns($input['columns'] ?? []);
+            $merged = $this->employeeAuditReportService->buildMergedRows($input);
+
+            if ($merged === []) {
                 return $this->sendError(trans('custom.no_employee_activity_logs_found'), 404);
             }
 
+            $locale = $input['locale'];
+            $formatted = collect($merged)->map(function (array $row) use ($locale) {
+                return $this->formatUnifiedEmployeeActivityRow($row, $locale);
+            })->all();
+
+            $data = collect($formatted)->map(function (array $row) use ($columns) {
+                return Arr::only($row, $columns);
+            })->all();
+
+            if (app()->getLocale() === 'ar') {
+                $data = collect($data)->map(function (array $row) {
+                    foreach (['amendedDateTime', 'loginTs', 'logoutTs'] as $k) {
+                        if (! empty($row[$k])) {
+                            $row[$k] = $this->convertDateTimeToRTL($row[$k]);
+                        }
+                    }
+
+                    return $row;
+                })->all();
+            }
+
             $reportData = [
-                'data' => $mappedData,
-                'companyName' => [],
-                'fromDate' => $request->fromDate ?? null,
-                'toDate' => $request->toDate ?? null,
-                'selectedColumns' => $request->selectedColumns ?? [],
+                'data' => $data,
+                'fromDate' => $input['fromDate'],
+                'toDate' => $input['toDate'],
+                'selectedColumns' => $columns,
             ];
 
             $fileName = trans('custom.employee_activity_audit_report');
@@ -1234,22 +1099,36 @@ class AuditTrailAPIController extends AppBaseController
             $isRtl = $lang === 'ar';
 
             return Excel::download(
-                new BladeViewExcelExport(
-                    'export_report.employee_activity_audit_report',
-                    $reportData,
-                    $fontFamily,
-                    $isRtl,
-                    null,
-                    2,
-                    3,
-                    10
-                ),
-                $fileName . '.xlsx'
+                new BladeViewExcelExport('export_report.employee_activity_audit_report', $reportData, $fontFamily, $isRtl),
+                $fileName.'.xlsx'
             );
+        } catch (\Exception $exception) {
+            Log::error('Error in exportEmployeeActivityAuditReport', [
+                'error' => $exception->getMessage(),
+                'trace' => $exception->getTraceAsString(),
+            ]);
 
-        } catch (\Exception $e) {
-            return $this->sendError($e->getMessage());
+            return $this->sendError($exception->getMessage());
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $row
+     * @return array<string, mixed>
+     */
+    private function formatUnifiedEmployeeActivityRow(array $row, string $locale): array
+    {
+        foreach (['amendedDateTime', 'loginTs', 'logoutTs'] as $key) {
+            if (! empty($row[$key])) {
+                $row[$key] = $this->formatDateTime($row[$key]);
+            }
+        }
+
+        if (! empty($row['navigationPath'])) {
+            $row['navigationPath'] = $this->convertNavigationPathArrows($row['navigationPath'], $locale);
+        }
+
+        return $row;
     }
 
     /**

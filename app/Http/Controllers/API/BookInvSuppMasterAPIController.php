@@ -388,6 +388,25 @@ class BookInvSuppMasterAPIController extends AppBaseController
             }
         }
 
+        if (in_array((int)$bookInvSuppMaster->documentType, [0, 2], true)) {
+            $poGrvDisplay = $this->getPoGrvDisplayValues($bookInvSuppMaster);
+            $currencyDecimal = optional($bookInvSuppMaster->transactioncurrency)->DecimalPlaces ?? 2;
+
+            $bookInvSuppMaster['poGrvDisplayRcmActivated'] = $poGrvDisplay['poGrvDisplayRcmActivated'];
+            $bookInvSuppMaster['poGrvVatBase'] = $poGrvDisplay['poGrvVatBase'];
+            $bookInvSuppMaster['poGrvRetentionVatPortion'] = $poGrvDisplay['poGrvRetentionVatPortion'];
+            $bookInvSuppMaster['poGrvVatAfterRetention'] = round($poGrvDisplay['poGrvVatDisplay'], $currencyDecimal);
+            $bookInvSuppMaster['poGrvTotalExVat'] = round($poGrvDisplay['poGrvTotalDisplay'], $currencyDecimal);
+            $bookInvSuppMaster['poGrvNetTotalVatInclusive'] = round($poGrvDisplay['poGrvNetTotalDisplay'], $currencyDecimal);
+            $bookInvSuppMaster['poGrvTotalDisplay'] = $bookInvSuppMaster['poGrvTotalExVat'];
+            $bookInvSuppMaster['poGrvVatDisplay'] = $bookInvSuppMaster['poGrvVatAfterRetention'];
+            $bookInvSuppMaster['poGrvNetTotalDisplay'] = $bookInvSuppMaster['poGrvNetTotalVatInclusive'];
+
+            // Backward-compatible fields for edit screen.
+            $bookInvSuppMaster['rcmActivated'] = $poGrvDisplay['poGrvDisplayRcmActivated'];
+            $bookInvSuppMaster['vatAmountAfterRetention'] = $bookInvSuppMaster['poGrvVatAfterRetention'];
+        }
+
         return $this->sendResponse($bookInvSuppMaster->toArray(), trans('custom.supplier_invoice_retrieved_successfully'));
     }
 
@@ -2392,19 +2411,30 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $stdVatAmountTotal = 0;
         $totalVatAmount = 0;
+        $poGrvVatBase = 0;
+        $poGrvStdVatBase = 0;
+        $poGrvRetentionVatPortion = 0;
+        $poGrvTotalOrderAmount = 0;
+        $poGrvDisplayRcmActivated = 0;
+        $poGrvNetTotalDisplay = 0;
 
        switch ($output->documentType)
        {
+           case 0 :
+           case 2 :
+               $poGrvDisplay = $this->getPoGrvDisplayValues($output);
+               $poGrvDisplayRcmActivated = $poGrvDisplay['poGrvDisplayRcmActivated'];
+               $poGrvVatBase = $poGrvDisplay['poGrvVatBase'];
+               $poGrvRetentionVatPortion = $poGrvDisplay['poGrvRetentionVatPortion'];
+               $poGrvTotalOrderAmount = $poGrvDisplay['poGrvTotalDisplay'];
+               $poGrvNetTotalDisplay = $poGrvDisplay['poGrvNetTotalDisplay'];
+               $totalVatAmount = $poGrvVatBase;
+               $stdVatAmountTotal = $poGrvVatBase;
+               break;
            case 1 :
                $totalVatAmount = $output->directdetail->sum('VATAmount');
                $stdVatAmountTotal = $output->directdetail->filter(function ($item) {
-                   return optional($item->vat_sub_category)->subCatgeoryType == 1;
-               })->sum('VATAmount');
-               break;
-           case 2 :
-               $totalVatAmount = $output->detail->sum('VATAmount');
-               $stdVatAmountTotal = $output->detail->filter(function ($item) {
-                   return optional($item->vat_sub_category)->subCatgeoryType == 1;
+                    return optional($item->vat_sub_category)->subCatgeoryType == 1;
                })->sum('VATAmount');
                break;
            case 3 :
@@ -2440,6 +2470,26 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $output['isProjectBase'] = $isProjectBase;
         $output['vatAmountAfterRetention'] = round($vatAmount,$output->transactioncurrency->DecimalPlaces ?? 2);
+        $output['poGrvVatBase'] = $poGrvVatBase;
+        $poGrvVatDisplay = max(($poGrvVatBase - $poGrvRetentionVatPortion), 0);
+        $poGrvTotalDisplay = ($output->documentType == 0 || $output->documentType == 2)
+            ? $poGrvTotalOrderAmount
+            : (($poGrvDisplayRcmActivated == 1) ? $poGrvTotalOrderAmount : ($poGrvTotalOrderAmount - $poGrvVatBase));
+        if (!($output->documentType == 0 || $output->documentType == 2)) {
+            $poGrvNetTotalDisplay = ($poGrvDisplayRcmActivated == 1) ? $poGrvTotalDisplay : ($poGrvTotalDisplay + $poGrvVatDisplay);
+        }
+        $output['poGrvDisplayRcmActivated'] = $poGrvDisplayRcmActivated;
+        $output['poGrvVatAfterRetention'] = round($poGrvVatDisplay, $output->transactioncurrency->DecimalPlaces ?? 2);
+        $output['poGrvTotalExVat'] = round($poGrvTotalDisplay, $output->transactioncurrency->DecimalPlaces ?? 2);
+        $output['poGrvNetTotalVatInclusive'] = round($poGrvNetTotalDisplay, $output->transactioncurrency->DecimalPlaces ?? 2);
+        $output['poGrvTotalDisplay'] = $output['poGrvTotalExVat'];
+        $output['poGrvVatDisplay'] = $output['poGrvVatAfterRetention'];
+        $output['poGrvNetTotalDisplay'] = $output['poGrvNetTotalVatInclusive'];
+        if (in_array((int)$output->documentType, [0, 2], true)) {
+            // Backward-compatible edit payload mapping for existing UI bindings.
+            $output['rcmActivated'] = $poGrvDisplayRcmActivated;
+            $output['vatAmountAfterRetention'] = $output['poGrvVatAfterRetention'];
+        }
 
         return $this->sendResponse($output, trans('custom.data_retrieved_successfully'));
     }
@@ -2623,6 +2673,47 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         return \DataTables::eloquent($invMaster)
             ->addColumn('Actions', 'Actions', "Actions")
+            ->editColumn('vatAmount', function ($row) {
+                if (!in_array((int)$row->documentType, [0, 2], true)) {
+                    return $row->vatAmount;
+                }
+
+                $bookingSuppMasInvAutoID = (int)$row->bookingSuppMasInvAutoID;
+
+                $masterData = BookInvSuppMaster::select('retentionPercentage', 'vatRegisteredYN', 'rcmActivated', 'whtApplicable')
+                    ->where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+                    ->first();
+                if (empty($masterData)) {
+                    return 0;
+                }
+
+                $poVatBase = 0;
+                $stdVatTot = 0;
+
+                $detailRows = BookInvSuppDet::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)->get();
+                foreach ($detailRows as $detailRow) {
+                    $poVatBase += $detailRow->getSupplierInvoiceItemDetailsVATAmountSum();
+                    $stdVatTot += $detailRow->getVATAmountSumWithoutExemptVAT();
+                }
+
+                $stdVatTot += DirectInvoiceDetails::where('directInvoiceAutoID', $bookingSuppMasInvAutoID)
+                    ->whereHas('vat_sub_category', function ($query) {
+                        $query->where('subCatgeoryType', 1);
+                    })
+                    ->sum('VATAmount');
+
+                $retentionVatPortion = 0;
+                if (
+                    ($masterData->retentionPercentage > 0) &&
+                    ($masterData->vatRegisteredYN == 1) &&
+                    ($masterData->rcmActivated == 0) &&
+                    ($masterData->whtApplicable == 0)
+                ) {
+                    $retentionVatPortion = ($stdVatTot * $masterData->retentionPercentage) / 100;
+                }
+
+                return max(($poVatBase - $retentionVatPortion), 0);
+            })
             ->order(function ($query) use ($input) {
                 if (request()->has('order')) {
                     if ($input['order'][0]['column'] == 0) {
@@ -3174,9 +3265,14 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
         $directItemNetTotalLocal = 0;
         $directItemNetTotalTrans = 0;
+        $poGrvDisplayRcmActivated = 0;
 
         if ($bookInvSuppMasterRecord->documentType == 3) {
             $grvTotTra = SupplierInvoiceDirectItem::selectRaw('SUM(netAmount + (VATAmount * noQty)) as total')->where('bookingSuppMasInvAutoID', $id)->first()->total;
+        }
+        $poGrvDisplay = $this->getPoGrvDisplayValues($bookInvSuppMasterRecord);
+        if ($bookInvSuppMasterRecord->documentType == 0 || $bookInvSuppMasterRecord->documentType == 2) {
+            $poGrvDisplayRcmActivated = $poGrvDisplay['poGrvDisplayRcmActivated'];
         }
 
         $isProjectBase = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
@@ -3190,13 +3286,17 @@ class BookInvSuppMasterAPIController extends AppBaseController
             if (
                 ($bookInvSuppMasterRecord->retentionPercentage > 0) &&
                 ($bookInvSuppMasterRecord->vatRegisteredYN == 1) &&
-                ($bookInvSuppMasterRecord->rcmActivated == 0) &&
+                ($poGrvDisplayRcmActivated == 0) &&
                 ($bookInvSuppMasterRecord->whtApplicable == 0)
             ) {
                 foreach ($bookInvSuppMasterRecord->directdetail as $data) {
                     if ($data->vat_sub_category && $data->vat_sub_category->subCatgeoryType == 1) {
                         $stdVatTot += $data->VATAmount;
                     }
+                }
+
+                foreach ($bookInvSuppMasterRecord->detail as $data) {
+                    $stdVatTot += $data->getVATAmountSumWithoutExemptVAT();
                 }
 
                 foreach ($bookInvSuppMasterRecord->item_details as $data) {
@@ -3207,6 +3307,19 @@ class BookInvSuppMasterAPIController extends AppBaseController
 
                 $retentionVatPortion = ($stdVatTot * $bookInvSuppMasterRecord->retentionPercentage) / 100;
             }
+        }
+
+        if ($bookInvSuppMasterRecord->documentType == 0 || $bookInvSuppMasterRecord->documentType == 2) {
+            $poGrvVatBase = $poGrvDisplay['poGrvVatBase'];
+            $retentionVatPortion = $poGrvDisplay['poGrvRetentionVatPortion'];
+            $poGrvVatAfterRetention = $poGrvDisplay['poGrvVatDisplay'];
+            $poGrvTotalExVat = $poGrvDisplay['poGrvTotalDisplay'];
+            $poGrvNetTotalVatInclusive = $poGrvDisplay['poGrvNetTotalDisplay'];
+        } else {
+            $poGrvVatBase = 0;
+            $poGrvVatAfterRetention = 0;
+            $poGrvTotalExVat = 0;
+            $poGrvNetTotalVatInclusive = 0;
         }
 
         $order = array(
@@ -3225,6 +3338,13 @@ class BookInvSuppMasterAPIController extends AppBaseController
             'isProjectBase' => $isProjectBase,
             'grvTotRpt' => $grvTotRpt,
             'retentionVatPortion' => $retentionVatPortion,
+            'poGrvVatAfterRetention' => $poGrvVatAfterRetention,
+            'poGrvTotalExVat' => $poGrvTotalExVat,
+            'poGrvNetTotalVatInclusive' => $poGrvNetTotalVatInclusive,
+            'poGrvDisplayRcmActivated' => $poGrvDisplayRcmActivated,
+            'poGrvTotalDisplay' => $poGrvTotalExVat,
+            'poGrvVatDisplay' => $poGrvVatAfterRetention,
+            'poGrvNetTotalDisplay' => $poGrvNetTotalVatInclusive,
             'directAmountReport' => $directAmountReport,
             'lang' => $lang // Pass lang to view
         );
@@ -3786,6 +3906,63 @@ LEFT JOIN erp_matchdocumentmaster ON erp_paysupplierinvoicedetail.matchingDocID 
         
         SupplierInvoiceCreation::dispatch($input, $db, $request->api_external_key, $request->api_external_url, $authorization, $externalReference, $tenantUuid);
         return $this->sendResponse(array('externalReference' => $externalReference),"Supplier invoice creation is sent to queue!");
+    }
+
+    private function getPoGrvDisplayValues(BookInvSuppMaster $masterData): array
+    {
+        $invoiceId = $masterData->bookingSuppMasInvAutoID;
+        $poGrvDisplayRcmActivated = BookInvSuppDet::resolveDisplayRcmActivatedFromPo($invoiceId);
+
+        $invoiceDetails = BookInvSuppDet::where('bookingSuppMasInvAutoID', $invoiceId)
+            ->with(['supplier_invoice_item_details.vat_sub_category'])
+            ->get();
+
+        $directDetails = DirectInvoiceDetails::where('directInvoiceAutoID', $invoiceId)
+            ->with(['vat_sub_category'])
+            ->get();
+
+        $poGrvInvoiceAmount = $invoiceDetails->sum('totTransactionAmount') + $directDetails->sum('DIAmount');
+
+        $poGrvVatBase = 0;
+        $poGrvStdVatBase = 0;
+        foreach ($invoiceDetails as $detail) {
+            foreach ($detail->supplier_invoice_item_details as $supplierItem) {
+                $itemVatAmount = (float) $supplierItem->VATAmount;
+                $poGrvVatBase += $itemVatAmount;
+
+                if (!(isset($supplierItem->vat_sub_category->subCatgeoryType) && (int)$supplierItem->vat_sub_category->subCatgeoryType === 3)) {
+                    $poGrvStdVatBase += $itemVatAmount;
+                }
+            }
+        }
+
+        $poGrvStdVatBase += $directDetails->filter(function ($item) {
+            return isset($item->vat_sub_category->subCatgeoryType) && (int)$item->vat_sub_category->subCatgeoryType === 1;
+        })->sum('VATAmount');
+
+        $poGrvRetentionVatPortion = 0;
+        if (
+            ($masterData->retentionPercentage > 0) &&
+            ((int)$masterData->vatRegisteredYN === 1) &&
+            ((int)$poGrvDisplayRcmActivated === 0) &&
+            ((int)$masterData->whtApplicable === 0)
+        ) {
+            $poGrvRetentionVatPortion = ($poGrvStdVatBase * $masterData->retentionPercentage) / 100;
+        }
+
+        $poGrvVatDisplay = max(($poGrvVatBase - $poGrvRetentionVatPortion), 0);
+        $poGrvTotalDisplay = ((int)$poGrvDisplayRcmActivated === 1) ? $poGrvInvoiceAmount : ($poGrvInvoiceAmount - $poGrvVatBase);
+        $poGrvNetTotalDisplay = ((int)$poGrvDisplayRcmActivated === 1) ? $poGrvTotalDisplay : ($poGrvTotalDisplay + $poGrvVatDisplay);
+
+        return [
+            'poGrvDisplayRcmActivated' => (int)$poGrvDisplayRcmActivated,
+            'poGrvVatBase' => $poGrvVatBase,
+            'poGrvRetentionVatPortion' => $poGrvRetentionVatPortion,
+            'poGrvVatDisplay' => $poGrvVatDisplay,
+            'poGrvTotalDisplay' => $poGrvTotalDisplay,
+            'poGrvNetTotalDisplay' => $poGrvNetTotalDisplay,
+            'poGrvInvoiceAmount' => $poGrvInvoiceAmount,
+        ];
     }
 
     private function checkMolApplicable($bookInvSuppMaster)

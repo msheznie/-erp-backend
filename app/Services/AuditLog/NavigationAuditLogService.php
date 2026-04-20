@@ -28,6 +28,7 @@ class NavigationAuditLogService
         $accessType = $parameters['accessType'];
         $company = $parameters['company'] ?? '-';
         $companyID = $parameters['companyID'] ?? null;
+        $navigationMenuID = $parameters['navigationMenuID'] ?? null;
         $requestData = $parameters['request'];
         $tenantUuid = $parameters['tenantUuid'] ?? 'local';
 
@@ -40,6 +41,7 @@ class NavigationAuditLogService
             'accessType' => $accessType,
             'company' => $company,
             'companyID' => $companyID,
+            'navigationMenuID' => $navigationMenuID,
             'date_time' => date('Y-m-d H:i:s'),
             'module' => 'finance',
             'tenant_uuid' => $tenantUuid,
@@ -162,6 +164,7 @@ class NavigationAuditLogService
                 'accessType' => $accessType,
                 'company' => $company ? $company->CompanyID . ' - ' . $company->CompanyName : '-',
                 'companyID' => $companyID,
+                'navigationMenuID' => $navigationMenuID,
                 'request' => $requestData,
                 'tenantUuid' => $requestData['tenant_uuid'] ?? 'local'
             ];

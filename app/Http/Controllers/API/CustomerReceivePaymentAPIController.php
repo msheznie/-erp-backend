@@ -2388,6 +2388,16 @@ class CustomerReceivePaymentAPIController extends AppBaseController
         $input = $request->all();
         /*companySystemID*/
         $companySystemID = isset($input['companyId']) ? $input['companyId'] : 0;
+        $isGroup = Helper::checkIsCompanyGroup($companySystemID);
+        if ($isGroup) {
+            $subCompanies = Helper::getGroupCompany($companySystemID);
+        } else {
+            $subCompanies = [$companySystemID];
+        }
+        if (empty($subCompanies)) {
+            $subCompanies = [$companySystemID];
+        }
+
         $type = $input['type']; /*value ['filter','create','getCurrency']*/
         $advaceReceipt  = array('value' => 15, 'label' => trans('custom.advance_receipt'));
 
@@ -2412,7 +2422,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $output['paymentType'] = PaymentType::all();
                 $output['projects'] = ErpProjectMaster::where('companySystemID', $companySystemID)
                     ->get();
-                $output['payee'] = Employee::select(DB::raw("employeeSystemID,CONCAT(empID, ' | ' ,empName) as employeeName"))->where('empCompanySystemID', $companySystemID)->where('discharegedYN', '<>', 2)->get();
+                $output['payee'] = Employee::select(DB::raw("employeeSystemID,CONCAT(empID, ' | ' ,empName) as employeeName"))->whereIn('empCompanySystemID', $subCompanies)->where('discharegedYN', '<>', 2)->get();
                 $output['customer'] = CustomerAssigned::select(DB::raw("customerCodeSystem,CONCAT(CutomerCode, ' | ' ,CustomerName) as CustomerName,vatEligible,vatPercentage"))
                     ->whereHas('customer_master',function($q){
                         $q->where('isCustomerActive',1);
@@ -2447,7 +2457,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 if(Helper::checkPolicy($companySystemID,49)){
                     array_push($output['invoiceType'], $advaceReceipt);
                 }
-                $output['payee'] = Employee::select(DB::raw("employeeSystemID,CONCAT(empID, ' | ' ,empName) as employeeName"))->where('empCompanySystemID', $companySystemID)->where('discharegedYN', '<>', 2)->get();
+                $output['payee'] = Employee::select(DB::raw("employeeSystemID,CONCAT(empID, ' | ' ,empName) as employeeName"))->whereIn('empCompanySystemID', $subCompanies)->where('discharegedYN', '<>', 2)->get();
 
                 $output['isProjectBase'] = CompanyPolicyMaster::where('companyPolicyCategoryID', 56)
                 ->where('companySystemID', $companySystemID)
@@ -2468,7 +2478,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 $master = CustomerReceivePayment::where('custReceivePaymentAutoID', $id)->first();
                 $output['company'] = Company::select('CompanyName', 'CompanyID','vatRegisteredYN')->where('companySystemID', $companySystemID)->first();
                 $output['expenseClaimType'] = ExpenseClaimType::all();
-                $output['payee'] = Employee::select(DB::raw("employeeSystemID,CONCAT(empID, ' | ' ,empName) as employeeName"))->where('empCompanySystemID', $companySystemID)->where('discharegedYN', '<>', 2)->get();
+                $output['payee'] = Employee::select(DB::raw("employeeSystemID,CONCAT(empID, ' | ' ,empName) as employeeName"))->whereIn('empCompanySystemID', $subCompanies)->where('discharegedYN', '<>', 2)->get();
 
 
                 if ($master->customerID != '') {

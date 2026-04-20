@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\CompanyDocumentAttachment;
+use App\Models\CompanyDepartmentEmployee;
 use App\Models\DocumentAccessEmployee;
 use App\Models\DocumentAccessRole;
 use App\Models\DocumentAccessRoleOwner;
@@ -85,6 +86,41 @@ class GrvRoleBasedAccessRepository
 
         return Employee::whereIn('employeeSystemID', $employeeIDs)
             ->where('discharegedYN', 0)
+            ->pluck('employeeSystemID')
+            ->toArray();
+    }
+
+    public function getHodDepartmentIDsForEmployeeFromCompanyDepartment(int $companySystemID, int $employeeSystemID): array
+    {
+        return CompanyDepartmentEmployee::query()
+            ->where('employeeSystemID', $employeeSystemID)
+            ->where('isHOD', 1)
+            ->where('isActive', 1)
+            ->whereHas('department', function ($query) use ($companySystemID) {
+                $query->where('companySystemID', $companySystemID)
+                    ->where('isActive', 1);
+            })
+            ->pluck('departmentSystemID')
+            ->toArray();
+    }
+
+    public function getActiveDepartmentEmployeeIDsFromCompanyDepartment(int $companySystemID, array $departmentIDs): array
+    {
+        if (empty($departmentIDs)) {
+            return [];
+        }
+
+        return CompanyDepartmentEmployee::query()
+            ->whereIn('departmentSystemID', $departmentIDs)
+            ->where('isActive', 1)
+            ->whereHas('department', function ($query) use ($companySystemID) {
+                $query->where('companySystemID', $companySystemID)
+                    ->where('isActive', 1);
+            })
+            ->whereHas('employee', function ($query) {
+                $query->where('discharegedYN', 0)
+                    ->where('empActive', 1);
+            })
             ->pluck('employeeSystemID')
             ->toArray();
     }

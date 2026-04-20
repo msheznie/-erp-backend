@@ -312,6 +312,42 @@ class BookInvSuppDet extends Model
         ->sum('VATAmount');
     }
 
+    /**
+     * Resolve RCM status for PO/GRV invoice display calculations from PO master.
+     * Fallback to invoice master RCM when PO data is missing/incomplete.
+     */
+    public static function resolveDisplayRcmActivatedFromPo($bookingSuppMasInvAutoID)
+    {
+        $details = self::where('bookingSuppMasInvAutoID', $bookingSuppMasInvAutoID)
+            ->with(['pomaster' => function ($query) {
+                $query->select('purchaseOrderID', 'rcmActivated');
+            }])
+            ->get();
+
+        if ($details->isNotEmpty()) {
+            foreach ($details as $detail) {
+                if (!empty($detail->pomaster) && (int)$detail->pomaster->rcmActivated === 1) {
+                    return 1;
+                }
+            }
+
+            $hasMappedPo = $details->contains(function ($detail) {
+                return !empty($detail->pomaster);
+            });
+
+            if ($hasMappedPo) {
+                return 0;
+            }
+        }
+
+        // Safe fallback for legacy/missing PO links.
+        $firstDetail = $details->first();
+        if (!empty($firstDetail)) {
+            return (int) $firstDetail->suppinvmaster()->value('rcmActivated');
+        }
+        return 0;
+    }
+
 
 
 }

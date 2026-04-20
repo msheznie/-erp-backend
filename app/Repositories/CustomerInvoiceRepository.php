@@ -120,15 +120,7 @@ class CustomerInvoiceRepository extends BaseRepository
         return CustomerInvoice::class;
     }
 
-    // ---------------------------------------------------------------------
-    // Customer invoice balances (API) query helpers
-    // ---------------------------------------------------------------------
 
-    /**
-     * Request `generated_from` values POS/CLUB map to third_party_systems.description values.
-     *
-     * @return list<string>
-     */
     public function thirdPartyDescriptionsForGeneratedFrom(string $generatedFrom): array
     {
         if ($generatedFrom === 'POS') {
@@ -146,10 +138,6 @@ class CustomerInvoiceRepository extends BaseRepository
     {
         $dsmTable = (new DocumentSystemMapping)->getTable();
         $tpsTable = (new ThirdPartySystems)->getTable();
-        $displayDescriptions = array_merge(
-            $this->thirdPartyDescriptionsForGeneratedFrom('POS'),
-            $this->thirdPartyDescriptionsForGeneratedFrom('CLUB')
-        );
 
         $latestMappingIdPerDocument = DB::table($dsmTable)
             ->where('documentSystemId', 20)
@@ -159,20 +147,25 @@ class CustomerInvoiceRepository extends BaseRepository
         return DB::table($dsmTable.' as dsm')
             ->joinSub($latestMappingIdPerDocument, 'latest_map', 'latest_map.max_mapping_id', '=', 'dsm.id')
             ->join($tpsTable.' as tps', 'tps.id', '=', 'dsm.thirdPartySystemId')
-            ->whereIn('tps.description', $displayDescriptions)
             ->select('dsm.documentId as documentId', 'tps.description as generated_from_label');
     }
 
     public function mappingInvoiceIdsSubQuery(array $generatedFromList): QueryBuilder
     {
-        $descriptions = [];
-        foreach (array_unique($generatedFromList) as $flag) {
-            $descriptions = array_merge($descriptions, $this->thirdPartyDescriptionsForGeneratedFrom($flag));
-        }
-        $descriptions = array_values(array_unique($descriptions));
+  
+        $descriptions = array_values(array_unique(array_filter(array_map(function ($value) {
+            $value = trim((string) $value);
+            return $value === '' ? null : $value;
+        }, $generatedFromList))));
 
         $dsmTable = (new DocumentSystemMapping)->getTable();
         $tpsTable = (new ThirdPartySystems)->getTable();
+
+        if ($descriptions === []) {
+            return DB::table($dsmTable.' as dsm')
+                ->whereRaw('1 = 0')
+                ->select('dsm.documentId');
+        }
 
         return DB::table($dsmTable.' as dsm')
             ->join($tpsTable.' as tps', 'tps.id', '=', 'dsm.thirdPartySystemId')
@@ -195,7 +188,6 @@ class CustomerInvoiceRepository extends BaseRepository
             ->where(function ($qq) {
                 $qq->whereNull('det.matchingDocID')->orWhere('det.matchingDocID', 0);
             })
-            ->where('rv.approved', -1)
             ->toBase();
     }
 
@@ -213,7 +205,6 @@ class CustomerInvoiceRepository extends BaseRepository
             ->whereIn('det.companySystemID', $subCompanies)
             ->where('det.addedDocumentSystemID', 20)
             ->where('det.matchingDocID', '>', 0)
-            ->where('m.matchingConfirmedYN', 1)
             ->toBase();
     }
 
@@ -226,7 +217,6 @@ class CustomerInvoiceRepository extends BaseRepository
             ->from($srdTable.' as srd')
             ->join($srTable.' as sr', 'srd.salesReturnID', '=', 'sr.id')
             ->whereIn('srd.companySystemID', $subCompanies)
-            ->where('sr.approvedYN', -1)
             ->toBase();
     }
 
@@ -236,7 +226,7 @@ class CustomerInvoiceRepository extends BaseRepository
         $taxTable = (new Taxdetail)->getTable();
         $invTable = (new CustomerInvoiceDirect)->getTable();
 
-        $mappingInvSub = ! empty($generatedFromList)
+        $mappingInvSub = $generatedFromList !== null
             ? $this->mappingInvoiceIdsSubQuery($generatedFromList)
             : null;
 
@@ -316,28 +306,58 @@ class CustomerInvoiceRepository extends BaseRepository
 
     public function receiptVoucherStatusLabel($rvApproved, $rvConfirmed): string
     {
-        $approved = (int) ($rvApproved ?? 0) === -1;
-        $confirmed = (int) ($rvConfirmed ?? 0) === 1;
-        if ($approved && $confirmed) {
-            return 'Approved & Confirmed';
+        $rvConfirmed = (int) ($rvConfirmed ?? 0);
+        $rvApproved = (int) ($rvApproved ?? 0);
+
+        if ($rvConfirmed === 0) {
+            return 'Unconfirmed';
         }
-        if ($confirmed) {
-            return 'Confirmed';
+
+        if ($rvConfirmed === 1 && $rvApproved === 0) {
+            return 'Unapproved';
         }
-        if ($approved) {
+
+        if ($rvApproved === -1) {
             return 'Approved';
         }
+
         return 'Pending';
     }
 
     public function matchingStatusLabel($matchingConfirmed): string
     {
-        return (int) ($matchingConfirmed ?? 0) === 1 ? 'Confirmed' : 'Pending';
+
+        if($matchingConfirmed === 0)
+        {
+            return 'Unconfirmed';
+        }
+        elseif($matchingConfirmed === 1)
+        {
+            return 'Confirmed';
+        }
+        else{
+            return 'Pending';
+        }
     }
 
-    public function salesReturnStatusLabel($approvedYn): string
+    public function salesReturnStatusLabel($srApproved, $srConfirmed): string
     {
-        return (int) ($approvedYn ?? 0) === -1 ? 'Approved' : 'Pending';
+        $srConfirmed = (int) ($srConfirmed ?? 0);
+        $srApproved = (int) ($srApproved ?? 0);
+
+        if ($srConfirmed === 0) {
+            return 'Unconfirmed';
+        }
+
+        if ($srConfirmed === 1 && $srApproved === 0) {
+            return 'Unapproved';
+        }
+
+        if ($srApproved === -1) {
+            return 'Approved';
+        }
+
+        return 'Pending';
     }
 
 
@@ -368,10 +388,10 @@ class CustomerInvoiceRepository extends BaseRepository
                 continue;
             }
             $byInvoice[$iid][] = [
-                'Document type' => 'receipt',
-                'Document Code' => $r->doc_code,
-                'Amount' => (float) ($r->amount ?? 0),
-                'Document status' => $this->receiptVoucherStatusLabel($r->rv_approved, $r->rv_confirmed),
+                'document_type' => 'receipt',
+                'document_code' => $r->doc_code,
+                'amount' => (float) ($r->amount ?? 0),
+                'document_status' => $this->receiptVoucherStatusLabel($r->rv_approved, $r->rv_confirmed),
             ];
         }
 
@@ -392,21 +412,22 @@ class CustomerInvoiceRepository extends BaseRepository
                 continue;
             }
             $byInvoice[$iid][] = [
-                'Document type' => 'matching',
-                'Document Code' => $r->doc_code,
-                'Amount' => (float) ($r->amount ?? 0),
-                'Document status' => $this->matchingStatusLabel($r->matching_confirmed),
+                'document_type' => 'matching',
+                'document_code' => $r->doc_code,
+                'amount' => (float) ($r->amount ?? 0),
+                'document_status' => $this->matchingStatusLabel($r->matching_confirmed),
             ];
         }
 
         $returnRows = $this->salesReturnBaseQuery($subCompanies)
             ->whereIn('srd.custInvoiceDirectAutoID', $invoiceIds)
-            ->groupBy('srd.custInvoiceDirectAutoID', 'sr.id', 'sr.salesReturnCode', 'sr.approvedYN')
+            ->groupBy('srd.custInvoiceDirectAutoID', 'sr.id', 'sr.salesReturnCode', 'sr.approvedYN', 'sr.confirmedYN')
             ->selectRaw('
                 srd.custInvoiceDirectAutoID as invoice_id,
                 sr.salesReturnCode as doc_code,
                 SUM(IFNULL(srd.transactionAmount,0) + (IFNULL(srd.transactionAmount,0) * IFNULL(srd.VATPercentage,0) / 100)) as amount,
-                sr.approvedYN as sr_approved
+                sr.approvedYN as sr_approved,
+                sr.confirmedYN as sr_confirmed
             ')
             ->get();
 
@@ -416,10 +437,10 @@ class CustomerInvoiceRepository extends BaseRepository
                 continue;
             }
             $byInvoice[$iid][] = [
-                'Document type' => 'sales_return',
-                'Document Code' => $r->doc_code,
-                'Amount' => (float) ($r->amount ?? 0),
-                'Document status' => $this->salesReturnStatusLabel($r->sr_approved),
+                'document_type' => 'sales_return',
+                'document_code' => $r->doc_code,
+                'amount' => (float) ($r->amount ?? 0),
+                'document_status' => $this->salesReturnStatusLabel($r->sr_approved, $r->sr_confirmed),
             ];
         }
 
@@ -432,25 +453,25 @@ class CustomerInvoiceRepository extends BaseRepository
         $dt = isset($invoice->isPerforma) ? (int) $invoice->isPerforma : -1;
 
         return [
-            'Invoice Code' => $invoice->bookingInvCode,
-            'Customer' => optional($invoice->customer)->CustomerName,
-            'Invoice Type' => $documentTypeLabels[$dt] ?? '',
-            'Document No' => $invoice->customerInvoiceNo,
-            'Invoice Date' => $invoice->bookingDate,
-            'Warehouse' => optional($invoice->warehouse)->wareHouseDescription,
-            'Transaction Currency' => optional($invoice->currency)->CurrencyCode,
-            'Due Date' => $invoice->invoiceDueDate,
-            'Invoice Amount' => (float) ($invoice->invoice_amount ?? 0),
-            'Balance Amount' => (float) ($invoice->balance_amount ?? 0),
-            'Status' => [
+            'invoice_code' => $invoice->bookingInvCode,
+            'customer' => optional($invoice->customer)->CustomerName,
+            'invoice_type' => $documentTypeLabels[$dt] ?? '',
+            'document_no' => $invoice->customerInvoiceNo,
+            'invoice_date' => $invoice->bookingDate,
+            'warehouse' => optional($invoice->warehouse)->wareHouseDescription,
+            'transaction_currency' => optional($invoice->currency)->CurrencyCode,
+            'due_date' => $invoice->invoiceDueDate,
+            'invoice_amount' => (float) ($invoice->invoice_amount ?? 0),
+            'balance_amount' => (float) ($invoice->balance_amount ?? 0),
+            'status' => [
                 'status' => $invoice->balance_payment_status ?? '',
                 'docs' => $docsByInvoice[$iid] ?? [],
             ],
-            'Created Date & Time' => $invoice->createdDateAndTime,
-            'Created By' => optional($invoice->createduser)->empName,
-            'Last Updated Date & Time' => $invoice->timestamp,
-            'Last Updated By' => optional($invoice->modified_by)->empName,
-            'Generated From' => $invoice->generated_from_display ?: null,
+            'created_date_time' => $invoice->createdDateAndTime,
+            'created_by' => optional($invoice->createduser)->empName,
+            'last_updated_date_time' => $invoice->timestamp,
+            'last_updated_by' => optional($invoice->modified_by)->empName,
+            'generated_from' => $invoice->generated_from_display ?: '',
         ];
     }
 

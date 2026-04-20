@@ -19,7 +19,7 @@ use App\Models\CompanyFinanceYear;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-
+use App\Models\Budjetdetails;
 class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -184,7 +184,7 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
     private function createNewDetail($departmentBudgetPlanning, $templateGl, $companyDepartmentSegment = null)
     {
         // Calculate previous year and current year budgets
-        $budgetCalculations = $this->calculateBudgetAmounts($departmentBudgetPlanning, $templateGl);
+        $budgetCalculations = $this->calculateBudgetAmounts($departmentBudgetPlanning, $templateGl,$companyDepartmentSegment);
 
         // Get responsible person (HOD of the department)
         $responsiblePerson = $this->getResponsiblePerson($departmentBudgetPlanning);
@@ -212,28 +212,28 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
     /**
      * Update existing department budget planning detail
      */
-    private function updateExistingDetail($existingDetail, $departmentBudgetPlanning, $templateGl)
-    {
-        // Recalculate budget amounts
-        $budgetCalculations = $this->calculateBudgetAmounts($departmentBudgetPlanning, $templateGl);
+    // private function updateExistingDetail($existingDetail, $departmentBudgetPlanning, $templateGl)
+    // {
+    //     // Recalculate budget amounts
+    //     $budgetCalculations = $this->calculateBudgetAmounts($departmentBudgetPlanning, $templateGl);
 
-        // Update only calculated fields, preserve user inputs
-        $existingDetail->update([
-            'previous_year_budget' => $budgetCalculations['previous_year'],
-            'current_year_budget' => $budgetCalculations['current_year'],
-            'difference_last_current_year' => $budgetCalculations['difference'],
-            'time_for_submission' => $this->calculateSubmissionTime($departmentBudgetPlanning)
-        ]);
+    //     // Update only calculated fields, preserve user inputs
+    //     $existingDetail->update([
+    //         'previous_year_budget' => $budgetCalculations['previous_year'],
+    //         'current_year_budget' => $budgetCalculations['current_year'],
+    //         'difference_last_current_year' => $budgetCalculations['difference'],
+    //         'time_for_submission' => $this->calculateSubmissionTime($departmentBudgetPlanning)
+    //     ]);
 
-        // Recalculate difference with request amount
-        $existingDetail->calculateDifferences();
-        $existingDetail->save();
-    }
+    //     // Recalculate difference with request amount
+    //     $existingDetail->calculateDifferences();
+    //     $existingDetail->save();
+    // }
 
     /**
      * Calculate budget amounts for previous and current year
      */
-    private function calculateBudgetAmounts($departmentBudgetPlanning, $templateGl)
+    private function calculateBudgetAmounts($departmentBudgetPlanning, $templateGl,$companyDepartmentSegment)
     {
         // Get budget year from finance year
         $financeYear = CompanyFinanceYear::find($departmentBudgetPlanning->masterBudgetPlannings->yearID);
@@ -254,10 +254,27 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
         $departmentId = $departmentBudgetPlanning->departmentID;
 
         // Calculate previous year budget (you may need to adjust this query based on your actual budget data structure)
-        $previousYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $previousYearFinanceYear,$financeYear->companySystemID);
+        $previousYearBudget = $this->getBudgetAmountForYear(
+            $departmentId,
+            $glCode,
+            $previousYearFinanceYear,
+            $financeYear->companySystemID,
+            $companyDepartmentSegment,
+            $departmentBudgetPlanning->typeID,
+            $departmentBudgetPlanning->workflow->method ?? null
+        );
 
         // Calculate current year budget
-        $currentYearBudget = $this->getBudgetAmountForYear($departmentId, $glCode, $currentYearFinanceYear,$financeYear->companySystemID);
+        $currentYearBudget = $this->getBudgetAmountForYear(
+            $departmentId,
+            $glCode,
+            $currentYearFinanceYear,
+            $financeYear->companySystemID,
+            $companyDepartmentSegment,
+            $departmentBudgetPlanning->typeID,
+            $departmentBudgetPlanning->workflow->method ?? null
+        );
+
 
         // Calculate difference
         $difference = $currentYearBudget - $previousYearBudget;
@@ -273,22 +290,41 @@ class ProcessDepartmentBudgetPlanningDetailsJob implements ShouldQueue
      * Get budget amount for a specific year
      * This method should be adjusted based on your actual budget data structure
      */
-    private function getBudgetAmountForYear($departmentId, $glCode, $year,$companySystemID)
+    private function getBudgetAmountForYear($departmentId, $glCode, $year, $companySystemID, $companyDepartmentSegment, $typeID, $workflowMethod = null)
     {
         try {
 
-            if($year) {
-                //get the sum of request_amount from the department budget planning details table
-                $budgetAmount = DepartmentBudgetPlanningDetail::whereHas('departmentBudgetPlanning', function($query) use ($departmentId, $year, $companySystemID) {
-                    $query->where('yearID', $year->companyFinanceYearID)
-                        ->whereHas('masterBudgetPlannings', function ($q) use ($companySystemID) {
-                            $q->where('companySystemID', $companySystemID);
-                        });
-                })->whereHas('budgetTemplateGl', function($query) use ($glCode) {
-                        $query->where('chartOfAccountSystemID', $glCode);
-                })->sum('request_amount');
+            // opex
+            if($typeID == 1) {
+                $reportIDArray = [2]; // P&L Template   
+            }
+            // capex
+            if($typeID == 2) {
+                $reportIDArray = [1]; // Balance Sheet Template
+            }
+            // other
+            if($typeID == 3) {
+                $reportIDArray = [1,2]; // Balance Sheet & P&L Template
+            }
 
-                return $budgetAmount ?? 0.00;
+            if($year) {
+
+                $budgetAmount = Budjetdetails::where('companySystemID', $companySystemID)
+                    ->where('companyFinanceYearID', $year->companyFinanceYearID)
+                    ->where('chartOfAccountID', $glCode)
+                    ->when((int) $workflowMethod === 1 && !empty($companyDepartmentSegment), function ($query) use ($companyDepartmentSegment) {
+                        $query->where('serviceLineSystemID', $companyDepartmentSegment->serviceLineSystemID);
+                    })
+                    ->whereHas('budget_master', function ($query) use ($reportIDArray) {
+                        $query->where('confirmedYN', 1)
+                            ->where('approvedYN', -1)
+                            ->whereHas('template_master', function ($templateQuery) use ($reportIDArray) {
+                                $templateQuery->whereIn('reportID', $reportIDArray);
+                            });
+                    })
+                    ->sum('budjetAmtLocal');
+
+                return abs($budgetAmount) ?? 0.00;
             } else {
                 return 0;
             }

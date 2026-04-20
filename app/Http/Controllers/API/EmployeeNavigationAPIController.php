@@ -255,11 +255,16 @@ class EmployeeNavigationAPIController extends AppBaseController
     public function getUserGroupEmployeesByCompanyDatatable(Request $request)
     {
         $input = $request->all();
+        $forGrvManageAccess = (int) ($input['for_grv_manage_access'] ?? 0) === 1;
+
         $userGroup = EmployeeNavigation::with(['company', 'usergroup'=>function($q){
             $q->where('delegation_id',0);
-        }, 'employee' => function ($query) use ($input) {
+        }, 'employee' => function ($query) use ($input, $forGrvManageAccess) {
             if (array_key_exists('dischargedYN', $input)) {
                 $query->where('discharegedYN', $input['dischargedYN']);
+            }
+            if ($forGrvManageAccess) {
+                $query->where('empActive', 1);
             }
           }])->whereHas('usergroup',function($q){
             $q->where('delegation_id',0);
@@ -286,9 +291,14 @@ class EmployeeNavigationAPIController extends AppBaseController
             $userGroup->where('employeeSystemID', $input['employeeSystemID']);
         }
 
-        if (array_key_exists('dischargedYN', $input)) {
-            $userGroup->whereHas('employee', function ($query) use ($input) {
-                            $query->where('discharegedYN', $input['dischargedYN']);
+        if (array_key_exists('dischargedYN', $input) || $forGrvManageAccess) {
+            $userGroup->whereHas('employee', function ($query) use ($input, $forGrvManageAccess) {
+                            if (array_key_exists('dischargedYN', $input)) {
+                                $query->where('discharegedYN', $input['dischargedYN']);
+                            }
+                            if ($forGrvManageAccess) {
+                                $query->where('empActive', 1);
+                            }
                         });
         }
 
