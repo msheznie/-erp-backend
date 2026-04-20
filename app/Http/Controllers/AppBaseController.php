@@ -61,7 +61,11 @@ class AppBaseController extends BaseController
         foreach ($input as $key => $value) {
             if (is_array($input[$key])){
                 if(count($input[$key]) > 0){
-                    $input[$key] = $input[$key][0];
+                    if (array_key_exists(0, $input[$key])) {
+                        $input[$key] = $input[$key][0];
+                    } else {
+                        $input[$key] = reset($input[$key]);
+                    }
                 }else{
                     $input[$key] = null;
                 }
@@ -75,7 +79,11 @@ class AppBaseController extends BaseController
             if(in_array($key,$params)){
                 if (is_array($input[$key])){
                     if(count($input[$key]) > 0){
-                        $input[$key] = $input[$key][0];
+                        if (array_key_exists(0, $input[$key])) {
+                            $input[$key] = $input[$key][0];
+                        } else {
+                            $input[$key] = reset($input[$key]);
+                        }
                     }
                 }
             }
