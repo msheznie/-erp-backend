@@ -77,6 +77,7 @@ Route::group([], function(){
     Route::post('journalVoucherDeleteAllAJ', 'JvDetailAPIController@journalVoucherDeleteAllAJ')->name('Delete JV all AJ');
     Route::post('journalVoucherDeleteAllPOAJ', 'JvDetailAPIController@journalVoucherDeleteAllPOAJ')->name('Delete JV all POAJ');
     Route::post('journalVoucherDeleteAllDetails', 'JvDetailAPIController@journalVoucherDeleteAllDetails')->name('Delete JV All Details');
+    Route::post('journalVoucherCancel', 'JvMasterAPIController@journalVoucherCancel')->name('JV Cancel');
     Route::post('journalVoucherReopen', 'JvMasterAPIController@journalVoucherReopen')->name('JV Reopen');
     Route::post('getJournalVoucherAmend', 'JvMasterAPIController@getJournalVoucherAmend')->name('JV Amend');
     Route::post('amendJournalVoucherReview', 'JvMasterAPIController@amendJournalVoucherReview')->name('JV Review');
