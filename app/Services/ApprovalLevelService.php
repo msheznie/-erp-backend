@@ -224,18 +224,19 @@ class ApprovalLevelService
                     ->where('company_system_id', $companySystemID)
                     ->where('is_active', 1)
                     ->where('is_amount_approval', $valueWise)
-                    ->where('id', $pvTypeSetupID);
+                    ->where('id', $pvTypeSetupID)
+                    ->exists();
 
-                if (!$pvTypeSetups->exists()) {
+                if (!$pvTypeSetups) {
                     return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
                 }
 
                 $approvalTypeSetups = PvApprovalTypeSetup::where('document_attachment_id', $documentConf->companyDocumentAttachmentID)
                     ->where('company_system_id', $companySystemID)
-                    ->where('is_active', 0)
+                    ->where('is_active', 1)
                     ->exists();
 
-                if ($approvalTypeSetups) {
+                if (!$approvalTypeSetups) {
                     return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
                 }
             }
