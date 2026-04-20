@@ -26,6 +26,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
+use App\Http\Requests\API\JournalVoucherCancelRequest;
 use App\Jobs\CreateJournalVoucher;
 use App\Models\BudgetConsumedData;
 use App\Models\ChartOfAccountsAssigned;
@@ -55,6 +56,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BudgetConsumedDataRepository;
 use App\Repositories\JvMasterRepository;
 use App\Repositories\UserRepository;
+use App\Services\API\JournalVoucherCancelService;
 use App\Services\JournalVoucherService;
 use App\Services\UserTypeService;
 use App\Traits\AuditTrial;
@@ -85,13 +87,16 @@ class JvMasterAPIController extends AppBaseController
     private $jvMasterRepository;
     private $userRepository;
     private $budgetConsumedDataRepository;
+    private $journalVoucherCancelService;
 
     public function __construct(JvMasterRepository $jvMasterRepo, UserRepository $userRepo,
-                                BudgetConsumedDataRepository $budgetConsumedDataRepo)
+                                BudgetConsumedDataRepository $budgetConsumedDataRepo,
+                                JournalVoucherCancelService $journalVoucherCancelService)
     {
         $this->jvMasterRepository = $jvMasterRepo;
         $this->userRepository = $userRepo;
         $this->budgetConsumedDataRepository = $budgetConsumedDataRepo;
+        $this->journalVoucherCancelService = $journalVoucherCancelService;
     }
 
     /**
@@ -1246,41 +1251,14 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             ->make(true);
     }
 
-    public function journalVoucherCancel(Request $request)
+    public function journalVoucherCancel(JournalVoucherCancelRequest $request)
     {
-        $input = $request->all();
-        $jvMasterAutoId = $input['jvMasterAutoId'] ?? 0;
-        $cancelComments = $input['cancelComments'] ?? '';
-
-        $jvMasterData = JvMaster::find($jvMasterAutoId);
-        if (empty($jvMasterData)) {
-            return $this->sendError(trans('custom.journal_voucher_not_found'));
+        $response = $this->journalVoucherCancelService->cancelJournalVoucher($request->validated());
+        if (!$response['status']) {
+            return $this->sendError($response['message'], $response['httpCode'] ?? 500);
         }
 
-        if ($jvMasterData->cancelYN == -1) {
-            return $this->sendError(trans('custom.document_already_cancelled', ['type' => 'journal voucher']));
-        }
-
-        if ($jvMasterData->confirmedYN == 1 || $jvMasterData->approved == -1) {
-            return $this->sendError('You can cancel only non confirmed journal vouchers.');
-        }
-
-        if (JvDetail::where('jvMasterAutoId', $jvMasterAutoId)->count() > 0) {
-            return $this->sendError('You cannot cancel the document as there are records in detail');
-        }
-
-        $employee = Helper::getEmployeeInfo();
-        $jvMasterData->cancelYN = -1;
-        $jvMasterData->cancelComment = $cancelComments;
-        $jvMasterData->cancelDate = Carbon::now();
-        $jvMasterData->canceledByEmpSystemID = $employee->employeeSystemID;
-        $jvMasterData->canceledByEmpID = $employee->empID;
-        $jvMasterData->canceledByEmpName = $employee->empName;
-        $jvMasterData->save();
-
-        AuditTrial::createAuditTrial($jvMasterData->documentSystemID, $jvMasterAutoId, $cancelComments, 'Cancelled');
-
-        return $this->sendResponse($jvMasterData->toArray(), trans('custom.successfully_cancelled'));
+        return $this->sendResponse($response['data'], $response['message']);
     }
 
     public function journalVoucherReopen(Request $request)

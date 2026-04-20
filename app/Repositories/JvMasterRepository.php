@@ -3,10 +3,12 @@
 namespace App\Repositories;
 
 use App\helper\Helper;
+use App\Models\JvDetail;
 use App\Models\JvMaster;
 use App\Repositories\BaseRepository;
 use App\helper\StatusService;
 use App\Models\GeneralLedger;
+use Carbon\Carbon;
 
 /**
  * Class JvMasterRepository
@@ -415,5 +417,28 @@ class JvMasterRepository extends BaseRepository
         }
 
         return $data;
+    }
+
+    public function findByAutoId($jvMasterAutoId)
+    {
+        return JvMaster::find($jvMasterAutoId);
+    }
+
+    public function hasDetailRecords($jvMasterAutoId)
+    {
+        return JvDetail::where('jvMasterAutoId', $jvMasterAutoId)->exists();
+    }
+
+    public function cancelJournalVoucher($jvMasterData, $cancelComments, $employee)
+    {
+        $jvMasterData->cancelYN = -1;
+        $jvMasterData->cancelComment = $cancelComments;
+        $jvMasterData->cancelDate = Carbon::now();
+        $jvMasterData->canceledByEmpSystemID = $employee->employeeSystemID;
+        $jvMasterData->canceledByEmpID = $employee->empID;
+        $jvMasterData->canceledByEmpName = $employee->empName;
+        $jvMasterData->save();
+
+        return $jvMasterData->refresh();
     }
 }
