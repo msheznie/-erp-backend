@@ -988,7 +988,8 @@ class DocumentApprovedAPIController extends AppBaseController
 				erp_documentapproved
 				INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
 				AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
-				INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+				INNER JOIN approvalgroups ON approvalgroups.rightsGroupId = erp_documentapproved.approvalGroupID
+				LEFT JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 				AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 				AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 				AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
@@ -1057,7 +1058,8 @@ class DocumentApprovedAPIController extends AppBaseController
 				erp_documentapproved
 				INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
 				AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
-				INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+				INNER JOIN approvalgroups ON approvalgroups.rightsGroupId = erp_documentapproved.approvalGroupID
+				LEFT JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 				AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 				AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 				AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
@@ -1123,7 +1125,8 @@ class DocumentApprovedAPIController extends AppBaseController
 				erp_documentapproved
 				INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
 				AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
-				INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+				INNER JOIN approvalgroups ON approvalgroups.rightsGroupId = erp_documentapproved.approvalGroupID
+				LEFT JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 				AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 				AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 				AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
@@ -1150,7 +1153,14 @@ class DocumentApprovedAPIController extends AppBaseController
 				AND erp_documentapproved.approvalGroupID > 0 
 				$filter
 				AND erp_documentapproved.documentSystemID IN ( 11 ) 
-				AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0 GROUP BY erp_bookinvsuppmaster.bookingInvCode
+				AND (
+					(employeesdepartments.employeeSystemID = $employeeSystemID
+						AND employeesdepartments.isActive = 1
+						AND employeesdepartments.removedYN = 0
+						AND (approvalgroups.isReportingManager IS NULL OR approvalgroups.isReportingManager != 1)
+					)
+					OR (approvalgroups.isReportingManager = 1 AND erp_documentapproved.docConfirmedByEmpSystemID = $employeeSystemID)
+				) GROUP BY erp_bookinvsuppmaster.bookingInvCode
 				) AS PendingSupplierInvoiceApprovals
 			UNION ALL
 			SELECT
@@ -1189,7 +1199,8 @@ class DocumentApprovedAPIController extends AppBaseController
 				erp_documentapproved
 				INNER JOIN companydocumentattachment ON companydocumentattachment.documentSystemID = erp_documentapproved.documentSystemID 
 				AND companydocumentattachment.companySystemID = erp_documentapproved.companySystemID
-				INNER JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
+				INNER JOIN approvalgroups ON approvalgroups.rightsGroupId = erp_documentapproved.approvalGroupID
+				LEFT JOIN employeesdepartments ON employeesdepartments.companySystemID = erp_documentapproved.companySystemID 
 				AND employeesdepartments.departmentSystemID = erp_documentapproved.departmentSystemID 
 				AND employeesdepartments.documentSystemID = erp_documentapproved.documentSystemID 
 				AND employeesdepartments.employeeGroupID = erp_documentapproved.approvalGroupID
@@ -1216,7 +1227,14 @@ class DocumentApprovedAPIController extends AppBaseController
 				AND erp_documentapproved.approvalGroupID > 0 
 				$filter
 				AND erp_documentapproved.documentSystemID IN ( 3 ) 
-				AND employeesdepartments.employeeSystemID = $employeeSystemID AND employeesdepartments.isActive = 1 AND employeesdepartments.removedYN = 0
+				AND (
+					(employeesdepartments.employeeSystemID = $employeeSystemID
+						AND employeesdepartments.isActive = 1
+						AND employeesdepartments.removedYN = 0
+						AND (approvalgroups.isReportingManager IS NULL OR approvalgroups.isReportingManager != 1)
+					)
+					OR (approvalgroups.isReportingManager = 1 AND erp_documentapproved.docConfirmedByEmpSystemID = $employeeSystemID)
+				)
 				) AS PendingGrvApprovals
 			UNION ALL
 			SELECT
