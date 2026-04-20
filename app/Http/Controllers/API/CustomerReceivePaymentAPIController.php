@@ -334,7 +334,18 @@ class CustomerReceivePaymentAPIController extends AppBaseController
             );
         }
 
+        $checkErChange = isset($input['checkErChange']) ? $input['checkErChange'] : true;
+        $isConfirming = isset($input['confirmedYN']) && $input['confirmedYN'] == 1;
+
+        $usePreviousExchangeRates = !$checkErChange && $isConfirming;
+
         $customerReceivePayment = $this->customerReceivePaymentRepository->findWithoutFail($id);
+
+        if ($usePreviousExchangeRates) {
+            $input['bankCurrencyER'] = $customerReceivePayment->bankCurrencyER;
+            $input['localCurrencyER'] = $customerReceivePayment->localCurrencyER;
+            $input['companyRptCurrencyER'] = $customerReceivePayment->companyRptCurrencyER;
+        }
 
 
         if (empty($customerReceivePayment)) {
@@ -418,7 +429,7 @@ class CustomerReceivePaymentAPIController extends AppBaseController
                 ->first();
             $policy = isset($policy->isYesNO) && $policy->isYesNO == 1;
 
-            if($policy == false || $input['documentType'] != 14) {
+            if(!$usePreviousExchangeRates && ($policy == false || $input['documentType'] != 14)) {
                 $input['companyRptCurrencyER'] = $companyCurrencyConversion['trasToRptER'];
                 $input['localCurrencyER'] = $companyCurrencyConversion['trasToLocER'];
             }
