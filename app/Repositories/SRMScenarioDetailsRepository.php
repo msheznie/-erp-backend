@@ -370,6 +370,27 @@ class SRMScenarioDetailsRepository extends BaseRepository
         {rfxCode} | {rfxTitle} {documentType} for 
         <b>{finalCommercialPrice}</b> {currency} with all agreed conditions.<br><br></div>
         <div>We are looking forward to complete the tasks within the time frame that mentioned in the latest proposal</div>',
+
+            7 => 'Dear {supplierName},<br /><br />
+        We trust this message finds you well.<br /><br />
+        We are in the process of inviting reputable suppliers to participate in a Tender for an upcoming project. Your company\'s outstanding reputation and capabilities have led us to extend this invitation to you.<br /><br />
+        If your company is interested in participating in the Tender process, please click on the link below.<br /><br />
+        <b>Tender Code :</b> {tenderCode}<br /><br />
+        <b>Tender Title :</b> {tenderTitle}<br /><br />
+        <b>Bid Submission Date :</b> {bidSubmissionDate}<br /><br />
+        <b>Currency :</b> {currency}<br /><br />
+        <b>Link :</b> <a href=\'{srmLink}\'>{srmLink}</a><br /><br />
+        Thank you for considering this invitation. We look forward to the possibility of collaborating with your esteemed company.<br /><br />',
+
+            8 => 'Dear {supplierName},<br /><br />
+        You are invited to participate in a new RFX, {rfxTitle}.<br />
+        <b>RFX Code :</b> {rfxCode}<br /><br />
+        <b>Bid Submission Date :</b> {bidSubmissionDate}<br /><br />
+        <b>Currency :</b> {currency}<br /><br />
+        Please find the link below to login to the supplier portal.<br /><br />
+        Click Here: <a href=\'{srmLink}\'>{srmLink}</a><br /><br />
+        Thank You<br />',
+
         ];
 
         return $templates[$scenarioId] ?? '';
