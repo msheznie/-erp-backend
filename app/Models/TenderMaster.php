@@ -1139,6 +1139,63 @@ class TenderMaster extends Model
             ->first();
     }
 
+    public static function getBidSummaryDocumentTypeInfo(int $tenderId): ?self
+    {
+        return self::select('id', 'document_type')->where('id', $tenderId)->first();
+    }
+
+    public static function getBidSummaryReportTenderData(int $tenderId, int $isNegotiation, array $bidSubmissionMasterIds, int $documentSystemID)
+    {
+        return self::with([
+            'srm_bid_submission_master' => function ($query) use ($isNegotiation, $bidSubmissionMasterIds) {
+                $query->where('status', 1);
+                if (!empty($bidSubmissionMasterIds)) {
+                    if ($isNegotiation === 1) {
+                        $query->whereIn('id', $bidSubmissionMasterIds);
+                    } else {
+                        $query->whereNotIn('id', $bidSubmissionMasterIds);
+                    }
+                }
+            },
+            'srm_bid_submission_master.SupplierRegistrationLink',
+            'srm_bid_submission_master.BidDocumentVerification',
+            'DocumentAttachments' => function ($query) use ($tenderId, $documentSystemID) {
+                $query->with(['bid_verify'])
+                    ->where('documentSystemCode', $tenderId)
+                    ->where('documentSystemID', $documentSystemID)
+                    ->where('attachmentType', 2)
+                    ->where('envelopType', 3);
+            }
+        ])->where('id', $tenderId)->get();
+    }
+
+    public static function getNegotiationBidSubmissionMasterIds(int $tenderId): array
+    {
+        return TenderBidNegotiation::where('tender_id', $tenderId)
+            ->pluck('bid_submission_master_id_new')
+            ->toArray();
+    }
+
+    public static function getBidOpeningReportTenderMaster(int $tenderId, array $bidSubmissionMasterIds): ?self
+    {
+        $tender = self::select('id', 'negotiation_code')->where('id', $tenderId)->first();
+        if (!$tender) {
+            return null;
+        }
+
+        return self::where('id', $tenderId)->with([
+            'envelop_type',
+            'evaluation_type',
+            'tender_type',
+            'ranking_supplier' => function ($q) use ($bidSubmissionMasterIds, $tender) {
+                if (!empty($tender->negotiation_code)) {
+                    $q->whereIn('bid_id', $bidSubmissionMasterIds);
+                }
+                $q->where('award', 1)->with('supplier');
+            }
+        ])->first();
+    }
+
     public function markAsCancelled(int $employeeSystemID, string $employeeName): bool
     {
         return $this->update([

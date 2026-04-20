@@ -540,4 +540,14 @@ class DocumentAttachments extends Model
                  ->where('documentSystemCode',$params['tenderId'])
                  ->get();
     }
+
+    public static function getBidSummaryAttachmentsByBidIds($documentSystemCodes, int $documentSystemID)
+    {
+        return self::with(['bid_verify'])
+            ->whereIn('documentSystemCode', $documentSystemCodes)
+            ->where('documentSystemID', $documentSystemID)
+            ->whereIn('attachmentType', [0, 11])
+            ->where('envelopType', 3)
+            ->get();
+    }
 }

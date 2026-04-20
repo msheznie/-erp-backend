@@ -5791,6 +5791,21 @@ class TenderMasterAPIController extends AppBaseController
 
     }
 
+    public function getTenderBidOpeningReportDataAPI(Request $request)
+    {
+        $payload = $this->buildTenderBidOpeningReportDataPayload($request);
+        if (isset($payload['error'])) {
+            return $this->sendError($payload['error']);
+        }
+
+        return $this->sendResponse($payload, 'Tender bid opening report data retrieved successfully');
+    }
+
+    private function buildTenderBidOpeningReportDataPayload(Request $request): array
+    {
+        return $this->tenderMasterRepository->getTenderBidOpeningReportData($request->all());
+    }
+
     public function getTenderBitsSupplierNameList($companyId, $tenderId, $loadSupplier, $isNegotiation, $bidSubmissionMasterIds)
     {
         $query = BidSubmissionMaster::with(['SupplierRegistrationLink', 'bidSubmissionDetail' => function($query){

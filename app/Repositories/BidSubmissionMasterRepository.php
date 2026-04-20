@@ -101,4 +101,41 @@ class BidSubmissionMasterRepository extends BaseRepository
             return ['status' => false, 'message' => $exception->getMessage()];
         }
     }
+
+    public function getBidSummaryReportData(array $input): array
+    {
+        $tenderId = (int)($input['id'] ?? 0);
+        $isNegotiation = (int)($input['isNegotiation'] ?? 0);
+
+        $documentTypeInfo = TenderMaster::getBidSummaryDocumentTypeInfo($tenderId);
+        if (!$documentTypeInfo) {
+            return ['error' => trans('srm_tender_rfx.tender_master_not_found')];
+        }
+
+        $documentType = (int)$documentTypeInfo->document_type;
+        $documentSystemID = $documentType === 0 ? 108 : 113;
+        $bidSubmissionMasterIds = TenderMaster::getNegotiationBidSubmissionMasterIds($tenderId);
+
+        $bidData = TenderMaster::getBidSummaryReportTenderData($tenderId, $isNegotiation, $bidSubmissionMasterIds, $documentSystemID);
+        $documentSystemCodes = BidSubmissionMaster::getBidSummaryVerifiedBidIds($tenderId);
+        $attachments = DocumentAttachments::getBidSummaryAttachmentsByBidIds($documentSystemCodes, $documentSystemID);
+        $attachmentsByBid = $attachments->groupBy('documentSystemCode');
+
+        $bidStatus = [];
+        foreach ($attachmentsByBid as $bidId => $docs) {
+            $notVerified = $docs->contains(function ($doc) {
+                $status = $doc->bid_verify->status ?? 0;
+                return $status == 0 || $status == 3;
+            });
+            $bidStatus[$bidId] = $notVerified ? 3 : 'Yes';
+        }
+
+        return [
+            'bidData' => $bidData,
+            'bidStatus' => $bidStatus,
+            'count' => $attachments->count(),
+            'documentType' => $documentType,
+            'isNegotiation' => $isNegotiation
+        ];
+    }
 }

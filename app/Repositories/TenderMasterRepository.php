@@ -7,6 +7,7 @@ use App\Helpers\General;
 use App\Models\BankMaster;
 use App\Http\Controllers\API\TenderBidEmployeeDetails;
 use App\Models\BidSubmissionDetail;
+use App\Models\BidSubmissionMaster;
 use App\Models\CalendarDates;
 use App\Models\CalendarDatesDetail;
 use App\Models\CalendarDatesDetailEditLog;
@@ -30,6 +31,7 @@ use App\Models\DocumentApproved;
 use App\Models\DocumentAttachments;
 use App\Models\DocumentMaster;
 use App\Models\DocumentModifyRequest;
+use App\Models\Employee;
 use App\Models\EnvelopType;
 use App\Models\EvaluationCriteriaDetails;
 use App\Models\EvaluationCriteriaDetailsEditLog;
@@ -3611,5 +3613,40 @@ class TenderMasterRepository extends BaseRepository
         }
 
         return ['success' => true];
+    }
+
+    public function getTenderBidOpeningReportData(array $input): array
+    {
+        $tenderId = (int)($input['id'] ?? 0);
+        $employeeID = $input['userID'] ?? null;
+        $companyId = (int)($input['companySystemID'] ?? 0);
+        $isNegotiation = (int)($input['isNegotiation'] ?? 0);
+
+        $bidSubmissionMasterIds = TenderMaster::getNegotiationBidSubmissionMasterIds($tenderId);
+        $tenderMaster = TenderMaster::getBidOpeningReportTenderMaster($tenderId, $bidSubmissionMasterIds);
+
+        if (!$tenderMaster) {
+            return ['error' => trans('srm_tender_rfx.tender_master_not_found')];
+        }
+
+        $tenderBids = BidSubmissionMaster::getBidOpeningSubmittedCount($tenderId, $isNegotiation, $bidSubmissionMasterIds);
+        $tenderBidsSupplierList = BidSubmissionMaster::getBidOpeningSupplierNameList($companyId, $tenderId, 1, $isNegotiation, $bidSubmissionMasterIds);
+        $employeeDetails = SrmTenderBidEmployeeDetails::where('tender_id', $tenderId)->with('employee')->get();
+        $company = Company::where('companySystemID', $tenderMaster->company_id)->first();
+        $SrmTenderBidEmployeeDetails = SrmTenderBidEmployeeDetails::with('employee')
+            ->where('tender_id', $tenderId)
+            ->get();
+        $employeeData = Employee::where('employeeSystemID', $employeeID)->first();
+
+        return [
+            'tenderMaster' => $tenderMaster,
+            'employeeDetails' => $employeeDetails,
+            'company' => $company,
+            'employeeData' => $employeeData,
+            'tenderBids' => $tenderBids,
+            'isNegotiation' => $isNegotiation,
+            'tenderBidsSupplierList' => $tenderBidsSupplierList,
+            'SrmTenderBidEmployeeDetails' => $SrmTenderBidEmployeeDetails
+        ];
     }
 }

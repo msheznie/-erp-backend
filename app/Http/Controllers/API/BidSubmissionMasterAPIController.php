@@ -1067,6 +1067,21 @@ class BidSubmissionMasterAPIController extends AppBaseController
 
     }
 
+    public function getBidSummaryReportDataAPI(Request $request)
+    {
+        $payload = $this->buildBidSummaryReportDataPayload($request);
+        if (isset($payload['error'])) {
+            return $this->sendError($payload['error']);
+        }
+
+        return $this->sendResponse($payload, 'Bid summary report data retrieved successfully');
+    }
+
+    private function buildBidSummaryReportDataPayload(Request $request): array
+    {
+        return $this->bidSubmissionMasterRepository->getBidSummaryReportData($request->all());
+    }
+
 
     public function getTenderCommercialBids(Request $request)
     {

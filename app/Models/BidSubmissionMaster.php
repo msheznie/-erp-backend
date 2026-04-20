@@ -197,6 +197,54 @@ class BidSubmissionMaster extends Model
     public static function checkTenderBidSubmitted($tender_id){
         return self::where('tender_id', $tender_id)->exists();
     }
+
+    public static function getBidOpeningReportBaseQuery(int $tenderId, int $isNegotiation, array $bidSubmissionMasterIds)
+    {
+        $query = self::where('status', 1)
+            ->where('bidSubmittedYN', 1)
+            ->where('tender_id', $tenderId);
+
+        if ($isNegotiation === 1) {
+            return $query->whereIn('id', $bidSubmissionMasterIds);
+        }
+
+        return $query->whereNotIn('id', $bidSubmissionMasterIds);
+    }
+
+    public static function getBidOpeningSubmittedCount(int $tenderId, int $isNegotiation, array $bidSubmissionMasterIds): int
+    {
+        return self::getBidOpeningReportBaseQuery($tenderId, $isNegotiation, $bidSubmissionMasterIds)->count();
+    }
+
+    public static function getBidOpeningSupplierNameList(int $companyId, int $tenderId, int $loadSupplier, int $isNegotiation, array $bidSubmissionMasterIds)
+    {
+        $query = self::getBidOpeningReportBaseQuery($tenderId, $isNegotiation, $bidSubmissionMasterIds)
+            ->with(['SupplierRegistrationLink', 'bidSubmissionDetail' => function ($query) {
+                $query->whereHas('srm_evaluation_criteria_details.evaluation_criteria_type', function ($query) {
+                    $query->where('id', 1);
+                });
+            }])->withCount(['documents' => function ($q) use ($companyId) {
+                $q->where('companySystemID', $companyId)
+                    ->where('documentSystemID', 113)
+                    ->where('attachmentType', 2)
+                    ->where('envelopType', 3);
+            }]);
+
+        if (isset($loadSupplier) && $loadSupplier) {
+            $query = $query->groupBy('srm_bid_submission_master.supplier_registration_id');
+        }
+
+        return $query->get();
+    }
+
+    public static function getBidSummaryVerifiedBidIds(int $tenderId)
+    {
+        return self::where('tender_id', $tenderId)
+            ->where('status', 1)
+            ->where('doc_verifiy_status', '!=', 0)
+            ->pluck('id');
+    }
+
     public static function getCommercialBidIds($tenderId, $isNegotiation)
     {
         $tender = TenderMaster::withCount([
@@ -227,8 +275,12 @@ class BidSubmissionMaster extends Model
 
         if (!empty($negotiationIds)) {
             $query->when($isNegotiation == 1,
-                fn($q) => $q->whereIn('srm_bid_submission_master.id', $negotiationIds),
-                fn($q) => $q->whereNotIn('srm_bid_submission_master.id', $negotiationIds)
+                function ($q) use ($negotiationIds) {
+                    return $q->whereIn('srm_bid_submission_master.id', $negotiationIds);
+                },
+                function ($q) use ($negotiationIds) {
+                    return $q->whereNotIn('srm_bid_submission_master.id', $negotiationIds);
+                }
             );
         }
 

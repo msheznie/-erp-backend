@@ -223,6 +223,8 @@ Route::post('getFinalBids', 'TenderFinalBidsAPIController@getFinalBids')->name("
 Route::post('confirmFinalBid', 'TenderFinalBidsAPIController@confirmFinalBid')->name("Confirm final bid");
 Route::post('getRankingCompletedTenderList', 'TenderMasterAPIController@getRankingCompletedTenderList')->name("Get ranking completed tender list");
 Route::post('getAwardedFormData', 'TenderMasterAPIController@getAwardedFormData')->name("Get awarded form data");
+Route::post('getTenderBidOpeningReportData', 'TenderMasterAPIController@getTenderBidOpeningReportDataAPI')->name("Get tender bid opening report data");
+Route::post('getBidSummaryReportData', 'BidSubmissionMasterAPIController@getBidSummaryReportDataAPI')->name("Get bid summary report data");
 Route::post('getEmployeesTenderAwardinglApproval','TenderBidEmployeeDetailsController@getEmployeesTenderAwardinglApproval')->name("Get employees tender awarding approval");
 Route::post('confirmFinalBidAwardComment', 'TenderMasterAPIController@confirmFinalBidAwardComment')->name("Confirm final bid award comment");
 Route::post('getTenderConfirmationDetails', 'TenderMasterAPIController@getTenderConfirmationDetails')->name("Get tender confirmation details");
