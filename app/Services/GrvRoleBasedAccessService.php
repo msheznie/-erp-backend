@@ -182,28 +182,27 @@ class GrvRoleBasedAccessService
      */
     private function getHodEmployeesForCurrentEmployee(int $companySystemID, int $hodEmployeeSystemID): array
     {
-        $legacyDepartmentIDs = $this->repository->getDepartmentIDsForEmployee(
-            $companySystemID,
-            $hodEmployeeSystemID,
-            self::GRV_DOCUMENT_SYSTEM_ID
-        );
-
-        $legacyEmployeeIDs = $this->repository->getActiveDepartmentEmployeeIDs(
-            $companySystemID,
-            self::GRV_DOCUMENT_SYSTEM_ID,
-            $legacyDepartmentIDs
-        );
-
-        $companyDepartmentIDs = $this->repository->getHodDepartmentIDsForEmployeeFromCompanyDepartment(
+        $hodDepartmentIDs = $this->repository->getHodDepartmentIDsForEmployeeFromCompanyDepartment(
             $companySystemID,
             $hodEmployeeSystemID
         );
-        $companyDepartmentEmployeeIDs = $this->repository->getActiveDepartmentEmployeeIDsFromCompanyDepartment(
+
+        if (empty($hodDepartmentIDs)) {
+            return [];
+        }
+
+        $fromCompanyDept = $this->repository->getActiveDepartmentEmployeeIDsFromCompanyDepartment(
             $companySystemID,
-            $companyDepartmentIDs
+            $hodDepartmentIDs
         );
 
-        return array_values(array_unique(array_merge($legacyEmployeeIDs, $companyDepartmentEmployeeIDs)));
+        $fromLegacyGrvDept = $this->repository->getActiveDepartmentEmployeeIDs(
+            $companySystemID,
+            self::GRV_DOCUMENT_SYSTEM_ID,
+            $hodDepartmentIDs
+        );
+
+        return array_values(array_unique(array_merge($fromCompanyDept, $fromLegacyGrvDept)));
     }
 
     private function isAdminAssignedForType(int $documentAccessRoleID, int $employeeSystemID, int $accessType): bool
