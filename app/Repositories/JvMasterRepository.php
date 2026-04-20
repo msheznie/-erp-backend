@@ -99,7 +99,7 @@ class JvMasterRepository extends BaseRepository
         }
 
         if (array_key_exists('jvType', $input)) {
-            if (($input['jvType'] == 0 || $input['jvType'] == 1 || $input['jvType'] == 2 || $input['jvType'] == 3 || $input['jvType'] == 4 || $input['jvType'] == 5) && !is_null($input['jvType'])) {
+            if (($input['jvType'] == 0 || $input['jvType'] == 1 || $input['jvType'] == 2 || $input['jvType'] == 3 || $input['jvType'] == 4 || $input['jvType'] == 5 || $input['jvType'] == 10) && !is_null($input['jvType'])) {
                 $invMaster->where('jvType', $input['jvType']);
             }
         }

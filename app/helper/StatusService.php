@@ -136,6 +136,8 @@ class StatusService
 			$type = trans('custom.final_settlement_accrual_jv');
 		} else if ($jvType == 8) {
 			$type = trans('custom.thirteenth_month_accrual_jv');
+		} else if ($jvType == 10) {
+			$type = trans('custom.audit_jv');
 		}
 
 		return $type;

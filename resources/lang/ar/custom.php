@@ -8872,6 +8872,7 @@ return
     'salary_jv' => 'قيد يومية الراتب',
     'allocation_jv' => 'قيد يومية التخصيص',
     'po_accrual_jv' => 'قيد يومية استحقاق أمر الشراء',
+    'audit_jv' => 'قيد يومية التدقيق',
     'gratuity_accrual_jv' => 'قيد يومية استحقاق المكافأة',
     'final_settlement_accrual_jv' => 'قيد يومية استحقاق التسوية النهائية',
     'thirteenth_month_accrual_jv' => 'قيد يومية استحقاق الشهر الثالث عشر',
