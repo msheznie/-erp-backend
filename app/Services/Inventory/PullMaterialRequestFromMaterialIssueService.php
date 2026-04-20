@@ -14,7 +14,11 @@ class PullMaterialRequestFromMaterialIssueService
 
         $search = isset($input['search']) ? $input['search'] : null;
 
-        $materielRequests = MaterielRequest::with('details')->where('RequestID',$input['RequestID'])
+        $materielRequests = MaterielRequest::with([
+            'details.uom_default',
+            'details.uom_issuing',
+            'details.item_by',
+        ])->where('RequestID', $input['RequestID'])
             ->where("approved", -1)
             ->where("cancelledYN", 0);
 

@@ -1679,7 +1679,9 @@ class MaterielRequestAPIController extends AppBaseController
             'itemCodeSystem' => $input['itemSystemCode'],
             'wareHouseId' =>  $itemIssueMaster->wareHouseFrom);
         $itemCurrentCostAndQty = Inventory::itemCurrentCostAndQty($data);
-        $itemCurrentCostAndQty['originalItem'] = ItemMaster::where('itemCodeSystem',$input['itemSystemCode'])->first();
+        $itemCurrentCostAndQty['originalItem'] = ItemMaster::with('unit')
+            ->where('itemCodeSystem', $input['itemSystemCode'])
+            ->first();
         $itemCurrentCostAndQty['prvIssuedQty'] = $materielIssuesPrvIssuedDetails;
         if(!$itemCurrentCostAndQty)
             return $this->sendError(trans('custom.item_details_not_found'));

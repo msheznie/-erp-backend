@@ -649,6 +649,13 @@ class ItemIssueDetailsAPIController extends AppBaseController
 
         }
 
+        $unitIDForInputPrecision = $input['unitOfMeasureIssued'] ?? $input['itemUnitOfMeasure'] ?? null;
+        $allowedDecimals = $this->decimalPrecisionService->getUnitInputPrecision($unitIDForInputPrecision);
+        if (!is_numeric($input['qtyIssued']) ||
+            !$this->decimalPrecisionService->hasValidScale($input['qtyIssued'], $allowedDecimals) ||
+            $input['qtyIssued'] > 999999999) {
+            return $this->sendError(trans('custom.invalid_qtyissued'), 422);
+        }
 
         $itemIssueDetails = $this->itemIssueDetailsRepository->create($input);
 
