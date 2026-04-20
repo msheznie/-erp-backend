@@ -150,6 +150,7 @@ class ApprovalLevelService
         $currentId = $level->approvalLevelID;
 
         if ($pvTypeWise == 0) {
+            // Common approval level
             $query = ApprovalLevel::where('companySystemID', $companySystemID)
                 ->where('documentSystemID', self::PAYMENT_VOUCHER_DOCUMENT_SYSTEM_ID)
                 ->where('pvTypeWise', 0)
@@ -172,9 +173,31 @@ class ApprovalLevelService
                 if ($valueWise != $documentConf->isAmountApproval) {
                     return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
                 }
+
+                $approvalTypeSetups = PvApprovalTypeSetup::where('document_attachment_id', $documentConf->companyDocumentAttachmentID)
+                    ->where('company_system_id', $companySystemID)
+                    ->where('is_active', 1)
+                    ->exists();
+
+                if ($approvalTypeSetups) {
+                    return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
+                }
+            }
+
+            // check if any type-based approval level exists for this company
+            $query2 = ApprovalLevel::where('companySystemID', $companySystemID)
+                ->where('documentSystemID', self::PAYMENT_VOUCHER_DOCUMENT_SYSTEM_ID)
+                ->where('pvTypeWise', 1)
+                ->where('isActive', -1)
+                ->where('approvalLevelID', '!=', $currentId)
+                ->exists();
+
+            if ($query2) {
+                return ['status' => false, 'message' => trans('custom.type_based_approval_level_already_exists')];
             }
         }
         else {
+            // Type-based approval level
             $pvTypeSetupID = $level->pvTypeSetupID;
 
             $query = ApprovalLevel::where('companySystemID', $companySystemID)
@@ -196,13 +219,36 @@ class ApprovalLevelService
                 ->where('documentSystemID', self::PAYMENT_VOUCHER_DOCUMENT_SYSTEM_ID)
                 ->first();
 
-            $pvTypeSetups = PvApprovalTypeSetup::where('document_attachment_id', $documentConf->companyDocumentAttachmentID)
-                ->where('company_system_id', $companySystemID)
-                ->where('is_active', 1)
-                ->where('is_amount_approval', $valueWise);
+            if ($documentConf) {
+                $pvTypeSetups = PvApprovalTypeSetup::where('document_attachment_id', $documentConf->companyDocumentAttachmentID)
+                    ->where('company_system_id', $companySystemID)
+                    ->where('is_active', 1)
+                    ->where('is_amount_approval', $valueWise)
+                    ->where('id', $pvTypeSetupID);
 
-            if (!$pvTypeSetups->exists()) {
-                return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
+                if (!$pvTypeSetups->exists()) {
+                    return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
+                }
+
+                $approvalTypeSetups = PvApprovalTypeSetup::where('document_attachment_id', $documentConf->companyDocumentAttachmentID)
+                    ->where('company_system_id', $companySystemID)
+                    ->where('is_active', 0)
+                    ->exists();
+
+                if ($approvalTypeSetups) {
+                    return ['status' => false, 'message' => trans('custom.approval_level_criteria_differ')];
+                }
+            }
+
+            $query2 = ApprovalLevel::where('companySystemID', $companySystemID)
+                ->where('documentSystemID', self::PAYMENT_VOUCHER_DOCUMENT_SYSTEM_ID)
+                ->where('pvTypeWise', 0)
+                ->where('isActive', -1)
+                ->where('approvalLevelID', '!=', $currentId)
+                ->exists();
+
+            if ($query2) {
+                return ['status' => false, 'message' => trans('custom.common_approval_level_already_exists')];
             }
         }
 

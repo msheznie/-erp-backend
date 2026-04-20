@@ -179,11 +179,23 @@ class PvApprovalTypeSetupService
             ->where('is_active', 1)
             ->where('id', '!=', (int) $setup->id);
 
-        foreach ($typeValues as $column => $value) {
-            $query->where($column, $value);
-        }
+        $selectedTypeColumns = array_keys(array_filter($typeValues, function ($value) {
+            return (int) $value === 1;
+        }));
 
-        $conflictingSetup = $query->first();
+        if (empty($selectedTypeColumns)) {
+            $conflictingSetup = null;
+        }
+        else {
+            // If any selected type already exists in another active setup, it's a conflict.
+            $query->where(function ($q) use ($selectedTypeColumns) {
+                foreach ($selectedTypeColumns as $column) {
+                    $q->orWhere($column, 1);
+                }
+            });
+
+            $conflictingSetup = $query->first();
+        }
 
         if (!empty($conflictingSetup)) {
             $existingActiveSetupDescription = $conflictingSetup->setup_description;
