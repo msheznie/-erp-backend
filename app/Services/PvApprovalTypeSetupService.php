@@ -85,7 +85,7 @@ class PvApprovalTypeSetupService
             }
         }
 
-        if (isset($validatedData['is_amount_approval'])) {
+        if (isset($validatedData['is_amount_approval']) && $validatedData['is_amount_approval'] == 1) {
             $result = $this->checkApprovalLevelConflict($validatedData, $setup);
             if (!$result['status']) {
                 return ServiceResponse::failure($result['message']);
@@ -179,10 +179,14 @@ class PvApprovalTypeSetupService
             ->where('is_active', 1)
             ->where('id', '!=', (int) $setup->id);
 
-        $selectedTypeColumns = array_keys(array_filter($typeValues, function ($value) {
-            return (int) $value === 1;
-        }));
-
+        $selectedTypeColumns = array_keys(array_filter(
+            $typeValues,
+            function ($value, $key) {
+                return !in_array($key, ['is_general_approval','is_amount_approval']) && (int) $value === 1;
+            },
+            ARRAY_FILTER_USE_BOTH
+        ));
+        
         if (empty($selectedTypeColumns)) {
             $conflictingSetup = null;
         }
