@@ -26,6 +26,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\AppBaseController;
+use App\Http\Requests\API\JournalVoucherCancelRequest;
 use App\Jobs\CreateJournalVoucher;
 use App\Models\BudgetConsumedData;
 use App\Models\ChartOfAccountsAssigned;
@@ -55,6 +56,7 @@ use App\Models\YesNoSelectionForMinus;
 use App\Repositories\BudgetConsumedDataRepository;
 use App\Repositories\JvMasterRepository;
 use App\Repositories\UserRepository;
+use App\Services\API\JournalVoucherCancelService;
 use App\Services\JournalVoucherService;
 use App\Services\UserTypeService;
 use App\Traits\AuditTrial;
@@ -85,13 +87,16 @@ class JvMasterAPIController extends AppBaseController
     private $jvMasterRepository;
     private $userRepository;
     private $budgetConsumedDataRepository;
+    private $journalVoucherCancelService;
 
     public function __construct(JvMasterRepository $jvMasterRepo, UserRepository $userRepo,
-                                BudgetConsumedDataRepository $budgetConsumedDataRepo)
+                                BudgetConsumedDataRepository $budgetConsumedDataRepo,
+                                JournalVoucherCancelService $journalVoucherCancelService)
     {
         $this->jvMasterRepository = $jvMasterRepo;
         $this->userRepository = $userRepo;
         $this->budgetConsumedDataRepository = $budgetConsumedDataRepo;
+        $this->journalVoucherCancelService = $journalVoucherCancelService;
     }
 
     /**
@@ -530,7 +535,7 @@ class JvMasterAPIController extends AppBaseController
     public function getJournalVoucherMasterView(Request $request)
     {
         $input = $request->all();
-        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'month', 'year', 'jvType'));
+        $input = $this->convertArrayToSelectedValue($input, array('confirmedYN', 'approved', 'cancelYN', 'month', 'year', 'jvType'));
         if (request()->has('order') && $input['order'][0]['column'] == 0 && $input['order'][0]['dir'] === 'asc') {
             $sort = 'asc';
         } else {
@@ -1244,6 +1249,16 @@ AND accruvalfromop.companyID = '" . $companyID . "'");
             ->with('orderCondition', $sort)
             ->with('balanceTotal', $depAmountLocal)
             ->make(true);
+    }
+
+    public function journalVoucherCancel(JournalVoucherCancelRequest $request)
+    {
+        $response = $this->journalVoucherCancelService->cancelJournalVoucher($request->validated());
+        if (!$response['status']) {
+            return $this->sendError($response['message'], $response['httpCode'] ?? 500);
+        }
+
+        return $this->sendResponse($response['data'], $response['message']);
     }
 
     public function journalVoucherReopen(Request $request)

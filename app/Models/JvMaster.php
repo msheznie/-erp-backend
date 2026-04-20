@@ -278,7 +278,13 @@ class JvMaster extends Model
         'reversedYN',
         'stopReversalJV',
         'isDelegation',
-        'isAutoCreate'
+        'isAutoCreate',
+        'cancelYN',
+        'cancelComment',
+        'cancelDate',
+        'canceledByEmpSystemID',
+        'canceledByEmpID',
+        'canceledByEmpName'
     ];
 
     /**
@@ -327,7 +333,13 @@ class JvMaster extends Model
         'isAutoApprove' => 'integer',
         'modifiedUser' => 'string',
         'modifiedPc' => 'string',
-        'isAutoCreate' => 'boolean'
+        'isAutoCreate' => 'boolean',
+        'cancelYN' => 'integer',
+        'cancelComment' => 'string',
+        'cancelDate' => 'datetime',
+        'canceledByEmpSystemID' => 'integer',
+        'canceledByEmpID' => 'string',
+        'canceledByEmpName' => 'string',
     ];
 
     /**
@@ -391,7 +403,7 @@ class JvMaster extends Model
 
     public function getJVNarrationAttribute($value)
     {
-        return str_replace('^','-',$value);
+        return str_replace('^', '-', $value);
     }
 
     public function setJVdateAttribute($value)
@@ -406,24 +418,25 @@ class JvMaster extends Model
 
     public function audit_trial()
     {
-        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'jvMasterAutoId')->where('documentSystemID',17);
+        return $this->hasMany('App\Models\AuditTrail', 'documentSystemCode', 'jvMasterAutoId')->where('documentSystemID', 17);
     }
 
-    public function scopeCurrencyJoin($q,$as = 'currencymaster' ,$column = 'supplierTransactionCurrencyID',$columnAs = 'CurrencyName'){
-        return $q->leftJoin('currencymaster as '.$as,$as.'.currencyID','=','erp_jvmaster.'.$column)
-        ->addSelect($as.".CurrencyName as ".$columnAs);
-
-    }
-
-        public function scopeCompanyJoin($q,$as = 'companymaster', $column = 'companySystemID' , $columnAs = 'CompanyName')
+    public function scopeCurrencyJoin($q, $as = 'currencymaster', $column = 'supplierTransactionCurrencyID', $columnAs = 'CurrencyName')
     {
-        return $q->leftJoin('companymaster as '.$as,$as.'.companySystemID','erp_jvmaster.'.$column)
-        ->addSelect($as.".CompanyName as ".$columnAs);
+        return $q->leftJoin('currencymaster as ' . $as, $as . '.currencyID', '=', 'erp_jvmaster.' . $column)
+            ->addSelect($as . ".CurrencyName as " . $columnAs);
+
+    }
+
+    public function scopeCompanyJoin($q, $as = 'companymaster', $column = 'companySystemID', $columnAs = 'CompanyName')
+    {
+        return $q->leftJoin('companymaster as ' . $as, $as . '.companySystemID', 'erp_jvmaster.' . $column)
+            ->addSelect($as . ".CompanyName as " . $columnAs);
     }
 
     public function scopeDetailJoin($q)
     {
-        return $q->join('erp_jvdetail','erp_jvdetail.jvMasterAutoId','erp_jvmaster.jvMasterAutoId');
+        return $q->join('erp_jvdetail', 'erp_jvdetail.jvMasterAutoId', 'erp_jvmaster.jvMasterAutoId');
     }
 
 }
