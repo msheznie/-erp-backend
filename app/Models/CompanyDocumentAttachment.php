@@ -63,7 +63,8 @@ class CompanyDocumentAttachment extends Model
         'isCategoryApproval',
         'isSubcategoryApproval',
         'enableAttachmentAfterApproval',
-        'isPRTypeApproval'
+        'isPRTypeApproval',
+        'isAttachmentApproval'
     ];
 
     /**
@@ -90,6 +91,7 @@ class CompanyDocumentAttachment extends Model
         'isSubcategoryApproval' => 'integer',
         'enableAttachmentAfterApproval' => 'integer',
         'isPRTypeApproval' => 'integer',
+        'isAttachmentApproval' => 'integer',
         'deleted_at' => 'datetime',
     ];
 

@@ -7,6 +7,7 @@ use App\Models\CompanyDocumentAttachment;
 
 class CompanyDocumentAttachmentService
 {
+    private const PO_DOCUMENT_SYSTEM_ID = 2;
     private const GRV_DOCUMENT_SYSTEM_ID = 3;
     private const ERROR_STATUS = 500;
 
@@ -68,6 +69,7 @@ class CompanyDocumentAttachmentService
             || $companyDocumentAttachment->isAmountApproval != ($input['isAmountApproval'] ?? $companyDocumentAttachment->isAmountApproval)
             || $companyDocumentAttachment->isCategoryApproval != ($input['isCategoryApproval'] ?? $companyDocumentAttachment->isCategoryApproval)
             || (isset($input['isPRTypeApproval']) && $companyDocumentAttachment->isPRTypeApproval != $input['isPRTypeApproval'])
+            || (isset($input['isAttachmentApproval']) && $companyDocumentAttachment->isAttachmentApproval != $input['isAttachmentApproval'])
             || (isset($input['isSubcategoryApproval']) && $companyDocumentAttachment->isSubcategoryApproval != $input['isSubcategoryApproval']);
 
         if (!$approvalChanged) {
@@ -91,7 +93,27 @@ class CompanyDocumentAttachmentService
     }
 
     /**
-     * Whether the given value is considered "approval enabled" (truthy).
+     * @param CompanyDocumentAttachment $companyDocumentAttachment
+     * @param array $input
+     * @return array{valid: bool, input?: array, status?: int, message?: string, errors?: array}
+     */
+    public function validatePoAttachmentApprovalUpdate(CompanyDocumentAttachment $companyDocumentAttachment, array $input): array
+    {
+        if ((int) $companyDocumentAttachment->documentSystemID !== self::PO_DOCUMENT_SYSTEM_ID) {
+            return ['valid' => true, 'input' => $input];
+        }
+
+        $currentAttachmentApproval = $companyDocumentAttachment->isAttachmentApproval ?? 0;
+        $requestedAttachmentApproval = $input['isAttachmentApproval'] ?? $currentAttachmentApproval;
+        $attachmentApprovalEnabled = self::isApprovalEnabled($requestedAttachmentApproval);
+        if ($attachmentApprovalEnabled) {
+            $input['enableAttachmentAfterApproval'] = 0;
+        }
+
+        return ['valid' => true, 'input' => $input];
+    }
+
+    /**
      *
      * @param mixed $value
      * @return bool
