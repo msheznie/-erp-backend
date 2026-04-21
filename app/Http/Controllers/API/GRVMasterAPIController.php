@@ -128,7 +128,18 @@ class GRVMasterAPIController extends AppBaseController
 
     private function ensureGrvViewAccessOrFail(GRVMaster $grvMaster): void
     {
-        $this->grvRoleBasedAccessService->requireCanViewOrFail($grvMaster, (int)Helper::getEmployeeSystemID());
+        $employeeSystemID = Helper::getEmployeeSystemID();
+        if($employeeSystemID == 0) { 
+            $authenticatedUserId = (int)request()->get('authenticated_user_id', 0);
+            if ($authenticatedUserId > 0) {
+                $authenticatedUser = $this->userRepository->findWithoutFail($authenticatedUserId);
+                if (!empty($authenticatedUser) && !empty($authenticatedUser->employee_id)) {
+                    $employeeSystemID = (int)$authenticatedUser->employee_id;
+                }
+            }
+        }
+
+        $this->grvRoleBasedAccessService->requireCanViewOrFail($grvMaster, $employeeSystemID);
     }
 
     /**
