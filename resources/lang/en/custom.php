@@ -90,7 +90,7 @@ return
     'category_parameter_missing' => 'Category parameter are missing',
     'amount_parameter_missing' => 'Amount parameter are missing',
     'please_set_approval_group' => 'Please set the approval group',
-    'reporting_manager_not_assigned_for_selected_employee' => 'Reporting Manager is not assigned for the selected employee. Please assign a Reporting Manager before confirming the Purchase Request',
+    'reporting_manager_not_assigned_for_selected_employee' => 'Reporting Manager is not assigned for the selected employee. Please assign a Reporting Manager before confirming the Document.',
     'document_already_confirmed' => 'Document is already confirmed',
     'document_approval_data_generated' => 'Document approval data is already generated.',
     'policy_not_found_general' => 'Policy not found.',
