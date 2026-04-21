@@ -2250,7 +2250,8 @@ class ProcumentOrderAPIController extends AppBaseController
             ->join('serviceline', 'erp_purchaseordermaster.serviceLineSystemID', 'serviceline.serviceLineSystemID')
             ->where('erp_documentapproved.rejectedYN', 0)
             ->whereIn('erp_documentapproved.documentSystemID', [2, 5, 52])
-            ->where('erp_documentapproved.companySystemID', $companyID);
+            ->where('erp_documentapproved.companySystemID', $companyID)
+            ->groupBy('erp_purchaseordermaster.purchaseOrderID');
 
         $search = $request->input('search.value');
 

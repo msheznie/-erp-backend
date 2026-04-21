@@ -23,6 +23,7 @@ use App\Services\DocumentAutoApproveService;
 use App\Services\DocumentReportingManagerService;
 use App\Jobs\PushNotification;
 use App\Models\PvApprovalTypeSetup;
+use App\Services\PoApprovalConfirmValidationService;
 use App\Services\PvApprovalTypeSetupService;
 
 class DocumentConfirm
@@ -748,8 +749,6 @@ class DocumentConfirm
                                 $empInfo  =  (object) ['empName' => null, 'empID' => null, 'employeeSystemID' => null];
                             }
 
-                            $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1, 'refferedBackYN' => 0]);
-
                             //get the policy
                             $policy = CompanyDocumentAttachment::where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->first();
                             if ($policy) {
@@ -784,6 +783,9 @@ class DocumentConfirm
                                 return ['success' => false, 'message' => trans('custom.policy_not_available')];
                             }
 
+                            $isPoAttachmentApprovalEnabled = ((int) $params['document'] === 2)
+                                && \App\Services\CompanyDocumentAttachmentService::isApprovalEnabled($policy->isAttachmentApproval ?? 0);
+
                             // get approval rolls
                             $approvalLevel = ApprovalLevel::with('approvalrole')->where('companySystemID', $params["company"])->where('documentSystemID', $reference_document_id)->where('departmentSystemID', $document["departmentSystemID"])->where('isActive', -1);
 
@@ -796,6 +798,9 @@ class DocumentConfirm
                             }
 
                             if($params["document"] != 4) {
+                                $poValidationMessages = [];
+                                $poCanQuery = true;
+
                                 if ($isSegmentWise) {
                                     if (array_key_exists('segment', $params)) {
     
@@ -803,10 +808,20 @@ class DocumentConfirm
                                             $approvalLevel->where('serviceLineSystemID', $params["segment"]);
                                             $approvalLevel->where('serviceLineWise', 1);
                                         } else {
-                                            return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                            if ($isPoAttachmentApprovalEnabled) {
+                                                $poValidationMessages[] = trans('custom.no_approval_setup_created');
+                                                $poCanQuery = false;
+                                            } else {
+                                                return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                            }
                                         }
                                     } else {
-                                        return ['success' => false, 'message' => trans('custom.serviceline_parameters_missing')];
+                                        if ($isPoAttachmentApprovalEnabled) {
+                                            $poValidationMessages[] = trans('custom.serviceline_parameters_missing');
+                                            $poCanQuery = false;
+                                        } else {
+                                            return ['success' => false, 'message' => trans('custom.serviceline_parameters_missing')];
+                                        }
                                     }
                                 }
     
@@ -816,10 +831,20 @@ class DocumentConfirm
                                             $approvalLevel->where('categoryID', $params["category"]);
                                             $approvalLevel->where('isCategoryWiseApproval', -1);
                                         } else {
-                                            return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                            if ($isPoAttachmentApprovalEnabled) {
+                                                $poValidationMessages[] = trans('custom.no_approval_setup_created');
+                                                $poCanQuery = false;
+                                            } else {
+                                                return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                            }
                                         }
                                     } else {
-                                        return ['success' => false, 'message' => trans('custom.category_parameter_missing')];
+                                        if ($isPoAttachmentApprovalEnabled) {
+                                            $poValidationMessages[] = trans('custom.category_parameter_missing');
+                                            $poCanQuery = false;
+                                        } else {
+                                            return ['success' => false, 'message' => trans('custom.category_parameter_missing')];
+                                        }
                                     }
                                 }
     
@@ -833,7 +858,7 @@ class DocumentConfirm
 
                                 if ($isValueWise) {
                                     if (array_key_exists('amount', $params)) {
-                                        if ($params["amount"] >= 0) {
+                                        if (is_numeric($params["amount"]) && $params["amount"] >= 0) {
                                             $amount = $params["amount"];
                                             $approvalLevel->where(function ($query) use ($amount) {
                                                 $query->where('valueFrom', '<=', $amount);
@@ -841,11 +866,25 @@ class DocumentConfirm
                                             });
                                             $approvalLevel->where('valueWise', 1);
                                         } else {
-                                            return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                            if ($isPoAttachmentApprovalEnabled) {
+                                                $poValidationMessages[] = trans('custom.no_approval_setup_created');
+                                                $poCanQuery = false;
+                                            } else {
+                                                return ['success' => false, 'message' => trans('custom.no_approval_setup_created')];
+                                            }
                                         }
                                     } else {
-                                        return ['success' => false, 'message' => trans('custom.amount_parameter_missing')];
+                                        if ($isPoAttachmentApprovalEnabled) {
+                                            $poValidationMessages[] = trans('custom.amount_parameter_missing');
+                                            $poCanQuery = false;
+                                        } else {
+                                            return ['success' => false, 'message' => trans('custom.amount_parameter_missing')];
+                                        }
                                     }
+                                }
+
+                                if ($isPoAttachmentApprovalEnabled && (!$poCanQuery) && !empty($poValidationMessages)) {
+                                    return ['success' => false, 'message' => implode("\n", array_values(array_unique($poValidationMessages)))];
                                 }
                             }
 
@@ -945,7 +984,7 @@ class DocumentConfirm
                                     }
                                 }
                             }
-
+                            
                             $output = $approvalLevel->first();
 
                             //when iscategorywiseapproval true and output is empty again check for isCategoryWiseApproval = 0
@@ -999,6 +1038,21 @@ class DocumentConfirm
                                     $output = $approvalLevel->first();
                                 }
                             }
+
+                            if ($isPoAttachmentApprovalEnabled) {
+                                $candidateLevels = clone $approvalLevel;
+                                $resolved = $candidateLevels->get();
+
+                                $poValidator = new PoApprovalConfirmValidationService();
+                                $poAttachResult = $poValidator->validateAndResolveFromLevels($resolved, $params);
+                                if (!$poAttachResult['valid']) {
+                                    $message = implode("\n", array_values(array_unique($poAttachResult['messages'] ?? [])));
+                                    return ['success' => false, 'message' => $message];
+                                }
+                                $output = $poAttachResult['approvalLevel'] ?? $output;
+                            }
+
+                            $masterRec->update([$docInforArr["confirmColumnName"] => 1, $docInforArr["confirmedBy"] => $empInfo->empName, $docInforArr["confirmedByEmpID"] => $empInfo->empID, $docInforArr["confirmedBySystemID"] => $empInfo->employeeSystemID, $docInforArr["confirmedDate"] => now(), 'RollLevForApp_curr' => 1, 'refferedBackYN' => 0]);
 
                             if(isset($params['isAutoCreateDocument']) && $params['isAutoCreateDocument']){
                                 $sorceDocument = $namespacedModel::find($params["autoID"]);
