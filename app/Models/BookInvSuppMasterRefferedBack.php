@@ -397,7 +397,8 @@ class BookInvSuppMasterRefferedBack extends Model
         'mol_calcualtion_type',
         'mol_amount',
         'isDelegation',
-        'whtPaymentMethod'
+        'whtPaymentMethod',
+        'invoiceDueDate',
     ];
 
     /**
@@ -471,7 +472,8 @@ class BookInvSuppMasterRefferedBack extends Model
         'mol_rate' => 'float',
         'mol_calcualtion_type' => 'integer',
         'mol_amount' => 'float',
-        'whtPaymentMethod' => 'integer'
+        'whtPaymentMethod' => 'integer',
+        'invoiceDueDate' => 'date',
     ];
 
     /**

@@ -275,6 +275,19 @@
                             </span>
                         </td>
                     </tr>
+                    <tr>
+                        <td width="70px">
+                            <span class="font-weight-bold">{{ __('custom.invoice_due_date') }}</span>
+                        </td>
+                        <td width="10px">
+                            <span class="font-weight-bold">:</span>
+                        </td>
+                        <td>
+                            <span>
+                                {{ \App\helper\Helper::dateFormat($masterdata->invoiceDueDate) }}
+                            </span>
+                        </td>
+                    </tr>
                 </table>
             </td>
         </tr>

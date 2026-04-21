@@ -383,7 +383,8 @@ class BookInvSuppMaster extends Model
         'mol_amount',
         'isDelegation',
         'isBulkItemJobRun',
-        'whtPaymentMethod'
+        'whtPaymentMethod',
+        'invoiceDueDate',
     ];
 
     /**
@@ -463,7 +464,8 @@ class BookInvSuppMaster extends Model
         'netAmountLocal' => 'float',
         'netAmountRpt' => 'float',
         'VATPercentage' => 'float',
-        'whtPaymentMethod' => 'integer'
+        'whtPaymentMethod' => 'integer',
+        'invoiceDueDate' => 'date',
     ];
 
     /**
