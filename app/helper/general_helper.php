@@ -2596,13 +2596,14 @@ class Helper
     // storing records to budget
     public static function storeBudgetConsumption($params)
     {
+        $autoID = isset($params["autoID"]) ? (int)$params["autoID"] : 0;
         switch ($params["documentSystemID"]) { // check the document id
             case 11:
                 $budgetConsumeData = array();
-                $masterRec = Models\BookInvSuppMaster::find($params["autoID"]);
+                $masterRec = Models\BookInvSuppMaster::find($autoID);
                 if ($masterRec) {
                     if ($masterRec->documentType == 1 || $masterRec->documentType == 4) {
-                        $directDetail = \DB::select('SELECT directInvoiceDetailsID,directInvoiceAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot, detail_project_id FROM erp_directinvoicedetails WHERE directInvoiceAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID,detail_project_id ');
+                        $directDetail = \DB::select('SELECT directInvoiceDetailsID,directInvoiceAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot, detail_project_id FROM erp_directinvoicedetails WHERE directInvoiceAutoID = ? GROUP BY serviceLineSystemID,chartOfAccountSystemID,detail_project_id ', [$autoID]);
 
                         if (!empty($directDetail)) {
                             foreach ($directDetail as $value) {
@@ -2617,7 +2618,7 @@ class Helper
                                         "serviceLineCode" => $value->serviceLineCode,
                                         "documentSystemID" => $masterRec->documentSystemID,
                                         "documentID" => $masterRec->documentID,
-                                        "documentSystemCode" => $params["autoID"],
+                                        "documentSystemCode" => $autoID,
                                         "documentCode" => $masterRec->bookingInvCode,
                                         "chartOfAccountID" => $value->chartOfAccountSystemID,
                                         "GLCode" => $value->glCode,
@@ -2638,7 +2639,7 @@ class Helper
                         }
                     } else if ($masterRec->documentType == 3) {
                         $budgetConsumeData = array();
-                        $directDetail = \DB::select('SELECT SUM((supplier_invoice_items.costPerUnitLocalCur) *supplier_invoice_items.noQty) as costPerUnitLocalCur,SUM((supplier_invoice_items.costPerUnitComRptCur)*supplier_invoice_items.noQty) as costPerUnitComRptCur,supplier_invoice_items.companyReportingCurrencyID,supplier_invoice_items.financeGLcodePLSystemID,supplier_invoice_items.companySystemID,erp_bookinvsuppmaster.serviceLineSystemID,supplier_invoice_items.localCurrencyID, erp_bookinvsuppmaster.projectID, erp_bookinvsuppmaster.companyFinanceYearID, MONTH(createdDateAndTime) as month FROM supplier_invoice_items INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = supplier_invoice_items.bookingSuppMasInvAutoID  WHERE supplier_invoice_items.itemFinanceCategoryID != 3 AND supplier_invoice_items.bookingSuppMasInvAutoID = ' . $params["autoID"] . ' GROUP BY supplier_invoice_items.companySystemID,erp_bookinvsuppmaster.serviceLineSystemID,supplier_invoice_items.financeGLcodePLSystemID,erp_bookinvsuppmaster.projectID');
+                        $directDetail = \DB::select('SELECT SUM((supplier_invoice_items.costPerUnitLocalCur) *supplier_invoice_items.noQty) as costPerUnitLocalCur,SUM((supplier_invoice_items.costPerUnitComRptCur)*supplier_invoice_items.noQty) as costPerUnitComRptCur,supplier_invoice_items.companyReportingCurrencyID,supplier_invoice_items.financeGLcodePLSystemID,supplier_invoice_items.companySystemID,erp_bookinvsuppmaster.serviceLineSystemID,supplier_invoice_items.localCurrencyID, erp_bookinvsuppmaster.projectID, erp_bookinvsuppmaster.companyFinanceYearID, MONTH(createdDateAndTime) as month FROM supplier_invoice_items INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = supplier_invoice_items.bookingSuppMasInvAutoID  WHERE supplier_invoice_items.itemFinanceCategoryID != 3 AND supplier_invoice_items.bookingSuppMasInvAutoID = ? GROUP BY supplier_invoice_items.companySystemID,erp_bookinvsuppmaster.serviceLineSystemID,supplier_invoice_items.financeGLcodePLSystemID,erp_bookinvsuppmaster.projectID', [$autoID]);
 
                         if (!empty($directDetail)) {
                             foreach ($directDetail as $value) {
@@ -2650,7 +2651,7 @@ class Helper
                                         "serviceLineCode" => Models\SegmentMaster::getSegmentCode($value->serviceLineSystemID),
                                         "documentSystemID" => $masterRec["documentSystemID"],
                                         "documentID" => $masterRec["documentID"],
-                                        "documentSystemCode" => $params["autoID"],
+                                        "documentSystemCode" => $autoID,
                                         "documentCode" => $masterRec["bookingInvCode"],
                                         "chartOfAccountID" => $value->financeGLcodePLSystemID,
                                         "GLCode" => Models\ChartOfAccount::getAccountCode($value->financeGLcodePLSystemID),
@@ -2673,10 +2674,10 @@ class Helper
                 break;
             case 4:
                 $budgetConsumeData = array();
-                $masterRec = Models\PaySupplierInvoiceMaster::find($params["autoID"]);
+                $masterRec = Models\PaySupplierInvoiceMaster::find($autoID);
                 if ($masterRec) {
                     if ($masterRec->invoiceType == 3) {
-                        $directDetail = \DB::select('SELECT directPaymentDetailsID,directPaymentAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot FROM erp_directpaymentdetails WHERE directPaymentAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+                        $directDetail = \DB::select('SELECT directPaymentDetailsID,directPaymentAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,SUM(localAmount) as localAmountTot, sum(comRptAmount) as comRptAmountTot FROM erp_directpaymentdetails WHERE directPaymentAutoID = ? GROUP BY serviceLineSystemID,chartOfAccountSystemID ', [$autoID]);
 
                         if (!empty($directDetail)) {
                             foreach ($directDetail as $value) {
@@ -2691,7 +2692,7 @@ class Helper
                                         "serviceLineCode" => $value->serviceLineCode,
                                         "documentSystemID" => $masterRec->documentSystemID,
                                         "documentID" => $masterRec->documentID,
-                                        "documentSystemCode" => $params["autoID"],
+                                        "documentSystemCode" => $autoID,
                                         "documentCode" => $masterRec->BPVcode,
                                         "chartOfAccountID" => $value->chartOfAccountSystemID,
                                         "GLCode" => $value->glCode,
@@ -2716,7 +2717,7 @@ class Helper
                 $budgetConsumeData = array();
                 $masterRec = Models\DebitNote::find($params["autoID"]);
                 if ($masterRec) {
-                    $directDetail = \DB::select('SELECT debitNoteDetailsID,debitNoteAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,sum(localAmount) as localAmountTot,sum(comRptAmount) as comRptAmountTot FROM erp_debitnotedetails WHERE debitNoteAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+                    $directDetail = \DB::select('SELECT debitNoteDetailsID,debitNoteAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,sum(localAmount) as localAmountTot,sum(comRptAmount) as comRptAmountTot FROM erp_debitnotedetails WHERE debitNoteAutoID = ? GROUP BY serviceLineSystemID,chartOfAccountSystemID ', [$autoID]);
 
                     if (!empty($directDetail)) {
                         foreach ($directDetail as $value) {
@@ -2755,7 +2756,7 @@ class Helper
                 $budgetConsumeData = array();
                 $masterRec = Models\CreditNote::find($params["autoID"]);
                 if ($masterRec) {
-                    $directDetail = \DB::select('SELECT creditNoteDetailsID,creditNoteAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,sum(localAmount) as localAmountTot,sum(comRptAmount) as comRptAmountTot FROM erp_creditnotedetails WHERE creditNoteAutoID = ' . $params["autoID"] . ' GROUP BY serviceLineSystemID,chartOfAccountSystemID ');
+                    $directDetail = \DB::select('SELECT creditNoteDetailsID,creditNoteAutoID,serviceLineSystemID,serviceLineCode,chartOfAccountSystemID,glCode,budgetYear,sum(localAmount) as localAmountTot,sum(comRptAmount) as comRptAmountTot FROM erp_creditnotedetails WHERE creditNoteAutoID = ? GROUP BY serviceLineSystemID,chartOfAccountSystemID ', [$autoID]);
 
                     if (!empty($directDetail)) {
                         foreach ($directDetail as $value) {

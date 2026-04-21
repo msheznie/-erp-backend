@@ -2280,7 +2280,16 @@ class ItemIssueMasterAPIController extends AppBaseController
 
                 if(isset($input['assets']))
                 {
-                    $assets = collect($input['assets'])->pluck('id')->toArray();
+                    $assets = collect($input['assets'])
+                        ->pluck('id')
+                        ->map(function ($id) {
+                            return (int) $id;
+                        })
+                        ->filter(function ($id) {
+                            return $id > 0;
+                        })
+                        ->values()
+                        ->toArray();
                     $assets = implode(',', $assets);
                     if(!empty($assets))
                     {
@@ -2654,6 +2663,7 @@ class ItemIssueMasterAPIController extends AppBaseController
     public function getMIRReportData($input)
     {
         $isGroup = Helper::checkIsCompanyGroup($input['companySystemID']);
+        $company = null;
 
         if ($isGroup) {
             $subCompanies = Helper::getGroupCompany($input['companySystemID']);
@@ -2687,24 +2697,60 @@ class ItemIssueMasterAPIController extends AppBaseController
         $endDate = new Carbon($input['toDate']);
         $endDate = $endDate->format('Y-m-d');
 
-        $items=[];
+        $items = [];
         if (array_key_exists('Items', $input)) {
-            $items = collect($input['Items'])->pluck('itemSystemCode')->toArray(); 
+            $items = collect($input['Items'])
+                ->pluck('itemSystemCode')
+                ->map(function ($id) {
+                    return (int) $id;
+                })
+                ->filter(function ($id) {
+                    return $id > 0;
+                })
+                ->values()
+                ->toArray();
         }
 
-        $employess=[];
+        $employee = [];
         if (array_key_exists('employee', $input)) {
-            $employee = collect($input['employee'])->pluck('id')->toArray(); 
+            $employee = collect($input['employee'])
+                ->pluck('id')
+                ->map(function ($id) {
+                    return (int) $id;
+                })
+                ->filter(function ($id) {
+                    return $id > 0;
+                })
+                ->values()
+                ->toArray();
         }
 
         $assets = [];
         if (array_key_exists('assets', $input)) {
-            $assets = collect($input['assets'])->pluck('id')->toArray();
+            $assets = collect($input['assets'])
+                ->pluck('id')
+                ->map(function ($id) {
+                    return (int) $id;
+                })
+                ->filter(function ($id) {
+                    return $id > 0;
+                })
+                ->values()
+                ->toArray();
         }
 
         $segments = [];
         if (array_key_exists('segments', $input)) {
-            $segments = collect($input['segments'])->pluck('id')->toArray();
+            $segments = collect($input['segments'])
+                ->pluck('id')
+                ->map(function ($id) {
+                    return (int) $id;
+                })
+                ->filter(function ($id) {
+                    return $id > 0;
+                })
+                ->values()
+                ->toArray();
         }
 
 

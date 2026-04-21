@@ -716,8 +716,8 @@ class InventoryReportAPIController extends AppBaseController
                 LEFT JOIN `units` ON `erp_itemledger`.`unitOfMeasure` = `units`.`UnitID` 
             WHERE
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
-                AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-	            AND erp_itemledger.itemSystemCode IN (" . join(',', json_decode($inputItems)) . ") 
+                AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
+	            AND erp_itemledger.itemSystemCode IN (" . $this->sanitizeIntegerCsv($inputItems) . ") 
                 AND itemmaster.financeCategoryMaster = 1 
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                
@@ -735,7 +735,7 @@ class InventoryReportAPIController extends AppBaseController
                 `erp_itemledger`
             WHERE
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
-                AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 AND erp_itemledger.inOutQty < 0
             GROUP BY
@@ -951,9 +951,9 @@ class InventoryReportAPIController extends AppBaseController
                 LEFT JOIN `itemassigned` ON `erp_itemledger`.`itemSystemCode` = `itemassigned`.`itemCodeSystem` AND itemassigned.companySystemID = erp_itemledger.companySystemID
             WHERE
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
-                AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-                AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
-                AND erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ")
+                AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
+                AND erp_itemledger.serviceLineSystemID IN (" . $this->sanitizeIntegerCsv($segment) . ")
+                AND erp_itemledger.itemSystemCode IN (" . $this->sanitizeIntegerCsv($items) . ")
                 AND itemmaster.financeCategoryMaster = 1 
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 ) AS ItemLedger 
@@ -1095,8 +1095,8 @@ FROM
                 LEFT JOIN `itemassigned` ON `erp_itemledger`.`itemSystemCode` = `itemassigned`.`itemCodeSystem` AND itemassigned.companySystemID = erp_itemledger.companySystemID
             WHERE
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
-                AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-                AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
+                AND erp_itemledger.serviceLineSystemID IN (" . $this->sanitizeIntegerCsv($segment) . ")
                 AND itemmaster.financeCategoryMaster = 1 
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 ) AS ItemLedger 
@@ -2061,8 +2061,8 @@ FROM
                     WHERE
                         erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ")  
                         AND erp_itemledger.fromDamagedTransactionYN = 0
-                        AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-                        AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                        AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
+                        AND erp_itemledger.serviceLineSystemID IN (" . $this->sanitizeIntegerCsv($segment) . ")
                         AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                     ) AS stockMainQuery
                     LEFT JOIN ( /*FROM ISSUE*/
@@ -2084,8 +2084,8 @@ FROM
                         erp_itemledger.documentSystemID = 8 
                         AND erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                         AND erp_itemledger.fromDamagedTransactionYN = 0 
-                        AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-                        AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                        AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
+                        AND erp_itemledger.serviceLineSystemID IN (" . $this->sanitizeIntegerCsv($segment) . ")
                         AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                     GROUP BY
                         erp_itemledger.companySystemID,
@@ -2110,8 +2110,8 @@ FROM
                         (erp_itemledger.documentSystemID = 3 or erp_itemledger.documentSystemID = 7)
                         AND erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                         AND erp_itemledger.fromDamagedTransactionYN = 0 
-                        AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-                        AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                        AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
+                        AND erp_itemledger.serviceLineSystemID IN (" . $this->sanitizeIntegerCsv($segment) . ")
                         AND erp_itemledger.inOutQty>0
                         AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                     GROUP BY
@@ -2139,8 +2139,8 @@ FROM
                 WHERE
                     erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                     AND erp_itemledger.fromDamagedTransactionYN = 0 
-                    AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-                    AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                    AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
+                    AND erp_itemledger.serviceLineSystemID IN (" . $this->sanitizeIntegerCsv($segment) . ")
                     AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) <= STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                 GROUP BY
                     erp_itemledger.companySystemID,
@@ -2162,8 +2162,8 @@ FROM
                     erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
                     AND erp_itemledger.documentSystemID = 8 
                     AND erp_itemledger.fromDamagedTransactionYN = 0 
-                    AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-                    AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
+                    AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
+                    AND erp_itemledger.serviceLineSystemID IN (" . $this->sanitizeIntegerCsv($segment) . ")
                     AND STR_TO_DATE( DATE_FORMAT( erp_itemledger.transactionDate, '%d/%m/%Y' ), '%d/%m/%Y' ) BETWEEN STR_TO_DATE( '".$fromDate ."', '%d/%m/%Y' ) 
                     AND  STR_TO_DATE( '".$toDate ."', '%d/%m/%Y' ) 
                 GROUP BY
@@ -2174,5 +2174,31 @@ FROM
                     itemmaster ON itemmaster.itemCodeSystem=finalquery.itemSystemCode AND itemmaster.financeCategoryMaster=1
                     LEFT JOIN units ON units.UnitID = itemmaster.unit $finalOrderBy";
         return DB::select($sql);
+    }
+
+    private function sanitizeIntegerCsv($values)
+    {
+        if ($values instanceof \Illuminate\Support\Collection) {
+            $values = $values->all();
+        } elseif (is_string($values)) {
+            $decoded = json_decode($values, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $values = $decoded;
+            } else {
+                $values = array_filter(array_map('trim', explode(',', $values)), function ($value) {
+                    return $value !== '';
+                });
+            }
+        }
+
+        if (!is_array($values)) {
+            $values = [$values];
+        }
+
+        $values = array_values(array_filter(array_map('intval', $values), function ($value) {
+            return $value > 0;
+        }));
+
+        return empty($values) ? '0' : implode(',', $values);
     }
 }

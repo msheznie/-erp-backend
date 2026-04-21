@@ -1873,8 +1873,8 @@ LEFT JOIN currencymaster AS transCurrencymaster ON erp_bookinvsuppdet.supplierTr
 LEFT JOIN currencymaster AS locCurrencymaster ON erp_bookinvsuppdet.localCurrencyID = locCurrencymaster.currencyID
 LEFT JOIN currencymaster AS rptCurrencymaster ON erp_bookinvsuppdet.companyReportingCurrencyID = rptCurrencymaster.currencyID
 WHERE
-	erp_bookinvsuppdet.grvAutoID = ' . $grvAutoID . '
-AND erp_bookinvsuppdet.companySystemID = ' . $companySystemID . '');
+	erp_bookinvsuppdet.grvAutoID = ?
+AND erp_bookinvsuppdet.companySystemID = ?', [(int)$grvAutoID, (int)$companySystemID]);
 
         return $this->sendResponse($detail, trans('custom.details_retrieved_successfully'));
     }

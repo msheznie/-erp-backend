@@ -102,18 +102,18 @@ class ErpItemLedgerRepository extends BaseRepository
 
         if (array_key_exists('Docs', $input)) {
             $docs = (array)$input['Docs'];
-            $docs = collect($docs)->pluck('documentSystemID');
+            $docs = self::sanitizeIntegerList(collect($docs)->pluck('documentSystemID')->toArray());
         }
 
         if (array_key_exists('Warehouse', $input)) {
             $warehouse = (array)$input['Warehouse'];
-            $warehouse = collect($warehouse)->pluck('wareHouseSystemCode');
+            $warehouse = self::sanitizeIntegerList(collect($warehouse)->pluck('wareHouseSystemCode')->toArray());
         }
 
         $items=[];
         if (array_key_exists('Items', $input)) {
             $items = (array)$input['Items'];
-            $items = collect($items)->pluck('itemSystemCode');
+            $items = self::sanitizeIntegerList(collect($items)->pluck('itemSystemCode')->toArray());
         }
 
         /*$test = [
@@ -247,9 +247,9 @@ FROM
 	INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
 WHERE
 	erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") AND
-	erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") AND
-	erp_itemledger.documentSystemID IN (" . join(',', json_decode($docs)) . ") AND
-	erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ") AND 
+	erp_itemledger.itemSystemCode IN (" . self::sanitizeIntegerCsv($items) . ") AND
+	erp_itemledger.documentSystemID IN (" . self::sanitizeIntegerCsv($docs) . ") AND
+	erp_itemledger.wareHouseSystemCode IN (" . self::sanitizeIntegerCsv($warehouse) . ") AND 
 	DATE(erp_itemledger.transactionDate) BETWEEN '" . $startDate . "' AND '" . $endDate . "' AND itemmaster.financeCategoryMaster = 1
 	
 	UNION ALL 
@@ -287,9 +287,9 @@ FROM
 	INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
 WHERE
 	erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") AND
-	erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") AND
-	erp_itemledger.documentSystemID IN (" . join(',', json_decode($docs)) . ") AND
-	erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ") AND 
+	erp_itemledger.itemSystemCode IN (" . self::sanitizeIntegerCsv($items) . ") AND
+	erp_itemledger.documentSystemID IN (" . self::sanitizeIntegerCsv($docs) . ") AND
+	erp_itemledger.wareHouseSystemCode IN (" . self::sanitizeIntegerCsv($warehouse) . ") AND 
 	DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.financeCategoryMaster = 1 GROUP BY erp_itemledger.itemSystemCode HAVING inOutQty > 0) a ORDER BY a.transactionDate asc");
         //dd(DB::getQueryLog());
         $dataFinal = [];
@@ -325,5 +325,17 @@ WHERE
                 ]
             ];
         }
+    }
+    private static function sanitizeIntegerList($values): array
+    {
+        return array_values(array_filter(array_map('intval', (array)$values), function ($value) {
+            return $value > 0;
+        }));
+    }
+
+    private static function sanitizeIntegerCsv($values): string
+    {
+        $values = self::sanitizeIntegerList($values);
+        return empty($values) ? '0' : implode(',', $values);
     }
 }

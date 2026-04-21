@@ -3670,6 +3670,8 @@ class BudgetConsumptionService
 
 	public static function insertBudgetConsumedData($documentSystemID, $documentSystemCode)
 	{
+		$documentSystemID = (int) $documentSystemID;
+		$documentSystemCode = (int) $documentSystemCode;
 		$result = ['status' => true];
 		switch ($documentSystemID) {
 			case 2:
@@ -3709,7 +3711,7 @@ class BudgetConsumptionService
 		$poMaster = ProcumentOrder::selectRaw('MONTH(createdDateTime) as month, purchaseOrderCode,documentID,documentSystemID, financeCategory')->find($documentSystemCode);
 		$budgetConsumeData = array();
 
-            $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*segment_allocated_items.allocatedQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*segment_allocated_items.allocatedQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,serviceline.serviceLineSystemID,serviceline.serviceLineCode,erp_purchaseordermaster.budgetYear,erp_purchaseorderdetails.localCurrencyID, erp_purchaseordermaster.projectID, erp_purchaseorderdetails.detail_project_id FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID INNER JOIN segment_allocated_items ON erp_purchaseordermaster.documentSystemID = segment_allocated_items.documentSystemID AND erp_purchaseorderdetails.purchaseOrderDetailsID = segment_allocated_items.documentDetailAutoID INNER JOIN serviceline ON serviceline.serviceLineSystemID = segment_allocated_items.serviceLineSystemID WHERE erp_purchaseorderdetails.purchaseOrderMasterID = ' . $documentSystemCode . ' AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,segment_allocated_items.serviceLineSystemID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.budgetYear,erp_purchaseorderdetails.detail_project_id');
+            $poDetail = \DB::select('SELECT SUM(erp_purchaseorderdetails.GRVcostPerUnitLocalCur*segment_allocated_items.allocatedQty) as GRVcostPerUnitLocalCur,SUM(erp_purchaseorderdetails.GRVcostPerUnitComRptCur*segment_allocated_items.allocatedQty) as GRVcostPerUnitComRptCur,erp_purchaseorderdetails.companyReportingCurrencyID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.financeGLcodePL,erp_purchaseorderdetails.companyID,erp_purchaseorderdetails.companySystemID,serviceline.serviceLineSystemID,serviceline.serviceLineCode,erp_purchaseordermaster.budgetYear,erp_purchaseorderdetails.localCurrencyID, erp_purchaseordermaster.projectID, erp_purchaseorderdetails.detail_project_id FROM erp_purchaseorderdetails INNER JOIN erp_purchaseordermaster ON erp_purchaseordermaster.purchaseOrderID = erp_purchaseorderdetails.purchaseOrderMasterID INNER JOIN segment_allocated_items ON erp_purchaseordermaster.documentSystemID = segment_allocated_items.documentSystemID AND erp_purchaseorderdetails.purchaseOrderDetailsID = segment_allocated_items.documentDetailAutoID INNER JOIN serviceline ON serviceline.serviceLineSystemID = segment_allocated_items.serviceLineSystemID WHERE erp_purchaseorderdetails.purchaseOrderMasterID = ? AND erp_purchaseordermaster.poType_N IN(1,2,3,4,5) GROUP BY erp_purchaseorderdetails.companySystemID,segment_allocated_items.serviceLineSystemID,erp_purchaseorderdetails.financeGLcodePLSystemID,erp_purchaseorderdetails.budgetYear,erp_purchaseorderdetails.detail_project_id', [(int)$documentSystemCode]);
             if (!empty($poDetail)) {
                 foreach ($poDetail as $value) {
                     if ($value->financeGLcodePLSystemID != "") {
@@ -3749,7 +3751,7 @@ class BudgetConsumptionService
 
 		if ($grvMaster->grvTypeID == 1) {
 			$budgetConsumeData = array();
-	        $grvDetail = \DB::select('SELECT SUM(erp_grvdetails.GRVcostPerUnitLocalCur*erp_grvdetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_grvdetails.GRVcostPerUnitComRptCur*erp_grvdetails.noQty) as GRVcostPerUnitComRptCur,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.financeGLcodePLSystemID,erp_grvdetails.financeGLcodePL,erp_grvdetails.companyID,erp_grvdetails.companySystemID,erp_grvmaster.serviceLineSystemID,erp_grvmaster.serviceLineCode,erp_grvdetails.localCurrencyID, erp_grvmaster.projectID, erp_grvdetails.detail_project_id, erp_grvmaster.companyFinanceYearID FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID  WHERE erp_grvdetails.itemFinanceCategoryID != 3 AND erp_grvdetails.grvAutoID = ' . $documentSystemCode . ' GROUP BY erp_grvdetails.companySystemID,erp_grvmaster.serviceLineSystemID,erp_grvdetails.financeGLcodePLSystemID,erp_grvdetails.detail_project_id');
+	        $grvDetail = \DB::select('SELECT SUM(erp_grvdetails.GRVcostPerUnitLocalCur*erp_grvdetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_grvdetails.GRVcostPerUnitComRptCur*erp_grvdetails.noQty) as GRVcostPerUnitComRptCur,erp_grvdetails.companyReportingCurrencyID,erp_grvdetails.financeGLcodePLSystemID,erp_grvdetails.financeGLcodePL,erp_grvdetails.companyID,erp_grvdetails.companySystemID,erp_grvmaster.serviceLineSystemID,erp_grvmaster.serviceLineCode,erp_grvdetails.localCurrencyID, erp_grvmaster.projectID, erp_grvdetails.detail_project_id, erp_grvmaster.companyFinanceYearID FROM erp_grvdetails INNER JOIN erp_grvmaster ON erp_grvmaster.grvAutoID = erp_grvdetails.grvAutoID  WHERE erp_grvdetails.itemFinanceCategoryID != 3 AND erp_grvdetails.grvAutoID = ? GROUP BY erp_grvdetails.companySystemID,erp_grvmaster.serviceLineSystemID,erp_grvdetails.financeGLcodePLSystemID,erp_grvdetails.detail_project_id', [(int)$documentSystemCode]);
 	        if (!empty($grvDetail)) {
 	            foreach ($grvDetail as $value) {
 	                if ($value->financeGLcodePLSystemID != "") {
@@ -3788,7 +3790,7 @@ class BudgetConsumptionService
 		$prnMaster = PurchaseReturn::selectRaw('MONTH(createdDateTime) as month, purchaseReturnCode,documentID,documentSystemID')->find($documentSystemCode);
 
 		$budgetConsumeData = array();
-        $prnDetail = \DB::select('SELECT SUM(erp_purchasereturndetails.GRVcostPerUnitLocalCur*erp_purchasereturndetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_purchasereturndetails.GRVcostPerUnitComRptCur*erp_purchasereturndetails.noQty) as GRVcostPerUnitComRptCur,erp_purchasereturndetails.companyReportingCurrencyID,erp_purchasereturndetails.financeGLcodePLSystemID,erp_purchasereturndetails.financeGLcodePL,erp_purchasereturndetails.companyID,erp_purchasereturnmaster.companySystemID,erp_purchasereturnmaster.serviceLineSystemID,erp_purchasereturnmaster.serviceLineCode,erp_purchasereturndetails.localCurrencyID, erp_purchasereturnmaster.companyFinanceYearID FROM erp_purchasereturndetails INNER JOIN erp_purchasereturnmaster ON erp_purchasereturnmaster.purhaseReturnAutoID = erp_purchasereturndetails.purhaseReturnAutoID  WHERE erp_purchasereturndetails.itemFinanceCategoryID != 3 AND erp_purchasereturndetails.purhaseReturnAutoID = ' . $documentSystemCode . ' GROUP BY erp_purchasereturnmaster.companySystemID,erp_purchasereturnmaster.serviceLineSystemID,erp_purchasereturndetails.financeGLcodePLSystemID');
+        $prnDetail = \DB::select('SELECT SUM(erp_purchasereturndetails.GRVcostPerUnitLocalCur*erp_purchasereturndetails.noQty) as GRVcostPerUnitLocalCur,SUM(erp_purchasereturndetails.GRVcostPerUnitComRptCur*erp_purchasereturndetails.noQty) as GRVcostPerUnitComRptCur,erp_purchasereturndetails.companyReportingCurrencyID,erp_purchasereturndetails.financeGLcodePLSystemID,erp_purchasereturndetails.financeGLcodePL,erp_purchasereturndetails.companyID,erp_purchasereturnmaster.companySystemID,erp_purchasereturnmaster.serviceLineSystemID,erp_purchasereturnmaster.serviceLineCode,erp_purchasereturndetails.localCurrencyID, erp_purchasereturnmaster.companyFinanceYearID FROM erp_purchasereturndetails INNER JOIN erp_purchasereturnmaster ON erp_purchasereturnmaster.purhaseReturnAutoID = erp_purchasereturndetails.purhaseReturnAutoID  WHERE erp_purchasereturndetails.itemFinanceCategoryID != 3 AND erp_purchasereturndetails.purhaseReturnAutoID = ? GROUP BY erp_purchasereturnmaster.companySystemID,erp_purchasereturnmaster.serviceLineSystemID,erp_purchasereturndetails.financeGLcodePLSystemID', [(int)$documentSystemCode]);
         if (!empty($prnDetail)) {
             foreach ($prnDetail as $value) {
                 if ($value->financeGLcodePLSystemID != "") {
@@ -3824,9 +3826,28 @@ class BudgetConsumptionService
 	public static function jvBudgetConsumption($documentSystemCode)
 	{
 		$jvMaster = JvMaster::selectRaw('MONTH(createdDateTime) as month, JVcode,documentID,documentSystemID, jvType')->find($documentSystemCode);
-
 		$budgetConsumeData = array();
-		$grvDetail = \DB::select('SELECT erp_jvdetail.debitAmount,erp_jvdetail.creditAmount,erp_jvdetail.currencyID,erp_jvdetail.chartOfAccountSystemID,erp_jvdetail.glAccount,erp_jvdetail.companyID,erp_jvdetail.companySystemID, erp_jvmaster.companyFinanceYearID, erp_jvdetail.serviceLineSystemID, erp_jvdetail.serviceLineCode, detail_project_id FROM erp_jvdetail INNER JOIN erp_jvmaster ON erp_jvmaster.jvMasterAutoId = erp_jvdetail.jvMasterAutoId  WHERE erp_jvdetail.jvMasterAutoId = ' . $documentSystemCode);
+        $grvDetail = \DB::select('SELECT 
+		erp_jvdetail.debitAmount,
+		erp_jvdetail.creditAmount,
+		erp_jvdetail.currencyID,
+		erp_jvdetail.chartOfAccountSystemID,
+		erp_jvdetail.glAccount,
+		erp_jvdetail.companyID,
+		erp_jvdetail.companySystemID, 
+		erp_jvmaster.companyFinanceYearID, 
+		erp_jvdetail.serviceLineSystemID, 
+		erp_jvdetail.serviceLineCode, 
+		detail_project_id 
+		FROM 
+		erp_jvdetail INNER JOIN erp_jvmaster ON erp_jvmaster.jvMasterAutoId = erp_jvdetail.jvMasterAutoId 
+		WHERE 
+		erp_jvdetail.jvMasterAutoId = ? 
+		GROUP BY 
+		erp_jvdetail.companySystemID,
+		erp_jvdetail.chartOfAccountSystemID, 
+		erp_jvdetail.serviceLineSystemID, 
+		erp_jvdetail.detail_project_id', [(int)$documentSystemCode]);
         if (!empty($grvDetail)) {
             foreach ($grvDetail as $value) {
                 if ($value->chartOfAccountSystemID != "") {
@@ -3922,7 +3943,7 @@ class BudgetConsumptionService
 		$siMaster = BookInvSuppMaster::selectRaw('MONTH(createdDateAndTime) as month, bookingInvCode,documentID,documentSystemID, documentType')->find($documentSystemCode);
 		$budgetConsumeData = array();
         if ($siMaster->documentType == 1) {
-            $siDetail = \DB::select('SELECT SUM(erp_directinvoicedetails.netAmountLocal) as netAmountLocal,SUM(erp_directinvoicedetails.netAmountRpt) as netAmountRpt,erp_directinvoicedetails.comRptCurrency,erp_directinvoicedetails.chartOfAccountSystemID,erp_directinvoicedetails.glCode,erp_directinvoicedetails.companyID,erp_directinvoicedetails.companySystemID,erp_directinvoicedetails.serviceLineSystemID,erp_directinvoicedetails.serviceLineCode,erp_directinvoicedetails.budgetYear,erp_directinvoicedetails.localCurrency,erp_directinvoicedetails.detail_project_id FROM erp_directinvoicedetails INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_directinvoicedetails.directInvoiceAutoID  WHERE erp_directinvoicedetails.directInvoiceAutoID = ' . $documentSystemCode . ' AND erp_bookinvsuppmaster.documentType = 1 GROUP BY erp_directinvoicedetails.companySystemID,erp_directinvoicedetails.serviceLineSystemID,erp_directinvoicedetails.chartOfAccountSystemID,erp_directinvoicedetails.budgetYear,erp_directinvoicedetails.detail_project_id');
+            $siDetail = \DB::select('SELECT SUM(erp_directinvoicedetails.netAmountLocal) as netAmountLocal,SUM(erp_directinvoicedetails.netAmountRpt) as netAmountRpt,erp_directinvoicedetails.comRptCurrency,erp_directinvoicedetails.chartOfAccountSystemID,erp_directinvoicedetails.glCode,erp_directinvoicedetails.companyID,erp_directinvoicedetails.companySystemID,erp_directinvoicedetails.serviceLineSystemID,erp_directinvoicedetails.serviceLineCode,erp_directinvoicedetails.budgetYear,erp_directinvoicedetails.localCurrency,erp_directinvoicedetails.detail_project_id FROM erp_directinvoicedetails INNER JOIN erp_bookinvsuppmaster ON erp_bookinvsuppmaster.bookingSuppMasInvAutoID = erp_directinvoicedetails.directInvoiceAutoID  WHERE erp_directinvoicedetails.directInvoiceAutoID = ? AND erp_bookinvsuppmaster.documentType = 1 GROUP BY erp_directinvoicedetails.companySystemID,erp_directinvoicedetails.serviceLineSystemID,erp_directinvoicedetails.chartOfAccountSystemID,erp_directinvoicedetails.budgetYear,erp_directinvoicedetails.detail_project_id', [(int)$documentSystemCode]);
             if (!empty($siDetail)) {
                 foreach ($siDetail as $value) {
                     if ($value->chartOfAccountSystemID != "") {
@@ -3961,7 +3982,7 @@ class BudgetConsumptionService
 		$siMaster = PaySupplierInvoiceMaster::selectRaw('MONTH(createdDateTime) as month, BPVcode,documentID,documentSystemID, invoiceType')->find($documentSystemCode);
 		$budgetConsumeData = array();
         if ($siMaster->invoiceType == 3) {
-            $siDetail = \DB::select('SELECT SUM(erp_directpaymentdetails.localAmount) as localAmount,SUM(erp_directpaymentdetails.comRptAmount) as comRptAmount,erp_directpaymentdetails.comRptCurrency,erp_directpaymentdetails.chartOfAccountSystemID,erp_directpaymentdetails.glCode,erp_directpaymentdetails.companyID,erp_directpaymentdetails.companySystemID,erp_directpaymentdetails.serviceLineSystemID,erp_directpaymentdetails.serviceLineCode,erp_directpaymentdetails.budgetYear,erp_directpaymentdetails.localCurrency,erp_directpaymentdetails.detail_project_id FROM erp_directpaymentdetails INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_directpaymentdetails.directPaymentAutoID  WHERE erp_directpaymentdetails.directPaymentAutoID = ' . $documentSystemCode . ' AND erp_paysupplierinvoicemaster.invoiceType = 3 GROUP BY erp_directpaymentdetails.companySystemID,erp_directpaymentdetails.serviceLineSystemID,erp_directpaymentdetails.chartOfAccountSystemID,erp_directpaymentdetails.budgetYear,erp_directpaymentdetails.detail_project_id');
+            $siDetail = \DB::select('SELECT SUM(erp_directpaymentdetails.localAmount) as localAmount,SUM(erp_directpaymentdetails.comRptAmount) as comRptAmount,erp_directpaymentdetails.comRptCurrency,erp_directpaymentdetails.chartOfAccountSystemID,erp_directpaymentdetails.glCode,erp_directpaymentdetails.companyID,erp_directpaymentdetails.companySystemID,erp_directpaymentdetails.serviceLineSystemID,erp_directpaymentdetails.serviceLineCode,erp_directpaymentdetails.budgetYear,erp_directpaymentdetails.localCurrency,erp_directpaymentdetails.detail_project_id FROM erp_directpaymentdetails INNER JOIN erp_paysupplierinvoicemaster ON erp_paysupplierinvoicemaster.PayMasterAutoId = erp_directpaymentdetails.directPaymentAutoID  WHERE erp_directpaymentdetails.directPaymentAutoID = ? AND erp_paysupplierinvoicemaster.invoiceType = 3 GROUP BY erp_directpaymentdetails.companySystemID,erp_directpaymentdetails.serviceLineSystemID,erp_directpaymentdetails.chartOfAccountSystemID,erp_directpaymentdetails.budgetYear,erp_directpaymentdetails.detail_project_id', [(int)$documentSystemCode]);
             if (!empty($siDetail)) {
                 foreach ($siDetail as $value) {
                     if ($value->chartOfAccountSystemID != "") {

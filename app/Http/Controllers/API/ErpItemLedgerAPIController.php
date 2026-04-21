@@ -497,9 +497,9 @@ LEFT JOIN currencymaster AS currencymaster_1 ON erp_itemledger.wacRptCurrencyID 
 INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
 WHERE
 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") AND
-erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") AND
-erp_itemledger.documentSystemID IN (" . join(',', json_decode($docs)) . ") AND
-erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ") AND 
+erp_itemledger.itemSystemCode IN (" . $this->sanitizeIntegerCsv($items) . ") AND
+erp_itemledger.documentSystemID IN (" . $this->sanitizeIntegerCsv($docs) . ") AND
+erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ") AND 
 DATE(erp_itemledger.transactionDate) BETWEEN '" . $startDate . "' AND '" . $endDate . "' AND itemmaster.financeCategoryMaster = 1
 
 UNION ALL 
@@ -540,9 +540,9 @@ LEFT JOIN currencymaster AS currencymaster_1 ON erp_itemledger.wacRptCurrencyID 
 INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
 WHERE
 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") AND
-erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") AND
-erp_itemledger.documentSystemID IN (" . join(',', json_decode($docs)) . ") AND
-erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ") AND 
+erp_itemledger.itemSystemCode IN (" . $this->sanitizeIntegerCsv($items) . ") AND
+erp_itemledger.documentSystemID IN (" . $this->sanitizeIntegerCsv($docs) . ") AND
+erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ") AND 
 DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.financeCategoryMaster = 1 GROUP BY erp_itemledger.itemSystemCode HAVING inOutQty > 0) a ORDER BY a.transactionDate asc");
     //dd(DB::getQueryLog());
     
@@ -757,9 +757,9 @@ FROM
 	INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
 WHERE
 	erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") AND
-	erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") AND
-	erp_itemledger.documentSystemID IN (" . join(',', json_decode($docs)) . ") AND
-	erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ") AND 
+	erp_itemledger.itemSystemCode IN (" . $this->sanitizeIntegerCsv($items) . ") AND
+	erp_itemledger.documentSystemID IN (" . $this->sanitizeIntegerCsv($docs) . ") AND
+	erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ") AND 
 	DATE(erp_itemledger.transactionDate) BETWEEN '" . $startDate . "' AND '" . $endDate . "' AND itemmaster.financeCategoryMaster = 1
 	
 	UNION ALL 
@@ -797,9 +797,9 @@ FROM
 	INNER JOIN itemmaster ON erp_itemledger.itemSystemCode = itemmaster.itemCodeSystem 
 WHERE
 	erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") AND
-	erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") AND
-	erp_itemledger.documentSystemID IN (" . join(',', json_decode($docs)) . ") AND
-	erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ") AND 
+	erp_itemledger.itemSystemCode IN (" . $this->sanitizeIntegerCsv($items) . ") AND
+	erp_itemledger.documentSystemID IN (" . $this->sanitizeIntegerCsv($docs) . ") AND
+	erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ") AND 
 	DATE(erp_itemledger.transactionDate) < '" . $startDate . "'  AND itemmaster.financeCategoryMaster = 1 GROUP BY erp_itemledger.itemSystemCode HAVING inOutQty > 0) a ORDER BY a.transactionDate asc");
 
        if(empty($data)) {
@@ -1068,9 +1068,9 @@ WHERE
                 LEFT JOIN `itemassigned` ON `erp_itemledger`.`itemSystemCode` = `itemassigned`.`itemCodeSystem` AND itemassigned.companySystemID = erp_itemledger.companySystemID
             WHERE
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
-                AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-                AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
-	            AND erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") 
+                AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
+                AND erp_itemledger.serviceLineSystemID IN (" . $this->sanitizeIntegerCsv($segment) . ")
+	            AND erp_itemledger.itemSystemCode IN (" . $this->sanitizeIntegerCsv($items) . ") 
                 AND itemmaster.financeCategoryMaster = 1 
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 ) AS ItemLedger 
@@ -1212,9 +1212,9 @@ WHERE
                 LEFT JOIN `itemassigned` ON `erp_itemledger`.`itemSystemCode` = `itemassigned`.`itemCodeSystem` AND itemassigned.companySystemID = erp_itemledger.companySystemID
             WHERE
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
-                AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
-                AND erp_itemledger.serviceLineSystemID IN (" . join(',', json_decode($segment)) . ")
-	            AND erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") 
+                AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
+                AND erp_itemledger.serviceLineSystemID IN (" . $this->sanitizeIntegerCsv($segment) . ")
+	            AND erp_itemledger.itemSystemCode IN (" . $this->sanitizeIntegerCsv($items) . ") 
                 AND itemmaster.financeCategoryMaster = 1 
                 AND DATE(erp_itemledger.transactionDate) <= '$date' 
                 ) AS ItemLedger 
@@ -1415,7 +1415,7 @@ FROM
 	AND warehouseitems.companySystemID = warehousebinlocationmaster.companySystemID
 WHERE
 	warehouseitems.companySystemID IN (".join(',',$subCompanies).") AND
-	warehouseitems.warehouseSystemCode IN (".join(',',json_decode($warehouse)).")
+	warehouseitems.warehouseSystemCode IN (".$this->sanitizeIntegerCsv($warehouse).")
 	) AS StockTaking_BinLocation ON erp_itemledger.companySystemID = StockTaking_BinLocation.companySystemID
 	AND erp_itemledger.wareHouseSystemCode = StockTaking_BinLocation.warehouseSystemCode
 	AND erp_itemledger.itemSystemCode = StockTaking_BinLocation.itemSystemCode
@@ -1423,7 +1423,7 @@ WHERE
 	erp_itemledger.fromDamagedTransactionYN = 0
 	AND DATE(erp_itemledger.transactionDate) <= '$date'
 	AND erp_itemledger.companySystemID IN (".join(',',$subCompanies).")
-	AND erp_itemledger.wareHouseSystemCode IN (".join(',',json_decode($warehouse)).")
+	AND erp_itemledger.wareHouseSystemCode IN (".$this->sanitizeIntegerCsv($warehouse).")
 	AND itemmaster.financeCategoryMaster = 1
 ORDER BY
 	erp_itemledger.itemSystemCode ASC) AS finalStockTaking
@@ -1488,8 +1488,8 @@ WHERE
 	itemmaster.financeCategoryMaster = 1 
 	AND DATE(erp_itemledger.transactionDate) <= '$date' 
 	AND erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ")
-	AND erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") 
-	AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+	AND erp_itemledger.itemSystemCode IN (" . $this->sanitizeIntegerCsv($items) . ") 
+	AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
 	$searchQry
 	) AS ItemLedger 
 GROUP BY
@@ -1632,7 +1632,7 @@ FROM
 	AND warehouseitems.companySystemID = warehousebinlocationmaster.companySystemID 
 WHERE
 	warehouseitems.companySystemID IN (".join(',',$subCompanies).") AND
-	warehouseitems.warehouseSystemCode IN (".join(',',json_decode($warehouse)).")
+	warehouseitems.warehouseSystemCode IN (".$this->sanitizeIntegerCsv($warehouse).")
 	) AS StockTaking_BinLocation ON erp_itemledger.companySystemID = StockTaking_BinLocation.companySystemID 
 	AND erp_itemledger.wareHouseSystemCode = StockTaking_BinLocation.warehouseSystemCode 
 	AND erp_itemledger.itemSystemCode = StockTaking_BinLocation.itemSystemCode 
@@ -1640,7 +1640,7 @@ WHERE
 	erp_itemledger.fromDamagedTransactionYN = 0 
 	AND DATE(erp_itemledger.transactionDate) <= '$date'  
 	AND erp_itemledger.companySystemID IN (".join(',',$subCompanies).")
-	AND erp_itemledger.wareHouseSystemCode IN (".join(',',json_decode($warehouse)).")
+	AND erp_itemledger.wareHouseSystemCode IN (".$this->sanitizeIntegerCsv($warehouse).")
 	AND itemmaster.financeCategoryMaster = 1  
 ORDER BY
 	erp_itemledger.itemSystemCode ASC) AS finalStockTaking
@@ -1705,8 +1705,8 @@ WHERE
 	itemmaster.financeCategoryMaster = 1 
 	AND DATE(erp_itemledger.transactionDate) <= '$date' 
 	AND erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ")
-	AND erp_itemledger.itemSystemCode IN (" . join(',', json_decode($items)) . ") 
-	AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+	AND erp_itemledger.itemSystemCode IN (" . $this->sanitizeIntegerCsv($items) . ") 
+	AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
 	$searchQry
 	) AS ItemLedger 
 GROUP BY
@@ -1865,7 +1865,7 @@ GROUP BY
                 LEFT JOIN `itemassigned` ON `erp_itemledger`.`itemSystemCode` = `itemassigned`.`itemCodeSystem` AND itemassigned.companySystemID = erp_itemledger.companySystemID
             WHERE
                 erp_itemledger.companySystemID IN (" . join(',', $subCompanies) . ") 
-                AND erp_itemledger.wareHouseSystemCode IN (" . join(',', json_decode($warehouse)) . ")
+                AND erp_itemledger.wareHouseSystemCode IN (" . $this->sanitizeIntegerCsv($warehouse) . ")
                 AND erp_itemledger.itemSystemCode = $item_code 
                 AND itemmaster.financeCategoryMaster = 1 
                 ) AS ItemLedger 
@@ -1931,6 +1931,32 @@ GROUP BY
             'item' => $item
         );
         return $this->sendResponse($output, trans('custom.supplier_master_retrieved_successfully'));
+    }
+
+    private function sanitizeIntegerCsv($values)
+    {
+        if ($values instanceof \Illuminate\Support\Collection) {
+            $values = $values->all();
+        } elseif (is_string($values)) {
+            $decoded = json_decode($values, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
+                $values = $decoded;
+            } else {
+                $values = array_filter(array_map('trim', explode(',', $values)), function ($value) {
+                    return $value !== '';
+                });
+            }
+        }
+
+        if (!is_array($values)) {
+            $values = [$values];
+        }
+
+        $values = array_values(array_filter(array_map('intval', $values), function ($value) {
+            return $value > 0;
+        }));
+
+        return empty($values) ? '0' : implode(',', $values);
     }
 
 
