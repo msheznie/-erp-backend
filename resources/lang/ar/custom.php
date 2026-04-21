@@ -10026,4 +10026,5 @@ return
     'credit_note_exchange_rates_updated_message' => 'تم تحديث أسعار الصرف كما يلي،<br><br>الأسعار السابقة سعر الصرف المحلي :local_er | سعر صرف التقارير :reporting_er<br><br>الأسعار الحالية سعر الصرف المحلي :current_local_er | سعر صرف التقارير :current_reporting_er<br><br>هل أنت متأكد من أنك تريد المتابعة؟',
     'cannot_inactive_approval_level_following_documents' => 'لا يمكن تعطيل مستوى الالإعتماد. المستندات التالية معلقة للالإعتماد',
     'attachment_type_and_no_of_documents_are_required' => 'نوع المرفق أو حقل عدد المستندات يحتوي على إدخال غير صالح.',
+    'attachment_is_mandatory_because_approval_enabled_based_on_attachment' => 'المرفق إلزامي لأن الموافقة تعتمد على المرفق.',
 ];
